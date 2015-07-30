@@ -32,7 +32,7 @@ if (PHP_SAPI != "cli") {
 }
 
 if ($argc < 4) {
-    echo("Syntax: ".__FILE__." CURRENCY_PAIR START_DATE END_DATE\nSTART_DATE and END_DATE must be of the form YYYYMMDD\nExample: ".__FILE__." EURUSD 20070201 20090801\n");
+    echo("Syntax: ".__FILE__." CURRENCY_PAIR START_DATE END_DATE OUT_FILE\nSTART_DATE and END_DATE must be of the form YYYYMMDD\nExample: ".__FILE__." EURUSD 20070201 20090830 out.csv\n");
     exit(1);
 }
 $pair = $argv[1];
@@ -103,7 +103,7 @@ $endyear = substr($argv[3],0,4);
 $endmonth = substr($argv[3],4,2);
 $endday = substr($argv[3],6,2);
 if ($startyear < 1900 || $startyear > 2100 || $endyear < 1900 || $endyear > 2100 || $startmonth < 1 || $startmonth > 12 || $endmonth < 1 || $endmonth > 12) {
-    echo "The input dates must be of the form YYYYMM, example 200808\n";
+    echo "The input dates must be of the form YYYYMMDD, example 20080801\n";
     exit(1);
 }
 
