@@ -83,9 +83,12 @@ class Dukascopy:
         return True
 
     def bt5_to_csv(self):
-        fileSize = os.stat(self.path).st_size
-        if fileSize == 0:
-            return
+        try:
+            fileSize = os.stat(self.path).st_size
+            if fileSize == 0:
+                return
+        except FileNotFoundError:
+            return False
 
         new_path = self.path.replace("bi5", "csv")
         if os.path.isfile(new_path):
@@ -94,6 +97,7 @@ class Dukascopy:
         print("Converting into CSV (%s)..." % (new_path))
 
         # Opening, uncompressing & reading raw data
+        lzma._BUFFER_SIZE = 2047 # Fix for liblzma bug: EOFError
         with lzma.open(self.path) as f:
             data = f.read()
 
