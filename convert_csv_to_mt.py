@@ -236,9 +236,6 @@ if __name__ == '__main__':
     args = argumentParser.parse_args()
 
     # Checking input file argument
-    if not args.inputFile:
-        print('ERROR: You haven\'t specified an input file!')
-        sys.exit(1)
     if args.verbose:
         print('[INFO] Input file: %s' % args.inputFile)
 
