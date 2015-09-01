@@ -47,7 +47,7 @@ class Input:
                 barTime = currentTime
                 startTime = datetime.datetime(int(timestamp[0]), int(timestamp[1]), int(timestamp[2]), int(timestamp[3]), int(timestamp[4]))
                 endTime = startTime + deltaTime
-                # Low is the lowest bid, High is the highest ask, Volume is the bid volume TODO
+                # Low is the lowest bid, High is the highest ask, Volume is the bid volume TODO ?
                 aggregatedOpen = aggregatedClose = aggregatedLow = bidPrice
                 aggregatedHigh = askPrice
                 aggregatedVolume = bidVolume
@@ -123,9 +123,9 @@ class HST574(Output):
             bars += pack('<d', uniBar[3])                               # High
             bars += pack('<d', uniBar[2])                               # Low
             bars += pack('<d', uniBar[4])                               # Close
-            bars += pack('<Q', int(uniBar[5]*1e6))                      # Volume TODO
-            bars += pack('<i', round((uniBar[3]) - uniBar[2])*10000)    # Spread TODO
-            bars += pack('<Q', int(uniBar[5]*1e6))                      # Real volume TODO
+            bars += pack('<Q', int(uniBar[5]*1e6))                      # Volume TODO ?
+            bars += pack('<i', round((uniBar[3]) - uniBar[2])*10000)    # Spread TODO ?
+            bars += pack('<Q', int(uniBar[5]*1e6))                      # Real volume TODO ?
 
         self._write(header + bars, outputPath)
 
@@ -139,8 +139,8 @@ class FXT(Output):
         binPeriod       = pack('<i', timeframe)
         binModel        = pack('<i', 0)     # TODO ?
         binBars         = pack('<i', len(uniBars))
-        binFromDate     = pack('<i', int(uniBars[0][0].timestamp()))     # TODO Date of first bar
-        binToDate       = pack('<i', int(uniBars[1][0].timestamp()))     # TODO Date of last bar
+        binFromDate     = pack('<i', int(uniBars[0][0].timestamp()))
+        binToDate       = pack('<i', int(uniBars[1][0].timestamp()))
         binModelQuality = pack('<d', 0)     # TODO ?
         # General parameters
         binCurrency    = bytearray(''[0:12].ljust(12, '\x00'), 'latin1', 'ignore')  # TODO ?
@@ -202,7 +202,7 @@ class FXT(Output):
             bars += pack('<d', uniBar[3])                   # High
             bars += pack('<d', uniBar[4])                   # Close
             bars += pack('<d', uniBar[5])                   # Volume
-            bars += pack('<i', int(uniBar[0].timestamp()))  # Current time within a bar 4 vs 8 Bytes TODO ?
+            bars += pack('<i', int(uniBar[0].timestamp()))  # Current time within a bar TODO ?
             bars += pack('<i', 0)                           # Flag to launch an expert TODO ?
 
         self._write(header + bars, outputPath)
@@ -217,12 +217,8 @@ def _fxtFilename(symbol, timeframe):
 if __name__ == '__main__':
     # Parse the arguments
     argumentParser = argparse.ArgumentParser(add_help=False)
-    argumentParser.add_argument('-h', '--help',
-        action='help', help='Show this help message and exit')
-    argumentParser.add_argument('-v', '--verbose',
-        action='store_true', dest='verbose', help='increase output verbosity')
     argumentParser.add_argument('-i', '--input-file',
-        action='store',      dest='inputFile', help='input file', default=None)
+        action='store',      dest='inputFile', help='input file', default=None, required=True)
     argumentParser.add_argument('-f', '--output-format',
         action='store',      dest='outputFormat', help='format of output file (FXT/HST/Old HST), as: fxt4/hst4/hst4_509', default='fxt4')
     argumentParser.add_argument('-s', '--symbol',
@@ -233,7 +229,18 @@ if __name__ == '__main__':
         action='store',      dest='spread', help='spread value in pips', default=1)
     argumentParser.add_argument('-d', '--output-dir',
         action='store',      dest='outputDir', help='destination directory to save the output file', default='.')
+    argumentParser.add_argument('-v', '--verbose',
+        action='store_true', dest='verbose', help='increase output verbosity')
+    argumentParser.add_argument('-h', '--help',
+        action='help', help='Show this help message and exit')
     args = argumentParser.parse_args()
+
+    # Checking input file argument
+    if not args.inputFile:
+        print('ERROR: You haven\'t specified an input file!')
+        sys.exit(1)
+    if args.verbose:
+        print('[INFO] Input file: %s' % args.inputFile)
 
     # Checking symbol argument
     if len(args.symbol) > 12:
@@ -278,13 +285,6 @@ if __name__ == '__main__':
     os.makedirs(outputDir, 0o755, True)
     if args.verbose:
         print('[INFO] Output directgory: %s' % args.outputDir)
-
-    # Checking input file argument
-    if not args.inputFile:
-        print('ERROR: You haven\'t specified an input file!')
-        sys.exit(1)
-    if args.verbose:
-        print('[INFO] Input file: %s' % args.inputFile)
 
     # Reading input file, creating intermediate format for future input sources other than CSV
     uniRows = CSV(args.inputFile).parse(timeframe)
