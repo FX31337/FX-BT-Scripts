@@ -22,7 +22,7 @@ class Input:
 
     def _aggregate(self, rawRows, timeframe):
         uniBars = []
-        deltaTime = datetime.timedelta(0, timeframe)
+        deltaTime = datetime.timedelta(0, 60*timeframe)
         barTime = None
         startTime = None
         endTime = None
@@ -209,10 +209,10 @@ class FXT(Output):
 
 
 def _hstFilename(symbol, timeframe):
-    return '%s%d.hst' % (symbol, timeframe//60)
+    return '%s%d.hst' % (symbol, timeframe)
 
 def _fxtFilename(symbol, timeframe):
-    return '%s%d_0.fxt' % (symbol, timeframe//60)
+    return '%s%d_0.fxt' % (symbol, timeframe)
 
 if __name__ == '__main__':
     # Parse the arguments
@@ -248,27 +248,27 @@ if __name__ == '__main__':
     if args.verbose:
         print('[INFO] Symbol name: %s' % symbol)
 
-    # Converting timeframe argument to seconds
+    # Converting timeframe argument to minutes
     timeframe = args.timeframe.lower()
     if timeframe == 'm1':
-        timeframe = 60
+        timeframe = 1
     elif timeframe == 'm5':
-        timeframe = 300
+        timeframe = 5
     elif timeframe == 'm15':
-        timeframe = 900
+        timeframe = 15
     elif timeframe == 'm30':
-        timeframe = 1800
+        timeframe = 30
     elif timeframe == 'h1':
-        timeframe = 3600
+        timeframe = 60
     elif timeframe == 'h4':
-        timeframe = 14400
+        timeframe = 240
     elif timeframe == 'd1':
-        timeframe = 86400
+        timeframe = 1440
     else:
         print('ERROR: Bad timeframe setting!')
         sys.exit(1)
     if args.verbose:
-        print('[INFO] Timeframe: %s (%d seconds)' % (args.timeframe.upper(), timeframe))
+        print('[INFO] Timeframe: %s - %d minute(s)' % (args.timeframe.upper(), timeframe))
 
     # Checking spread argument
     spread = int(args.spread)
@@ -289,13 +289,10 @@ if __name__ == '__main__':
     # Checking output file format argument and doing conversion
     outputFormat = args.outputFormat.lower()
     if outputFormat == 'fxt4':
-        #FXT(uniRows, symbol, timeframe, spread)
         FXT(uniRows, spread, outputDir + _fxtFilename(symbol, timeframe))
     elif outputFormat == 'hst4':
-        #HST574(uniRows, symbol, timeframe)
         HST574(uniRows, outputDir + _hstFilename(symbol, timeframe))
     elif outputFormat == 'hst4_509':
-        #HST509(uniRows, symbol, timeframe)
         HST509(uniRows, outputDir + _hstFilename(symbol, timeframe))
     else:
         print('ERROR: Unknown output file format!')
