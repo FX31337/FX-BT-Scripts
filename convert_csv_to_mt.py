@@ -17,7 +17,7 @@ class Input:
             with open(inputFile, 'r') as i:
                 self.rawInput = i.read()
         except OSError as e:
-            print("ERROR: %s raised when tried to save the file '%s'" % (e.strerror, e.filename))
+            print("[ERROR] '%s' raised when tried to read the file '%s'" % (e.strerror, e.filename))
             sys.exit(1)
 
     def _aggregate(self, rawRows, timeframe):
@@ -72,8 +72,12 @@ class CSV(Input):
 
 class Output:
     def _write(self, content, filename):
-        with open(filename, 'wb') as o:
-            o.write(content)
+        try:
+            with open(filename, 'wb') as o:
+                o.write(content)
+        except OSError as e:
+            print("[ERROR] '%s' raised when tried to save the file '%s'" % (e.strerror, e.filename))
+            sys.exit(1)
 
 
 class HST509(Output):
@@ -211,8 +215,10 @@ class FXT(Output):
 def _hstFilename(symbol, timeframe):
     return '%s%d.hst' % (symbol, timeframe)
 
+
 def _fxtFilename(symbol, timeframe):
     return '%s%d_0.fxt' % (symbol, timeframe)
+
 
 if __name__ == '__main__':
     # Parse the arguments
@@ -265,7 +271,7 @@ if __name__ == '__main__':
     elif timeframe == 'd1':
         timeframe = 1440
     else:
-        print('ERROR: Bad timeframe setting!')
+        print('[ERROR] Bad timeframe setting!')
         sys.exit(1)
     if args.verbose:
         print('[INFO] Timeframe: %s - %d minute(s)' % (args.timeframe.upper(), timeframe))
@@ -295,7 +301,7 @@ if __name__ == '__main__':
     elif outputFormat == 'hst4_509':
         HST509(uniRows, outputDir + _hstFilename(symbol, timeframe))
     else:
-        print('ERROR: Unknown output file format!')
+        print('[ERROR] Unknown output file format!')
         sys.exit(1)
     if args.verbose:
         print('[INFO] Output format: %s' % outputFormat)
