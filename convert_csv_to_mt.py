@@ -140,7 +140,7 @@ class FXT(Output):
     def __init__(self, uniBars, spread, outputPath):
         # Build header (728 Bytes in total)
         header = bytearray()
-        header += pack('<i', 403)                                                       # Version
+        header += pack('<i', 405)                                                       # Version
         header += bytearray('Copyright 2001-2015, MetaQuotes Software Corp.'.ljust(64,  # Copyright
                             '\x00'), 'latin1', 'ignore')
         header += bytearray('FxPro.com-Demo04FixedSpread'.ljust(128,                    # Server
