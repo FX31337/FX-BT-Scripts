@@ -83,15 +83,16 @@ class Output:
 class HST509(Output):
     def __init__(self, uniBars, outputPath):
         # Build header (148 Bytes in total)
-        binVersion   = pack('<i', 400)
-        binCopyright = bytearray('(C)opyright 2003, MetaQuotes Software Corp.'.ljust(64, '\x00'), 'latin1', 'ignore')
-        binSymbol    = bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')
-        binPeriod    = pack('<i', timeframe)
-        binDigits    = pack('<i', 5)                        # Default value of HST format
-        binTimeSign  = pack('<i', int(time.time()))         # Time of creation
-        binLastSync  = pack('<i', 0)
-        binUnused    = bytearray(13*4)
-        header = binVersion + binCopyright + binSymbol + binPeriod + binDigits + binTimeSign + binLastSync + binUnused
+        header = bytearray()
+        header += pack('<i', 400)                                                       # Version
+        header += bytearray('(C)opyright 2003, MetaQuotes Software Corp.'.ljust(64,     # Copyright
+                            '\x00'),'latin1', 'ignore')
+        header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')               # Symbol
+        header += pack('<i', timeframe)                                                 # Period
+        header += pack('<i', 5)                                                         # Digits, using the default value of HST format
+        header += pack('<i', int(time.time()))                                          # Time of sign (database creation)
+        header += pack('<i', 0)                                                         # Time of last synchronization
+        header += bytearray(13*4)                                                       # Space for future use
 
         # Transform universal bar list to binary bar data (44 Bytes per bar)
         bars = bytearray()
@@ -109,15 +110,16 @@ class HST509(Output):
 class HST574(Output):
     def __init__(self, uniBars, outputPath):
         # Build header (148 Bytes in total)
-        binVersion   = pack('<i', 401)
-        binCopyright = bytearray('(C)opyright 2003, MetaQuotes Software Corp.'.ljust(64, '\x00'), 'latin1', 'ignore')
-        binSymbol    = bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')
-        binPeriod    = pack('<i', timeframe)
-        binDigits    = pack('<i', 5)                    # Default value of HST format
-        binTimeSign  = pack('<i', int(time.time()))     # Time of creation
-        binLastSync  = pack('<i', 0)
-        binUnused    = bytearray(13*4)
-        header = binVersion + binCopyright + binSymbol + binPeriod + binDigits + binTimeSign + binLastSync + binUnused
+        header = bytearray()
+        header += pack('<i', 401)                                                       # Version
+        header += bytearray('(C)opyright 2003, MetaQuotes Software Corp.'.ljust(64,     # Copyright
+                            '\x00'),'latin1', 'ignore')
+        header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')               # Symbol
+        header += pack('<i', timeframe)                                                 # Period
+        header += pack('<i', 5)                                                         # Digits, using the default value of HST format
+        header += pack('<i', int(time.time()))                                          # Time of sign (database creation)
+        header += pack('<i', 0)                                                         # Time of last synchronization
+        header += bytearray(13*4)                                                       # Space for future use
 
         # Transform universal bar list to binary bar data (60 Bytes per bar)
         bars = bytearray()
@@ -136,66 +138,69 @@ class HST574(Output):
 
 class FXT(Output):
     def __init__(self, uniBars, spread, outputPath):
-        # Build header (148 Bytes in total)
-        binVersion      = pack('<i', 403)
-        binCopyright    = bytearray('Copyright 2001-2015, MetaQuotes Software Corp.'.ljust(64, '\x00'), 'latin1', 'ignore')
-        binSymbol       = bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')
-        binPeriod       = pack('<i', timeframe)
-        binModel        = pack('<i', 0)     # TODO ?
-        binBars         = pack('<i', len(uniBars))
-        binFromDate     = pack('<i', int(uniBars[0][0].timestamp()))
-        binToDate       = pack('<i', int(uniBars[1][0].timestamp()))
-        binModelQuality = pack('<d', 0)     # TODO ?
+        # Build header (728 Bytes in total)
+        header = bytearray()
+        header += pack('<i', 403)                                                       # Version
+        header += bytearray('Copyright 2001-2015, MetaQuotes Software Corp.'.ljust(64,  # Copyright
+                            '\x00'), 'latin1', 'ignore')
+        header += bytearray('FxPro.com-Demo04FixedSpread'.ljust(128,                    # Server
+                            '\x00'), 'latin1', 'ignore')
+        header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')               # Symbol
+        header += pack('<i', timeframe)                                                 # Period in minutes
+        header += pack('<i', 0)                                                         # Model - for what modeling type was the ticks sequence generated, 0 means ``every tick model''
+        header += pack('<i', len(uniBars))                                              # Bars - Amount bars in history
+        header += pack('<i', int(uniBars[0][0].timestamp()))                            # FromDate - Date of first tick
+        header += pack('<i', int(uniBars[-1][0].timestamp()))                           # ToDate - Date of last tick
+        header += bytearray(4)                                                          # 4 Bytes of padding
+        header += pack('<d', 99.0)                                                      # ModelQuality - modeling quality
         # General parameters
-        binCurrency    = bytearray(''[0:12].ljust(12, '\x00'), 'latin1', 'ignore')  # TODO ?
-        binSpread      = pack('<i', spread) # TODO ?
-        binDigits      = pack('<i', 5)      # TODO Default value of FXT format
-        binPoint       = pack('<d', 0)      # TODO ?
-        binLotMin      = pack('<i', 0)      # TODO ?
-        binLotMax      = pack('<i', 0)      # TODO ?
-        binLotStep     = pack('<i', 0)      # TODO ?
-        binStopsLevel  = pack('<i', 0)      # TODO ?
-        binGtcPendings = pack('<i', 0)      # TODO ?
+        header += bytearray('EUR'.ljust(12, '\x00'), 'latin1', 'ignore')                # Currency - currency base
+        header += pack('<i', spread)                                                    # Spread in pips
+        header += pack('<i', 4)                                                         # Digits, using the default value of FXT format
+        header += bytearray(4)                                                          # 4 Bytes of padding
+        header += pack('<d', 0.0)                                                       # Point
+        header += pack('<i', 10)                                                        # LotMin - minimum lot
+        header += pack('<i', 10000)                                                     # LotMax - maximum lot
+        header += pack('<i', 10)                                                        # LotStep
+        header += pack('<i', 8)                                                         # StopsLevel - stops level value
+        header += pack('<i', 1)                                                         # GtcPendings - instruction to close pending orders at the end of day, true by default
+        header += bytearray(4)                                                          # 4 Bytes of padding
         # Profit Calculation parameters
-        binContractSize = pack('<d', 0)     # TODO ?
-        binTickValue    = pack('<d', 0)     # TODO ?
-        binTickSize     = pack('<d', 0)     # TODO ?
-        binProfitMode   = pack('<d', 0)     # TODO ?
+        header += pack('<d', 100000.0)                                                  # ContractSize - contract size
+        header += pack('<d', 0.0)                                                       # TickValue - value of one tick
+        header += pack('<d', 0.0)                                                       # TickSize - size of one tick
+        header += pack('<i', 0)                                                         # ProfitMode - profit calculation mode {PROFIT_CALC_FOREX, PROFIT_CALC_CFD, PROFIT_CALC_FUTURES}
         # Swap calculation
-        binSwapEnable = pack('<i', 0)       # TODO ?
-        binSwapType   = pack('<i', 0)       # TODO ?
-        binSwapLong   = pack('<d', 0)       # TODO ?
-        binSwapShort  = pack('<d', 0)       # TODO ?
-        binSwap3days  = pack('<i', 0)       # TODO ?
+        header += pack('<i', 1)                                                         # SwapEnable - enable swap, true by default
+        header += pack('<i', 0)                                                         # SwapType - type of swap {SWAP_BY_POINTS, SWAP_BY_DOLLARS, SWAP_BY_INTEREST}
+        header += bytearray(4)                                                          # 4 Bytes of padding
+        header += pack('<d', 0.33)                                                      # SwapLong
+        header += pack('<d', -1.04)                                                     # SwapShort - swap overnight value
+        header += pack('<i', 3)                                                         # SwapRolloverThreeDays - three-days swap rollover, 3 by default
         # Margin calculation
-        binLeverage          = pack('<i', 0)    # TODO ?
-        binFreeMarginMode    = pack('<i', 0)    # TODO ?
-        binMarginMode        = pack('<i', 0)    # TODO ?
-        binMarginStopOut     = pack('<i', 0)    # TODO ?
-        binMarginStopOutMode = pack('<i', 0)    # TODO ?
-        binMarginInitial     = pack('<d', 0)    # TODO ?
-        binMarginMaintenance = pack('<d', 0)    # TODO ?
-        binMarginHedged      = pack('<d', 0)    # TODO ?
-        binMarginDivider     = pack('<d', 0)    # TODO ?
-        binMarginCurrency    = bytearray(''[0:12].ljust(12, '\x00'), 'latin1', 'ignore')    # TODO ?
+        header += pack('<i', 100)                                                       # Leverage, 100 by default
+        header += pack('<i', 1)                                                         # FreeMarginMode - free margin calculation mode {MARGIN_DONT_USE, MARGIN_USE_ALL, MARGIN_USE_PROFIT, MARGIN_USE_LOSS}
+        header += pack('<i', 0)                                                         # MarginMode - margin calculation mode {MARGIN_CALC_FOREX,MARGIN_CALC_CFD,MARGIN_CALC_FUTURES,MARGIN_CALC_CFDINDEX}
+        header += pack('<i', 30)                                                        # MarginStopout - margin stopout level
+        header += pack('<i', 0)                                                         # MarginStopoutMode - stop out check mode {MARGIN_TYPE_PERCENT, MARGIN_TYPE_CURRENCY}
+        header += pack('<d', 0.0)                                                       # MarginInitial - margin requirements
+        header += pack('<d', 0.0)                                                       # MarginMaintenance - margin maintenance requirements
+        header += pack('<d', 50000.0)                                                   # MarginHedged - margin requirements for hedged positions
+        header += pack('<d', 1.0)                                                       # MarginDivider
+        header += bytearray('EUR'.ljust(12, '\x00'), 'latin1', 'ignore')                # MarginCurrency
+        header += bytearray(4)                                                          # 4 Bytes of padding
         # Commission calculation
-        binCommissionBase = pack('<d', 0)   # TODO ?
-        binCommissionType = pack('<i', 0)   # TODO ?
-        binCommissionLots = pack('<i', 0)   # TODO ?
+        header += pack('<d', 0.0)                                                       # CommissionBase - basic commission
+        header += pack('<i', 0)                                                         # CommissionType - basic commission type {COMM_TYPE_MONEY, COMM_TYPE_PIPS, COMM_TYPE_PERCENT}
+        header += pack('<i', 0)                                                         # CommissionLots - commission per lot or per deal {COMMISSION_PER_LOT, COMMISSION_PER_DEAL}
         # For internal use
-        binFromBar     = pack('<i', 0)      # TODO ?
-        binToBar       = pack('<i', 0)      # TODO ?
-        binStartPeriod = bytearray(6*4)     # TODO ?
-        binSetFrom     = pack('<i', 0)      # TODO ?
-        binSetTo       = pack('<i', 0)      # TODO ?
-        binReserved    = bytearray(62*4)    # TODO ?
-        header = binVersion + binCopyright + binSymbol + binPeriod + binModel + binBars + binFromDate + binToDate + binModelQuality + \
-                 binCurrency + binSpread + binDigits + binPoint + binLotMin + binLotMax + binLotStep + binStopsLevel + binGtcPendings + \
-                 binContractSize + binTickValue + binTickSize + binProfitMode + \
-                 binSwapEnable + binSwapType + binSwapLong + binSwapShort + binSwap3days + \
-                 binLeverage + binFreeMarginMode + binMarginMode + binMarginStopOut + binMarginStopOutMode + binMarginInitial + binMarginMaintenance + binMarginHedged + binMarginDivider + binMarginCurrency + \
-                 binCommissionBase + binCommissionType + binCommissionLots + \
-                 binFromBar + binStartPeriod + binSetFrom + binSetTo + binReserved
+        header += pack('<i', 0)                                                         # FromBar - FromDate bar number
+        header += pack('<i', 0)                                                         # ToBar - ToDate bar number
+        header += pack('<6i', 0, 0, 0, 0, 0, 0)                                         # StartPeriod - number of bar at which the smaller period modeling started
+        header += pack('<i', 0)                                                         # SetFrom - begin date from tester settings
+        header += pack('<i', 0)                                                         # SetTo - end date from tester settings
+        header += pack('<i', 0)                                                         # FreezeLevel - order's freeze level in points
+        header += bytearray(61*4)                                                       # Reserved - Space for future use
 
         # Transform universal bar list to binary bar data (60 Bytes per bar)
         bars = bytearray()
