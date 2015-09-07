@@ -97,7 +97,7 @@ class Dukascopy:
         print("Converting into CSV (%s)..." % (new_path))
 
         # Opening, uncompressing & reading raw data
-        lzma._BUFFER_SIZE = 2047 # Fix for liblzma bug: EOFError
+        lzma._BUFFER_SIZE = 1023 # Fix for liblzma bug: EOFError
         with lzma.open(self.path) as f:
             data = f.read()
 
