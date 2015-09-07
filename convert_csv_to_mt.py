@@ -206,13 +206,14 @@ class FXT(Output):
         bars = bytearray()
         for uniBar in uniBars:
             bars += pack('<i', int(uniBar[0].timestamp()))  # Time
+            bars += bytearray(4)                            # 4 Bytes of padding
             bars += pack('<d', uniBar[1])                   # Open
             bars += pack('<d', uniBar[2])                   # Low
             bars += pack('<d', uniBar[3])                   # High
             bars += pack('<d', uniBar[4])                   # Close
-            bars += pack('<d', uniBar[5])                   # Volume
+            bars += pack('<Q', round(uniBar[5]))            # Volume (Document says it's a double, though it's stored as a long int.)
             bars += pack('<i', int(uniBar[0].timestamp()))  # Current time within a bar TODO ?
-            bars += pack('<i', 0)                           # Flag to launch an expert TODO ?
+            bars += pack('<i', 0)                           # Flag to launch an expert
 
         self._write(header + bars, outputPath)
 
