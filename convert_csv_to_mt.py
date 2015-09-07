@@ -293,7 +293,7 @@ if __name__ == '__main__':
         outputDir += '/'
     os.makedirs(outputDir, 0o755, True)
     if args.verbose:
-        print('[INFO] Output directgory: %s' % args.outputDir)
+        print('[INFO] Output directory: %s' % args.outputDir)
 
     # Reading input file, creating intermediate format for future input sources other than CSV
     uniRows = CSV(args.inputFile).parse(timeframe)
