@@ -137,14 +137,13 @@ class HST574(Output):
 
 
 class FXT(Output):
-    def __init__(self, uniBars, spread, outputPath):
+    def __init__(self, uniBars, spread, server, outputPath):
         # Build header (728 Bytes in total)
         header = bytearray()
         header += pack('<i', 405)                                                       # Version
         header += bytearray('Copyright 2001-2015, MetaQuotes Software Corp.'.ljust(64,  # Copyright
                             '\x00'), 'latin1', 'ignore')
-        header += bytearray('FxPro.com-Demo04FixedSpread'.ljust(128,                    # Server
-                            '\x00'), 'latin1', 'ignore')
+        header += bytearray(server.ljust(128, '\x00'), 'latin1', 'ignore')              # Server
         header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')               # Symbol
         header += pack('<i', timeframe)                                                 # Period in minutes
         header += pack('<i', 0)                                                         # Model - for what modeling type was the ticks sequence generated, 0 means ``every tick model''
@@ -241,6 +240,8 @@ if __name__ == '__main__':
         action='store',      dest='spread', help='spread value in pips', default=1)
     argumentParser.add_argument('-d', '--output-dir',
         action='store',      dest='outputDir', help='destination directory to save the output file', default='.')
+    argumentParser.add_argument('-S', '--server',
+        action='store',      dest='server', help='name of FX server', default='default')
     argumentParser.add_argument('-v', '--verbose',
         action='store_true', dest='verbose', help='increase output verbosity')
     argumentParser.add_argument('-h', '--help',
@@ -295,13 +296,22 @@ if __name__ == '__main__':
     if args.verbose:
         print('[INFO] Output directory: %s' % args.outputDir)
 
+    # Checking server argument
+    if len(args.server) > 128:
+        print('[WARNING] Server name is longer than 128 characters, cutting its end off!')
+        server = args.server[0:128]
+    else:
+        server = args.server
+    if args.verbose:
+        print('[INFO] Server name: %s' % server)
+
     # Reading input file, creating intermediate format for future input sources other than CSV
     uniRows = CSV(args.inputFile).parse(timeframe)
 
     # Checking output file format argument and doing conversion
     outputFormat = args.outputFormat.lower()
     if outputFormat == 'fxt4':
-        FXT(uniRows, spread, outputDir + _fxtFilename(symbol, timeframe))
+        FXT(uniRows, spread, server, outputDir + _fxtFilename(symbol, timeframe))
     elif outputFormat == 'hst4':
         HST574(uniRows, outputDir + _hstFilename(symbol, timeframe))
     elif outputFormat == 'hst4_509':
