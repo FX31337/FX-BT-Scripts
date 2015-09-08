@@ -8,7 +8,6 @@ import re
 from struct import *
 import time
 import datetime
-import math
 
 class Input:
     def __init__(self, inputFile):
@@ -118,7 +117,7 @@ class HST574(Output):
         header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')               # Symbol
         header += pack('<i', timeframe)                                                 # Period
         header += pack('<i', 5)                                                         # Digits, using the default value of HST format
-        header += pack('<i', math.floor(time.time()/60)*60)                             # Time of sign (database creation)
+        header += pack('<i', int(time.time()))                                          # Time of sign (database creation)
         header += pack('<i', 0)                                                         # Time of last synchronization
         header += bytearray(13*4)                                                       # Space for future use
 
