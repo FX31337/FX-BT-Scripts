@@ -156,13 +156,13 @@ class FXT(Output):
         # General parameters
         header += bytearray('EUR'.ljust(12, '\x00'), 'latin1', 'ignore')                # Currency - currency base
         header += pack('<i', spread)                                                    # Spread in pips
-        header += pack('<i', 4)                                                         # Digits, using the default value of FXT format
+        header += pack('<i', 5)                                                         # Digits, using the default value of FXT format
         header += bytearray(4)                                                          # 4 Bytes of padding
-        header += pack('<d', 0.0)                                                       # Point
-        header += pack('<i', 10)                                                        # LotMin - minimum lot
-        header += pack('<i', 10000)                                                     # LotMax - maximum lot
-        header += pack('<i', 10)                                                        # LotStep
-        header += pack('<i', 8)                                                         # StopsLevel - stops level value
+        header += pack('<d', 1e-5)                                                      # Point
+        header += pack('<i', 1)                                                         # LotMin - minimum lot TODO ?
+        header += pack('<i', 50000)                                                     # LotMax - maximum lot TODO ?
+        header += pack('<i', 1)                                                         # LotStep
+        header += pack('<i', 0)                                                         # StopsLevel - stops level value
         header += pack('<i', 1)                                                         # GtcPendings - instruction to close pending orders at the end of day, true by default
         header += bytearray(4)                                                          # 4 Bytes of padding
         # Profit Calculation parameters
@@ -171,27 +171,27 @@ class FXT(Output):
         header += pack('<d', 0.0)                                                       # TickSize - size of one tick
         header += pack('<i', 0)                                                         # ProfitMode - profit calculation mode {PROFIT_CALC_FOREX, PROFIT_CALC_CFD, PROFIT_CALC_FUTURES}
         # Swap calculation
-        header += pack('<i', 1)                                                         # SwapEnable - enable swap, true by default
+        header += pack('<i', 0)                                                         # SwapEnable - enable swap, true by default
         header += pack('<i', 0)                                                         # SwapType - type of swap {SWAP_BY_POINTS, SWAP_BY_DOLLARS, SWAP_BY_INTEREST}
         header += bytearray(4)                                                          # 4 Bytes of padding
-        header += pack('<d', 0.33)                                                      # SwapLong
-        header += pack('<d', -1.04)                                                     # SwapShort - swap overnight value
-        header += pack('<i', 3)                                                         # SwapRolloverThreeDays - three-days swap rollover, 3 by default
+        header += pack('<d', 0.0)                                                       # SwapLong
+        header += pack('<d', 0.0)                                                       # SwapShort - swap overnight value
+        header += pack('<i', 2)                                                         # SwapRolloverThreeDays - three-days swap rollover
         # Margin calculation
         header += pack('<i', 100)                                                       # Leverage, 100 by default
         header += pack('<i', 1)                                                         # FreeMarginMode - free margin calculation mode {MARGIN_DONT_USE, MARGIN_USE_ALL, MARGIN_USE_PROFIT, MARGIN_USE_LOSS}
         header += pack('<i', 0)                                                         # MarginMode - margin calculation mode {MARGIN_CALC_FOREX,MARGIN_CALC_CFD,MARGIN_CALC_FUTURES,MARGIN_CALC_CFDINDEX}
-        header += pack('<i', 30)                                                        # MarginStopout - margin stopout level
+        header += pack('<i', 100)                                                       # MarginStopout - margin stopout level
         header += pack('<i', 0)                                                         # MarginStopoutMode - stop out check mode {MARGIN_TYPE_PERCENT, MARGIN_TYPE_CURRENCY}
-        header += pack('<d', 0.0)                                                       # MarginInitial - margin requirements
-        header += pack('<d', 0.0)                                                       # MarginMaintenance - margin maintenance requirements
+        header += pack('<d', 100000.0)                                                  # MarginInitial - margin requirements
+        header += pack('<d', 100000.0)                                                  # MarginMaintenance - margin maintenance requirements
         header += pack('<d', 50000.0)                                                   # MarginHedged - margin requirements for hedged positions
-        header += pack('<d', 1.0)                                                       # MarginDivider
+        header += pack('<d', 1.25)                                                      # MarginDivider
         header += bytearray('EUR'.ljust(12, '\x00'), 'latin1', 'ignore')                # MarginCurrency
         header += bytearray(4)                                                          # 4 Bytes of padding
         # Commission calculation
         header += pack('<d', 0.0)                                                       # CommissionBase - basic commission
-        header += pack('<i', 0)                                                         # CommissionType - basic commission type {COMM_TYPE_MONEY, COMM_TYPE_PIPS, COMM_TYPE_PERCENT}
+        header += pack('<i', 1)                                                         # CommissionType - basic commission type {COMM_TYPE_MONEY, COMM_TYPE_PIPS, COMM_TYPE_PERCENT}
         header += pack('<i', 0)                                                         # CommissionLots - commission per lot or per deal {COMMISSION_PER_LOT, COMMISSION_PER_DEAL}
         # For internal use
         header += pack('<i', 0)                                                         # FromBar - FromDate bar number
@@ -202,7 +202,7 @@ class FXT(Output):
         header += pack('<i', 0)                                                         # FreezeLevel - order's freeze level in points
         header += bytearray(61*4)                                                       # Reserved - Space for future use
 
-        # Transform universal bar list to binary bar data (60 Bytes per bar)
+        # Transform universal bar list to binary bar data (56 Bytes per bar)
         bars = bytearray()
         for uniBar in uniBars:
             bars += pack('<i', int(uniBar[0].timestamp()))  # Time
@@ -238,7 +238,7 @@ if __name__ == '__main__':
     argumentParser.add_argument('-t', '--timeframe',
         action='store',      dest='timeframe', help='one of the timeframe values: M1, M5, M15, M30, H1, H4, D1', default='M1')
     argumentParser.add_argument('-p', '--spread',
-        action='store',      dest='spread', help='spread value in pips', default=1)
+        action='store',      dest='spread', help='spread value in pips', default=20)
     argumentParser.add_argument('-d', '--output-dir',
         action='store',      dest='outputDir', help='destination directory to save the output file', default='.')
     argumentParser.add_argument('-S', '--server',
