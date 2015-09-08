@@ -131,7 +131,7 @@ class HST574(Output):
             bars += pack('<d', uniBar[2])                               # Low
             bars += pack('<d', uniBar[4])                               # Close
             bars += pack('<Q', int(uniBar[5]))                          # Volume
-            bars += pack('<i', round((uniBar[3]) - uniBar[2])*10000)    # Spread TODO ?
+            bars += pack('<i', 0)                                       # Spread
             bars += pack('<Q', 0)                                       # Real volume
 
         self._write(header + bars, outputPath)
