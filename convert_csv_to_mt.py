@@ -10,18 +10,18 @@ import time
 import datetime
 
 class Input:
-    def __init__(self, inputFile):
+    def __init__(self, fileName):
         if args.verbose:
-            print('[INFO] Trying to read data from %s...' % inputFile)
+            print('[INFO] Trying to read data from %s...' % fileName)
         try:
-            with open(inputFile, 'r') as i:
-                self.rawInput = i.read()
+            with open(fileName, 'r') as inputFile:
+                self.ticks = inputFile.read().splitlines()
         except OSError as e:
             print("[ERROR] '%s' raised when tried to read the file '%s'" % (e.strerror, e.filename))
             sys.exit(1)
 
-    def _aggregate(self, rawRows, timeframe):
-        uniBars = []
+    def aggregate(self, timeframe):
+        self.uniBars = []
         deltaTime = datetime.timedelta(0, 60*timeframe)
         startTime = None
         endTime = None
@@ -31,19 +31,18 @@ class Input:
         aggregatedClose = 0.0
         aggregatedVolume = 0.0
 
-        for rawRow in rawRows:
-            timestamp = re.split('[. :]', rawRow[0])  # Convert date & time in the rawRow to a list
-            currentTime = datetime.datetime(int(timestamp[0]), int(timestamp[1]), int(timestamp[2]), int(timestamp[3]), int(timestamp[4]), int(timestamp[5]), 1000*int(timestamp[6])) 
-            bidPrice = float(rawRow[1])
-            askPrice = float(rawRow[2])
-            bidVolume = float(rawRow[3])
-            askVolume = float(rawRow[4])
+        for tick in self.ticks:
+            currentTime = datetime.datetime(tick[0][0], tick[0][1], tick[0][2], tick[0][3], tick[0][4], tick[0][5], tick[0][6]) 
+            bidPrice = float(tick[1])
+            askPrice = float(tick[2])
+            bidVolume = float(tick[3])
+            askVolume = float(tick[4])
             if not endTime or currentTime >= endTime:
                 # Append aggregated rows to uniBars list
                 if endTime:
-                    uniBars.append([startTime, aggregatedOpen, aggregatedLow, aggregatedHigh, aggregatedClose, aggregatedVolume])
+                    self.uniBars.append([startTime, aggregatedOpen, aggregatedLow, aggregatedHigh, aggregatedClose, aggregatedVolume])
                 # Initialize values for the first or next bar
-                startTime = datetime.datetime(int(timestamp[0]), int(timestamp[1]), int(timestamp[2]), int(timestamp[3]), int(timestamp[4]))
+                startTime = datetime.datetime(tick[0][0], tick[0][1], tick[0][2], tick[0][3], tick[0][4])
                 endTime = startTime + deltaTime
                 # Low is the lowest bid, High is the highest ask, Volume is the bid volume TODO ?
                 aggregatedOpen = aggregatedClose = aggregatedLow = bidPrice
@@ -58,14 +57,26 @@ class Input:
                 if askPrice > aggregatedHigh:
                     aggregatedHigh = askPrice
 
-        uniBars.append([startTime, aggregatedOpen, aggregatedLow, aggregatedHigh, aggregatedClose, aggregatedVolume])
-        return uniBars
+        self.uniBars.append([startTime, aggregatedOpen, aggregatedLow, aggregatedHigh, aggregatedClose, aggregatedVolume])
 
 
 class CSV(Input):
-    def parse(self, timeframe):
-        rawRows = csv.reader(self.rawInput.splitlines(), delimiter=',')
-        return self._aggregate(rawRows, timeframe)
+    def parse(self):
+        self.ticks = csv.reader(self.ticks, delimiter=',')
+
+        uniTicks = []
+        for tick in self.ticks:
+            timestamp = re.split('[. :]', tick[0])
+            timestamp[0] = int(timestamp[0])
+            timestamp[1] = int(timestamp[1])
+            timestamp[2] = int(timestamp[2])
+            timestamp[3] = int(timestamp[3])
+            timestamp[4] = int(timestamp[4])
+            timestamp[5] = int(timestamp[5])
+            timestamp[6] = 1000*int(timestamp[6])   # Convert to milliseconds
+            uniTicks.append([timestamp, float(tick[1]), float(tick[2]), float(tick[3]), float(tick[4])])  # Convert date & time to a sublist
+
+        self.ticks = uniTicks
 
 
 class Output:
@@ -305,16 +316,20 @@ if __name__ == '__main__':
         print('[INFO] Server name: %s' % server)
 
     # Reading input file, creating intermediate format for future input sources other than CSV
-    uniRows = CSV(args.inputFile).parse(timeframe)
+    csvInput = CSV(args.inputFile)
+    csvInput.parse()
 
     # Checking output file format argument and doing conversion
     outputFormat = args.outputFormat.lower()
     if outputFormat == 'fxt4':
-        FXT(uniRows, spread, server, outputDir + _fxtFilename(symbol, timeframe))
+        csvInput.aggregate(timeframe)
+        FXT(csvInput.uniBars, spread, server, outputDir + _fxtFilename(symbol, timeframe))
     elif outputFormat == 'hst4':
-        HST574(uniRows, outputDir + _hstFilename(symbol, timeframe))
+        csvInput.aggregate(timeframe)
+        HST574(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
     elif outputFormat == 'hst4_509':
-        HST509(uniRows, outputDir + _hstFilename(symbol, timeframe))
+        csvInput.aggregate(timeframe)
+        HST509(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
     else:
         print('[ERROR] Unknown output file format!')
         sys.exit(1)
