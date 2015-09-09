@@ -55,7 +55,7 @@ all_currencies = {
 class Dukascopy:
     url_tpl = "http://www.dukascopy.com/datafeed/%s/%04d/%02d/%02d/%02dh_ticks.bi5"
 
-    def __init__(self, pair, year, month, day, hour, dest = "download"):
+    def __init__(self, pair, year, month, day, hour, dest = "download/dukascopy"):
         if not os.path.exists(dest):
             os.makedirs(dest)
         self.year = year
@@ -135,7 +135,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("-?", "--help",         action="help",                          help="Show this help message and exit." )
     parser.add_argument("-v", "--verbose",      action="store_true",  dest="verbose",   help="Increase output verbosity." )
-    parser.add_argument("-d", "--download-dir", action="store",       dest="dest",      help="Directory to download files.", default="download")
+    parser.add_argument("-d", "--download-dir", action="store",       dest="dest",      help="Directory to download files.", default="download/dukascopy")
     parser.add_argument("-c", "--csv-convert",  action="store_true",  dest="csv",       help="Perform CSV conversion.")
     parser.add_argument("-p", "--pairs",        action="store",       dest="pairs",     help="Pair(s) to download (separated by comma).", default="all")
     parser.add_argument("-y", "--years",        action="store",       dest="years",     help="Year(s) to download (separated by comma).", default="all")
