@@ -63,7 +63,7 @@ class Dukascopy:
         self.day = day
         self.hour = hour
         self.url = self.url_tpl % (pair, int(year), month, day, hour)
-        self.path = "%s/%04d-%02d-%02d--%02dh_ticks.bi5" % (dest, year, month, day, hour)
+        self.path = "%s/%04d/%02d/%04d-%02d-%02d--%02dh_ticks.bi5" % (dest, year, month, year, month, day, hour)
 
     def download(self):
         print("Downloading %s into: %s..." % (self.url, self.path))
@@ -71,6 +71,8 @@ class Dukascopy:
             print("File (%s) exists, so skipping." % (self.path));
             return True
         else:
+            if not os.path.exists(os.path.dirname(self.path)):
+                os.makedirs(os.path.dirname(self.path))
             try:
                 urllib.request.urlretrieve(self.url, filename=self.path)
             except HTTPError as err:
