@@ -244,7 +244,7 @@ $missingfilecount = 0; /* number of the file does not exist on the server */
 $failedfilecount = 0;  /* number of files failed to download */
 $successfilecount = 0; /* number of files successfully downloaded */
 $skippedfilecount = 0; /* the number of files to be skipped */
-$quitstring = "正常";
+$quitstring = "normal";
 
 $lasttime = 0; /* for each file before downloading the first day of a record of the current GMT time */
 $lastday = 0;  /* Day one day before the download number */
@@ -268,20 +268,20 @@ foreach($symbols as $pair => $firsttick) {
         $url = "http://www.dukascopy.com/datafeed/$pair/$year/$month/$day/{$hour}h_ticks.bi5";
 
     // When the file begins to download before the first one day to $ lasttim, $ lastday recorded.  Prompt action is actually downloaded to the day, no other practical effect.
-		if ($day != $lastday)
-		{
-			// If you download the previous day within three seconds BIN data was processed, that the previous day's data has been downloaded.
-			if (time() - $lasttime < 3)
-			{
-				//error("BIN data already downloaded. Skipped.\r\n");
-			}
+    if ($day != $lastday)
+    {
+      // If you download the previous day within three seconds BIN data was processed, that the previous day's data has been downloaded.
+      if (time() - $lasttime < 3)
+      {
+        //error("BIN data already downloaded. Skipped.\r\n");
+      }
 
-			$lasttime = time();
-			$lastday = $day;
-			echo("Info: Downloading BIN data of $pair- ".gmstrftime("%m/%d/%Y",$i)."\r\n");
-		}
+      $lasttime = time();
+      $lastday = $day;
+      echo("Info: Downloading BIN data of $pair- ".gmstrftime("%m/%d/%Y",$i)."\r\n");
+    }
 
-		// Calculate the local storage path
+    // Calculate the local storage path
         $localpath = "$pair/$year/$month/$day/";
         $binlocalfile = $localpath . $hour . "h_ticks.bin";
         $localfile = $localpath . $hour . "h_ticks.bi5";
@@ -289,12 +289,12 @@ foreach($symbols as $pair => $firsttick) {
             mkdir($localpath, 0777, true);
         }
 
-		    // Only when the local file does not exist when it starts to download
+        // Only when the local file does not exist when it starts to download
         if (!file_exists($localfile) && !file_exists($binlocalfile)) {
             $ch = FALSE;
             $j = 0;
 
-			      // If you can not connect to the server is continuously attempting to download, try up to three times
+            // If you can not connect to the server is continuously attempting to download, try up to three times
             do {
                 if ($ch !== FALSE) {
                     curl_close($ch);
@@ -307,13 +307,13 @@ foreach($symbols as $pair => $firsttick) {
                 $j++;
             } while ($j <= 3 && curl_errno($ch));
 
-			      // Try three times still can not connect the server to exit the program.
+            // Try three times still can not connect the server to exit the program.
             if (curl_errno($ch)) {
                 error("FATAL: Couldn't download $url.\r\nError was: ".curl_error($ch)."\r\n");
-				$quitstring = "无法连接服务器";
+                $quitstring = "Unable to connect to server";
                 exit(1);
             }
-			      // The server returns the data, but does not necessarily represent the download success
+            // The server returns the data, but does not necessarily represent the download success
             else {
               // The server returns a 404 number to indicate you want to download the file does not exist
                 if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 404) {
@@ -326,51 +326,49 @@ foreach($symbols as $pair => $firsttick) {
                         error("WARNING: missing file $url ($i - ".gmstrftime("%m/%d/%Y %H:%M GMT",$i).")\r\n");
                     }
 
-					$missingfilecount++;
+                    $missingfilecount++;
                 }
-				        // The server returns a 200 number, indicating that the file is complete download.
+                // The server returns a 200 number, indicating that the file is complete download.
                 else if (curl_getinfo($ch, CURLINFO_HTTP_CODE) == 200) {
                     $outfd = fopen($localfile, 'wb');
                     if ($outfd === FALSE) {
                         error("FATAL: Couldn't open $localfile ($url - $i)\r\n");
-						$quitstring = "创建本地文件出错";
+                        $quitstring = "Error: Can not create a local file.";
                         exit(1);
                     }
                     fwrite($outfd, $result);
                     fclose($outfd);
                     //error("Info: successfully downloaded $url\r\n");
-					$successfilecount++;
+          $successfilecount++;
                 }
-				        // Returns the number of unknown, indicates that the file download an unknown error
+                // Returns the number of unknown, indicates that the file download an unknown error
                 else {
                     error("WARNING: did not download $url ($i - ".gmstrftime("%m/%d/%Y %H:%M GMT",$i).") - error code was ".curl_getinfo($ch, CURLINFO_HTTP_CODE)."\r\nContent was: $result\r\n");
 
-					$failedfilecount++;
+          $failedfilecount++;
                 }
             }
             curl_close($ch);
         }
         else {
-			    // Local file already exists, skip.  Logic programs to ensure every file download is complete.
+          // Local file already exists, skip.  Logic programs to ensure every file download is complete.
             //error("Info: skipping $url, local file already exists.\r\n");
-			$skippedfilecount++;
+      $skippedfilecount++;
         }
         // Here the end of a file to download, about to enter the next file
 
     }
 
-	$totalseconds = time() - $curtime;
+  $totalseconds = time() - $curtime;
 
-	error("has been completed" . $pair . ". The download task total use ". outtm($totalseconds) . "state exit is:" . $quitstring . "\r\n");
-	error("There are" . $successfilecount . "files in this task has been downloaded\r\nwhere" . $skippedfilecount . " skipped as the files already exists\r\n");
-	error("there are " . $missingfilecount . "missing files on the server, so could not be downloaded\r\nThere are".$failedfilecount."files where unknown error occured, so a file was not saved during the download process.\r\n");
+  error("has been completed" . $pair . ". The download task total use ". outtm($totalseconds) . "state exit is:" . $quitstring . "\r\n");
+  error("There are" . $successfilecount . "files in this task has been downloaded\r\nwhere" . $skippedfilecount . " skipped as the files already exists\r\n");
+  error("there are " . $missingfilecount . "missing files on the server, so could not be downloaded\r\nThere are".$failedfilecount."files where unknown error occured, so a file was not saved during the download process.\r\n");
 
 
-	// Here ends a currency download all the files downloaded, about to enter the next currency pair.  We only deal with the current version of one pair of currency pairs, so the use of break out of the loop, the actual end of the program.
-	break;
+  // Here ends a currency download all the files downloaded, about to enter the next currency pair.  We only deal with the current version of one pair of currency pairs, so the use of break out of the loop, the actual end of the program.
+  break;
 }
-
-
 
 function error($error) {
     echo $error;
@@ -379,16 +377,15 @@ function error($error) {
     fclose($fd);
 }
 
-
 /*
  * According to the number of seconds to return all day: hours, minutes, seconds format.
  */
 function outtm($sec){
-	$d = floor($sec / 86400);
-	$tmp = $sec % 86400;
-	$h = floor($tmp / 3600);
-	$tmp %= 3600;
-	$m = floor($tmp /60);
-	$s = $tmp % 60;
-	return "[".$d."天".$h."小时".$m."分".$s."秒]";
+  $d = floor($sec / 86400);
+  $tmp = $sec % 86400;
+  $h = floor($tmp / 3600);
+  $tmp %= 3600;
+  $m = floor($tmp /60);
+  $s = $tmp % 60;
+  return "[" . $d . "days" . $h . "h" . $m . "points" . $s . "s]";
 }

@@ -34,7 +34,7 @@ class Input:
 
         for rawRow in rawRows:
             timestamp = re.split('[. :]', rawRow[0])  # Convert date & time in the rawRow to a list
-            currentTime = datetime.datetime(int(timestamp[0]), int(timestamp[1]), int(timestamp[2]), int(timestamp[3]), int(timestamp[4]), int(timestamp[5]), 1000*int(timestamp[6])) 
+            currentTime = datetime.datetime(int(timestamp[0]), int(timestamp[1]), int(timestamp[2]), int(timestamp[3]), int(timestamp[4]), int(timestamp[5]), 1000*int(timestamp[6]))
             bidPrice = float(rawRow[1])
             askPrice = float(rawRow[2])
             bidVolume = float(rawRow[3])
