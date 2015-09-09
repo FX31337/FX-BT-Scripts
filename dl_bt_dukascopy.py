@@ -86,6 +86,7 @@ class Dukascopy:
         try:
             fileSize = os.stat(self.path).st_size
             if fileSize == 0:
+                print("File (%s) is empty" % (self.path))
                 return
         except FileNotFoundError:
             return False
