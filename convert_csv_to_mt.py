@@ -23,7 +23,6 @@ class Input:
     def _aggregate(self, rawRows, timeframe):
         uniBars = []
         deltaTime = datetime.timedelta(0, 60*timeframe)
-        barTime = None
         startTime = None
         endTime = None
         aggregatedOpen = 0.0
@@ -42,9 +41,8 @@ class Input:
             if not endTime or currentTime >= endTime:
                 # Append aggregated rows to uniBars list
                 if endTime:
-                    uniBars.append([barTime, aggregatedOpen, aggregatedLow, aggregatedHigh, aggregatedClose, aggregatedVolume])
+                    uniBars.append([startTime, aggregatedOpen, aggregatedLow, aggregatedHigh, aggregatedClose, aggregatedVolume])
                 # Initialize values for the first or next bar
-                barTime = currentTime
                 startTime = datetime.datetime(int(timestamp[0]), int(timestamp[1]), int(timestamp[2]), int(timestamp[3]), int(timestamp[4]))
                 endTime = startTime + deltaTime
                 # Low is the lowest bid, High is the highest ask, Volume is the bid volume TODO ?
@@ -60,7 +58,7 @@ class Input:
                 if askPrice > aggregatedHigh:
                     aggregatedHigh = askPrice
 
-        uniBars.append([barTime, aggregatedOpen, aggregatedLow, aggregatedHigh, aggregatedClose, aggregatedVolume])
+        uniBars.append([startTime, aggregatedOpen, aggregatedLow, aggregatedHigh, aggregatedClose, aggregatedVolume])
         return uniBars
 
 
