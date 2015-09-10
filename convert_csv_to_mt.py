@@ -139,7 +139,7 @@ class HST574(Output):
             bars += pack('<d', uniBar[3])                               # High
             bars += pack('<d', uniBar[2])                               # Low
             bars += pack('<d', uniBar[4])                               # Close
-            bars += pack('<Q', int(uniBar[5]))                          # Volume
+            bars += pack('<Q', round(uniBar[5]))                        # Volume
             bars += pack('<i', 0)                                       # Spread
             bars += pack('<Q', 0)                                       # Real volume
 
