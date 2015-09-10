@@ -147,7 +147,7 @@ class HST574(Output):
 
 
 class FXT(Output):
-    def __init__(self, uniBars, spread, server, outputPath):
+    def __init__(self, uniTicks, spread, server, outputPath):
         # Build header (728 Bytes in total)
         header = bytearray()
         header += pack('<i', 405)                                                       # Version
@@ -155,11 +155,11 @@ class FXT(Output):
                             '\x00'), 'latin1', 'ignore')
         header += bytearray(server.ljust(128, '\x00'), 'latin1', 'ignore')              # Server
         header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')               # Symbol
-        header += pack('<i', timeframe)                                                 # Period in minutes
+        header += pack('<i', 1)                                                         # Period is set statically to 1, since we're generating an ``every tick'' file
         header += pack('<i', 0)                                                         # Model - for what modeling type was the ticks sequence generated, 0 means ``every tick model''
-        header += pack('<i', len(uniBars))                                              # Bars - Amount bars in history
-        header += pack('<i', int(uniBars[0][0].timestamp()))                            # FromDate - Date of first tick
-        header += pack('<i', int(uniBars[-1][0].timestamp()))                           # ToDate - Date of last tick
+        header += pack('<i', len(uniTicks))                                             # Bars - Amount bars in history
+        header += pack('<i', self._timestamp(uniTicks[0][0]))                           # FromDate - Date of first tick
+        header += pack('<i', self._timestamp(uniTicks[-1][0]))                          # ToDate - Date of last tick
         header += bytearray(4)                                                          # 4 Bytes of padding
         header += pack('<d', 99.0)                                                      # ModelQuality - modeling quality
         # General parameters
@@ -212,19 +212,22 @@ class FXT(Output):
         header += bytearray(61*4)                                                       # Reserved - Space for future use
 
         # Transform universal bar list to binary bar data (56 Bytes per bar)
-        bars = bytearray()
-        for uniBar in uniBars:
-            bars += pack('<i', int(uniBar[0].timestamp()))  # Time
-            bars += bytearray(4)                            # 4 Bytes of padding
-            bars += pack('<d', uniBar[1])                   # Open
-            bars += pack('<d', uniBar[2])                   # Low
-            bars += pack('<d', uniBar[3])                   # High
-            bars += pack('<d', uniBar[4])                   # Close
-            bars += pack('<Q', round(uniBar[5]))            # Volume (Document says it's a double, though it's stored as a long int.)
-            bars += pack('<i', int(uniBar[0].timestamp()))  # Current time within a bar TODO ?
-            bars += pack('<i', 0)                           # Flag to launch an expert
+        ticks = bytearray()
+        for uniTick in uniTicks:
+            ticks += pack('<i', self._timestamp(uniTick[0]))    # Time
+            ticks += bytearray(4)                               # 4 Bytes of padding
+            ticks += pack('<d', uniTick[2])                     # Open is ask price
+            ticks += pack('<d', min(uniTick[1], uniTick[2]))    # Low is the minimum of bid price and ask price
+            ticks += pack('<d', max(uniTick[1], uniTick[2]))    # High is the maximum of bid price and ask price
+            ticks += pack('<d', uniTick[1])                     # Close is bid price
+            ticks += pack('<Q', round(uniTick[3]))              # Volume is bid volume (Document says it's a double, though it's stored as a long int.)
+            ticks += pack('<i', self._timestamp(uniTick[0]))    # Current time within a bar
+            ticks += pack('<i', 4)                              # Flag to launch an expert
 
-        self._write(header + bars, outputPath)
+        self._write(header + ticks, outputPath)
+
+    def _timestamp(self, dateTime):
+        return int(datetime.datetime(dateTime[0], dateTime[1], dateTime[2], dateTime[3], dateTime[4], dateTime[5], dateTime[6]).timestamp())
 
 
 def _hstFilename(symbol, timeframe):
@@ -322,8 +325,7 @@ if __name__ == '__main__':
     # Checking output file format argument and doing conversion
     outputFormat = args.outputFormat.lower()
     if outputFormat == 'fxt4':
-        csvInput.aggregate(timeframe)
-        FXT(csvInput.uniBars, spread, server, outputDir + _fxtFilename(symbol, timeframe))
+        FXT(csvInput.ticks, spread, server, outputDir + _fxtFilename(symbol, timeframe))
     elif outputFormat == 'hst4':
         csvInput.aggregate(timeframe)
         HST574(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
