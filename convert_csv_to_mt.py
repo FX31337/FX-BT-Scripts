@@ -32,7 +32,7 @@ class Input:
         aggregatedVolume = 0.0
 
         for tick in self.ticks:
-            currentTime = datetime.datetime(tick[0][0], tick[0][1], tick[0][2], tick[0][3], tick[0][4], tick[0][5], tick[0][6]) 
+            currentTime = datetime.datetime(tick[0][0], tick[0][1], tick[0][2], tick[0][3], tick[0][4], tick[0][5], tick[0][6], tzinfo=datetime.timezone.utc)
             bidPrice = float(tick[1])
             askPrice = float(tick[2])
             bidVolume = float(tick[3])
@@ -42,7 +42,7 @@ class Input:
                 if endTime:
                     self.uniBars.append([startTime, aggregatedOpen, aggregatedLow, aggregatedHigh, aggregatedClose, aggregatedVolume])
                 # Initialize values for the first or next bar
-                startTime = datetime.datetime(tick[0][0], tick[0][1], tick[0][2], tick[0][3], tick[0][4])
+                startTime = datetime.datetime(tick[0][0], tick[0][1], tick[0][2], tick[0][3], tick[0][4], tzinfo=datetime.timezone.utc)
                 endTime = startTime + deltaTime
                 # Low is the lowest bid, High is the highest ask, Volume is the bid volume TODO ?
                 aggregatedOpen = aggregatedClose = aggregatedLow = bidPrice
@@ -227,7 +227,7 @@ class FXT(Output):
         self._write(header + ticks, outputPath)
 
     def _timestamp(self, dateTime):
-        return int(datetime.datetime(dateTime[0], dateTime[1], dateTime[2], dateTime[3], dateTime[4], dateTime[5], dateTime[6]).timestamp())
+        return int(datetime.datetime(dateTime[0], dateTime[1], dateTime[2], dateTime[3], dateTime[4], dateTime[5], dateTime[6], tzinfo=datetime.timezone.utc).timestamp())
 
 
 def _hstFilename(symbol, timeframe):
