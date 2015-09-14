@@ -62,7 +62,7 @@ class Dukascopy:
         self.month = month
         self.day = day
         self.hour = hour
-        self.url = self.url_tpl % (pair, int(year), month, day, hour)
+        self.url = self.url_tpl % (pair, int(year), month - 1, day, hour)
         self.path = "%s/%04d-%02d-%02d--%02dh_ticks.bi5" % (dest, year, month, day, hour)
 
     def download(self):
