@@ -248,7 +248,7 @@ if __name__ == '__main__':
     argumentParser.add_argument('-s', '--symbol',
         action='store',      dest='symbol', help='symbol code (maximum 12 characters)', default='EURUSD')
     argumentParser.add_argument('-t', '--timeframe',
-        action='store',      dest='timeframe', help='one of the timeframe values: M1, M5, M15, M30, H1, H4, D1', default='M1')
+        action='store',      dest='timeframe', help='one of the timeframe values: M1, M5, M15, M30, H1, H4, D1, W1, MN', default='M1')
     argumentParser.add_argument('-p', '--spread',
         action='store',      dest='spread', help='spread value in pips', default=20)
     argumentParser.add_argument('-d', '--output-dir',
@@ -290,6 +290,10 @@ if __name__ == '__main__':
         timeframe = 240
     elif timeframe == 'd1':
         timeframe = 1440
+    elif timeframe == 'w1':
+        timeframe = 10080
+    elif timeframe == 'mn':
+        timeframe = 43200
     else:
         print('[ERROR] Bad timeframe setting!')
         sys.exit(1)
