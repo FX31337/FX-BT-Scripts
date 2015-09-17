@@ -70,7 +70,7 @@ class HST4_509(Input):
             table += separator
             table += '{:>9d}'.format(row['volume'])
             table += '\n'
-        return table
+        return table[:-1]
 
 
 class HST4(Input):
@@ -114,7 +114,7 @@ class HST4(Input):
             table += separator
             table += '{:>9d}'.format(row['realVolume'])
             table += '\n'
-        return table
+        return table[:-1]
 
 
 class FXT4(Input):
@@ -159,7 +159,7 @@ class FXT4(Input):
             table += separator
             table += '{:>d}'.format(row['flag'])
             table += '\n'
-        return table
+        return table[:-1]
 
 
 if __name__ == '__main__':
