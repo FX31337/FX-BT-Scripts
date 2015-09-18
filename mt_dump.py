@@ -62,9 +62,9 @@ class HST4_509(Input):
             table += separator
             table += '{:>9.5f}'.format(row['open'])
             table += separator
-            table += '{:>9.5f}'.format(row['low'])
-            table += separator
             table += '{:>9.5f}'.format(row['high'])
+            table += separator
+            table += '{:>9.5f}'.format(row['low'])
             table += separator
             table += '{:>9.5f}'.format(row['close'])
             table += separator
@@ -129,8 +129,8 @@ class FXT4(Input):
             self.rows += [{'barTimestamp' : datetime.datetime.fromtimestamp(
                                             unpack('<i', self.content[base          :base +       4])[0], datetime.timezone.utc),
                            'open'         : unpack('<d', self.content[base +       8:base +     2*8])[0],
-                           'low'          : unpack('<d', self.content[base +     2*8:base +     3*8])[0],
-                           'high'         : unpack('<d', self.content[base +     3*8:base +     4*8])[0],
+                           'high'         : unpack('<d', self.content[base +     2*8:base +     3*8])[0],
+                           'low'          : unpack('<d', self.content[base +     3*8:base +     4*8])[0],
                            'close'        : unpack('<d', self.content[base +     4*8:base +     5*8])[0],
                            'volume'       : unpack('<Q', self.content[base +     5*8:base +     6*8])[0],
                            'tickTimestamp': datetime.datetime.fromtimestamp(
@@ -147,9 +147,9 @@ class FXT4(Input):
             table += separator
             table += '{:>9.5f}'.format(row['open'])
             table += separator
-            table += '{:>9.5f}'.format(row['low'])
-            table += separator
             table += '{:>9.5f}'.format(row['high'])
+            table += separator
+            table += '{:>9.5f}'.format(row['low'])
             table += separator
             table += '{:>9.5f}'.format(row['close'])
             table += separator
