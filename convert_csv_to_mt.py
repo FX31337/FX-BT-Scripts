@@ -20,44 +20,63 @@ class Input:
             print("[ERROR] '%s' raised when tried to read the file '%s'" % (e.strerror, e.filename))
             sys.exit(1)
 
-    def aggregate(self, timeframe):
+
+    def aggregate(self):
         self.uniBars = []
-        deltaTime = datetime.timedelta(0, 60*timeframe)
-        startTime = None
-        endTime = None
-        aggregatedOpen = 0.0
-        aggregatedLow = 0.0
-        aggregatedHigh = 0.0
-        aggregatedClose = 0.0
-        aggregatedVolume = 0.0
+        deltaTimestamp = timeframe*60
+        endTimestamp = None
 
         for tick in self.ticks:
-            currentTime = datetime.datetime(tick[0][0], tick[0][1], tick[0][2], tick[0][3], tick[0][4], tick[0][5], tick[0][6], tzinfo=datetime.timezone.utc)
-            bidPrice = float(tick[1])
-            askPrice = float(tick[2])
-            bidVolume = float(tick[3])
-            askVolume = float(tick[4])
-            if not endTime or currentTime >= endTime:
-                # Append aggregated rows to uniBars list
-                if endTime:
-                    self.uniBars.append([startTime, aggregatedOpen, aggregatedLow, aggregatedHigh, aggregatedClose, aggregatedVolume])
-                # Initialize values for the first or next bar
-                startTime = datetime.datetime(tick[0][0], tick[0][1], tick[0][2], tick[0][3], tick[0][4], tzinfo=datetime.timezone.utc)
-                endTime = startTime + deltaTime
-                # Low is the lowest bid, High is the highest ask, Volume is the bid volume TODO ?
-                aggregatedOpen = aggregatedClose = aggregatedLow = bidPrice
-                aggregatedHigh = askPrice
-                aggregatedVolume = bidVolume
-            else:
-                # Commulate lines belong to a bar
-                aggregatedClose = bidPrice
-                aggregatedVolume += bidVolume
-                if bidPrice < aggregatedLow:
-                    aggregatedLow = bidPrice
-                if askPrice > aggregatedHigh:
-                    aggregatedHigh = askPrice
+            currentTimestamp = tick['timestamp']
+            if not endTimestamp or currentTimestamp >= endTimestamp:
+                if endTimestamp:
+                    self._addBar(startTimestamp, currentTimestamp, open, low, high, tick['bidPrice'], volume)
 
-        self.uniBars.append([startTime, aggregatedOpen, aggregatedLow, aggregatedHigh, aggregatedClose, aggregatedVolume])
+                startTimestamp = (int(tick['timestamp'])//deltaTimestamp)*deltaTimestamp
+                endTimestamp = startTimestamp + deltaTimestamp
+                open = high = low = tick['bidPrice']
+                volume = tick['bidVolume'] + tick['askVolume']
+            else:
+                high = max(tick['bidPrice'], high)
+                low  = min(tick['bidPrice'], low)
+                volume += tick['bidVolume'] + tick['askVolume']
+
+        self._addBar(startTimestamp, currentTimestamp, open, low, high, tick['bidPrice'], volume)
+
+
+    def aggregateWithTicks(self):
+        self.uniBars = []
+        deltaTimestamp = timeframe*60
+        endTimestamp = None
+        self.barCount = 0
+
+        for tick in self.ticks:
+            currentTimestamp = tick['timestamp']
+            if not endTimestamp or currentTimestamp >= endTimestamp:
+                startTimestamp = (int(tick['timestamp'])//deltaTimestamp)*deltaTimestamp
+                endTimestamp = startTimestamp + deltaTimestamp
+                open = high = low = tick['bidPrice']
+                volume = tick['bidVolume'] + tick['askVolume']
+
+                self._addBar(startTimestamp, currentTimestamp, open, low, high, tick['bidPrice'], volume)
+                self.barCount += 1
+            else:
+                high = max(tick['bidPrice'], high)
+                low  = min(tick['bidPrice'], low)
+                volume += tick['bidVolume'] + tick['askVolume']
+
+                self._addBar(startTimestamp, currentTimestamp, open, low, high, tick['bidPrice'], volume)
+
+
+    def _addBar(self, barTimestamp, tickTimestamp, open, low, high, close, volume):
+        self.uniBars += [{'barTimestamp': barTimestamp,
+                          'tickTimestamp': tickTimestamp,
+                          'open': open,
+                          'high': high,
+                          'low': low,
+                          'close': close,
+                          'volume': volume
+                        }]
 
 
 class CSV(Input):
@@ -66,15 +85,12 @@ class CSV(Input):
 
         uniTicks = []
         for tick in self.ticks:
-            timestamp = re.split('[. :]', tick[0])
-            timestamp[0] = int(timestamp[0])
-            timestamp[1] = int(timestamp[1])
-            timestamp[2] = int(timestamp[2])
-            timestamp[3] = int(timestamp[3])
-            timestamp[4] = int(timestamp[4])
-            timestamp[5] = int(timestamp[5])
-            timestamp[6] = 1000*int(timestamp[6])   # Convert to milliseconds
-            uniTicks.append([timestamp, float(tick[1]), float(tick[2]), float(tick[3]), float(tick[4])])  # Convert date & time to a sublist
+            uniTicks += [{'timestamp': datetime.datetime.strptime(tick[0], '%Y.%m.%d %H:%M:%S.%f').replace(tzinfo=datetime.timezone.utc).timestamp(),
+                          'bidPrice' : float(tick[1]),
+                          'askPrice' : float(tick[2]),
+                          'bidVolume': float(tick[3]),
+                          'askVolume': float(tick[4])
+                        }]
 
         self.ticks = uniTicks
 
@@ -106,12 +122,12 @@ class HST509(Output):
         # Transform universal bar list to binary bar data (44 Bytes per bar)
         bars = bytearray()
         for uniBar in uniBars:
-            bars += pack('<i', int(uniBar[0].timestamp()))  # Time
-            bars += pack('<d', uniBar[1])                   # Open
-            bars += pack('<d', uniBar[2])                   # Low
-            bars += pack('<d', uniBar[3])                   # High
-            bars += pack('<d', uniBar[4])                   # Close
-            bars += pack('<d', uniBar[5])                   # Volume
+            bars += pack('<i', uniBar['barTimestamp'])  # Time
+            bars += pack('<d', uniBar['open'])          # Open
+            bars += pack('<d', uniBar['low'])           # Low
+            bars += pack('<d', uniBar['high'])          # High
+            bars += pack('<d', uniBar['close'])         # Close
+            bars += pack('<d', uniBar['volume'])        # Volume
 
         self._write(header + bars, outputPath)
 
@@ -133,21 +149,21 @@ class HST574(Output):
         # Transform universal bar list to binary bar data (60 Bytes per bar)
         bars = bytearray()
         for uniBar in uniBars:
-            bars += pack('<i', int(uniBar[0].timestamp()))              # Time
-            bars += bytearray(4)                                        # 4 Bytes of padding
-            bars += pack('<d', uniBar[1])                               # Open
-            bars += pack('<d', uniBar[3])                               # High
-            bars += pack('<d', uniBar[2])                               # Low
-            bars += pack('<d', uniBar[4])                               # Close
-            bars += pack('<Q', round(uniBar[5]))                        # Volume
-            bars += pack('<i', 0)                                       # Spread
-            bars += pack('<Q', 0)                                       # Real volume
+            bars += pack('<i', uniBar['barTimestamp'])      # Time
+            bars += bytearray(4)                            # 4 Bytes of padding
+            bars += pack('<d', uniBar['open'])              # Open
+            bars += pack('<d', uniBar['high'])              # High
+            bars += pack('<d', uniBar['low'])               # Low
+            bars += pack('<d', uniBar['close'])             # Close
+            bars += pack('<Q', round(uniBar['volume']))     # Volume
+            bars += pack('<i', 0)                           # Spread
+            bars += pack('<Q', 0)                           # Real volume
 
         self._write(header + bars, outputPath)
 
 
 class FXT(Output):
-    def __init__(self, uniTicks, spread, server, outputPath):
+    def __init__(self, uniBars, barCount, outputPath):
         # Build header (728 Bytes in total)
         header = bytearray()
         header += pack('<i', 405)                                                       # Version
@@ -157,19 +173,19 @@ class FXT(Output):
         header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')               # Symbol
         header += pack('<i', 1)                                                         # Period is set statically to 1, since we're generating an ``every tick'' file
         header += pack('<i', 0)                                                         # Model - for what modeling type was the ticks sequence generated, 0 means ``every tick model''
-        header += pack('<i', len(uniTicks))                                             # Bars - Amount bars in history
-        header += pack('<i', self._timestamp(uniTicks[0][0]))                           # FromDate - Date of first tick
-        header += pack('<i', self._timestamp(uniTicks[-1][0]))                          # ToDate - Date of last tick
+        header += pack('<i', barCount)                                                  # Bars - Amount bars in history
+        header += pack('<i', self._timestamp(uniBars[0]))                               # FromDate - Date of first tick
+        header += pack('<i', self._timestamp(uniBars[-1]))                              # ToDate - Date of last tick
         header += bytearray(4)                                                          # 4 Bytes of padding
-        header += pack('<d', 99.0)                                                      # ModelQuality - modeling quality
+        header += pack('<d', 99.9)                                                      # ModelQuality - modeling quality
         # General parameters
         header += bytearray('EUR'.ljust(12, '\x00'), 'latin1', 'ignore')                # Currency - currency base
         header += pack('<i', spread)                                                    # Spread in pips
         header += pack('<i', 5)                                                         # Digits, using the default value of FXT format
         header += bytearray(4)                                                          # 4 Bytes of padding
         header += pack('<d', 1e-5)                                                      # Point
-        header += pack('<i', 1)                                                         # LotMin - minimum lot TODO ?
-        header += pack('<i', 50000)                                                     # LotMax - maximum lot TODO ?
+        header += pack('<i', 1)                                                         # LotMin - minimum lot
+        header += pack('<i', 50000)                                                     # LotMax - maximum lot
         header += pack('<i', 1)                                                         # LotStep
         header += pack('<i', 0)                                                         # StopsLevel - stops level value
         header += pack('<i', 1)                                                         # GtcPendings - instruction to close pending orders at the end of day, true by default
@@ -205,29 +221,30 @@ class FXT(Output):
         # For internal use
         header += pack('<i', 0)                                                         # FromBar - FromDate bar number
         header += pack('<i', 0)                                                         # ToBar - ToDate bar number
-        header += pack('<6i', 0, 0, 0, 0, 0, 0)                                         # StartPeriod - number of bar at which the smaller period modeling started
+        header += pack('<6i', 1, 0, 0, 0, 0, 0)                                         # StartPeriod - number of bar at which the smaller period modeling started
         header += pack('<i', 0)                                                         # SetFrom - begin date from tester settings
         header += pack('<i', 0)                                                         # SetTo - end date from tester settings
         header += pack('<i', 0)                                                         # FreezeLevel - order's freeze level in points
         header += bytearray(61*4)                                                       # Reserved - Space for future use
 
         # Transform universal bar list to binary bar data (56 Bytes per bar)
-        ticks = bytearray()
-        for uniTick in uniTicks:
-            ticks += pack('<i', self._timestamp(uniTick[0]))    # Time
-            ticks += bytearray(4)                               # 4 Bytes of padding
-            ticks += pack('<d', uniTick[2])                     # Open is ask price
-            ticks += pack('<d', min(uniTick[1], uniTick[2]))    # Low is the minimum of bid price and ask price
-            ticks += pack('<d', max(uniTick[1], uniTick[2]))    # High is the maximum of bid price and ask price
-            ticks += pack('<d', uniTick[1])                     # Close is bid price
-            ticks += pack('<Q', round(uniTick[3]))              # Volume is bid volume (Document says it's a double, though it's stored as a long int.)
-            ticks += pack('<i', self._timestamp(uniTick[0]))    # Current time within a bar
-            ticks += pack('<i', 4)                              # Flag to launch an expert
+        bars = bytearray()
+        for uniBar in uniBars:
+            bars += pack('<i', self._timestamp(uniBar))         # Time
+            bars += bytearray(4)                                # 4 Bytes of padding
+            bars += pack('<d', uniBar['open'])                  # Open
+            bars += pack('<d', uniBar['high'])                  # High
+            bars += pack('<d', uniBar['low'])                   # Low
+            bars += pack('<d', uniBar['close'])                 # Close
+            bars += pack('<Q', round(uniBar['volume']))         # Volume (Document says it's a double, though it's stored as a long int.)
+            bars += pack('<i', int(uniBar['tickTimestamp']))    # Current time within a bar
+            bars += pack('<i', 4)                               # Flag to launch an expert
 
-        self._write(header + ticks, outputPath)
+        self._write(header + bars, outputPath)
 
-    def _timestamp(self, dateTime):
-        return int(datetime.datetime(dateTime[0], dateTime[1], dateTime[2], dateTime[3], dateTime[4], dateTime[5], dateTime[6], tzinfo=datetime.timezone.utc).timestamp())
+
+    def _timestamp(self, tick):
+        return int(tick['barTimestamp'])
 
 
 def _hstFilename(symbol, timeframe):
@@ -328,14 +345,15 @@ if __name__ == '__main__':
 
     # Checking output file format argument and doing conversion
     outputFormat = args.outputFormat.lower()
-    if outputFormat == 'fxt4':
-        FXT(csvInput.ticks, spread, server, outputDir + _fxtFilename(symbol, timeframe))
-    elif outputFormat == 'hst4':
-        csvInput.aggregate(timeframe)
-        HST574(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
-    elif outputFormat == 'hst4_509':
-        csvInput.aggregate(timeframe)
+    if outputFormat == 'hst4_509':
+        csvInput.aggregate()
         HST509(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
+    elif outputFormat == 'hst4':
+        csvInput.aggregate()
+        HST574(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
+    elif outputFormat == 'fxt4':
+        csvInput.aggregateWithTicks()
+        FXT(csvInput.uniBars, csvInput.barCount, outputDir + _fxtFilename(symbol, timeframe))
     else:
         print('[ERROR] Unknown output file format!')
         sys.exit(1)
