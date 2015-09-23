@@ -34,15 +34,15 @@ M5/%.fxt: dukascopy.csv
 	python3 convert_csv_to_mt.py -i dukascopy.csv -s ${symbol} -p 10 -S ${server} -t ${TF} -d ${TF} -f hst4 
 
 test-dump-hst: M1/%.hst.csv M5/%.hst.csv
-	CMD=$(realpath mt_dump.py) find . -name "*.hst" -execdir python3 $CMD -i {} -f hst4 -o {}.csv ';'
+	CMD=$(realpath convert_mt_to_csv.py) find . -name "*.hst" -execdir python3 $CMD -i {} -f hst4 -o {}.csv ';'
 
 test-dump-fxt: M1/%.fxt.csv M5/%.fxt.csv
-	CMD=$(realpath mt_dump.py) find . -name "*.hst" -execdir python3 $CMD -i {} -f fxt4 -o {}.csv ';'
+	CMD=$(realpath convert_mt_to_csv.py) find . -name "*.hst" -execdir python3 $CMD -i {} -f fxt4 -o {}.csv ';'
 
 test-help:
 	python3 convert_csv_to_mt.py --help
 	python3 dl_bt_dukascopy.py --help
-	python3 mt_dump.py --help
+	python3 convert_mt_to_csv.py --help
 
 dukascopy.csv:
 	find download/dukascopy/${symbol}/${year} -name "*.csv" -exec cat {} '+' > dukascopy.csv
