@@ -122,12 +122,12 @@ class HST509(Output):
         # Transform universal bar list to binary bar data (44 Bytes per bar)
         bars = bytearray()
         for uniBar in uniBars:
-            bars += pack('<i', uniBar['barTimestamp'])  # Time
-            bars += pack('<d', uniBar['open'])          # Open
-            bars += pack('<d', uniBar['low'])           # Low
-            bars += pack('<d', uniBar['high'])          # High
-            bars += pack('<d', uniBar['close'])         # Close
-            bars += pack('<d', uniBar['volume'])        # Volume
+            bars += pack('<i', uniBar['barTimestamp'])      # Time
+            bars += pack('<d', uniBar['open'])              # Open
+            bars += pack('<d', uniBar['low'])               # Low
+            bars += pack('<d', uniBar['high'])              # High
+            bars += pack('<d', uniBar['close'])             # Close
+            bars += pack('<d', max(uniBar['volume'], 1.0))  # Volume
 
         self._write(header + bars, outputPath)
 
@@ -149,15 +149,15 @@ class HST574(Output):
         # Transform universal bar list to binary bar data (60 Bytes per bar)
         bars = bytearray()
         for uniBar in uniBars:
-            bars += pack('<i', uniBar['barTimestamp'])      # Time
-            bars += bytearray(4)                            # 4 Bytes of padding
-            bars += pack('<d', uniBar['open'])              # Open
-            bars += pack('<d', uniBar['high'])              # High
-            bars += pack('<d', uniBar['low'])               # Low
-            bars += pack('<d', uniBar['close'])             # Close
-            bars += pack('<Q', round(uniBar['volume']))     # Volume
-            bars += pack('<i', 0)                           # Spread
-            bars += pack('<Q', 0)                           # Real volume
+            bars += pack('<i', uniBar['barTimestamp'])          # Time
+            bars += bytearray(4)                                # 4 Bytes of padding
+            bars += pack('<d', uniBar['open'])                  # Open
+            bars += pack('<d', uniBar['high'])                  # High
+            bars += pack('<d', uniBar['low'])                   # Low
+            bars += pack('<d', uniBar['close'])                 # Close
+            bars += pack('<Q', max(round(uniBar['volume']), 1)) # Volume
+            bars += pack('<i', 0)                               # Spread
+            bars += pack('<Q', 0)                               # Real volume
 
         self._write(header + bars, outputPath)
 
@@ -236,7 +236,7 @@ class FXT(Output):
             bars += pack('<d', uniBar['high'])                  # High
             bars += pack('<d', uniBar['low'])                   # Low
             bars += pack('<d', uniBar['close'])                 # Close
-            bars += pack('<Q', round(uniBar['volume']))         # Volume (Document says it's a double, though it's stored as a long int.)
+            bars += pack('<Q', max(round(uniBar['volume']), 1)) # Volume (Document says it's a double, though it's stored as a long int.)
             bars += pack('<i', int(uniBar['tickTimestamp']))    # Current time within a bar
             bars += pack('<i', 4)                               # Flag to launch an expert
 
