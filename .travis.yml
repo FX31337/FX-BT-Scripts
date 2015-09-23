@@ -1,0 +1,47 @@
+# Travis CI build configuration config file.
+# Used environment variables (see: http://docs.travis-ci.com/user/ci-environment/):
+#   TRAVIS_BUILD_DIR - The absolute path to the directory where the repository being built has been copied on the worker. (e.g. "/home/travis/build/mycognitive/ads")
+#   TRAVIS_REPO_SLUG - The slug (in form: owner_name/repo_name) of the repository currently being built. (e.g. "mycognitive/ads")
+
+# Before Install
+# Use this to prepare the system to install prerequisites or dependencies.
+# Commonly used to update git repository submodules and do similar tasks that need to be performed before dependencies are installed.
+before_install:
+  - env
+
+# Install
+# Use this to install any prerequisites or dependencies necessary to run your build.
+install:
+# - pip install -r requirements.txt
+
+# Before Script
+# Use this to prepare your build for testing (e.g. copy database configurations, environment variables, etc.).
+before_script:
+
+# Script
+# Main build command to run.
+# All commands must exit with code 0 on success. Anything else is considered failure.
+script:
+  - set -e # This makes build to fail on first error.
+  - make test
+
+# After Success
+# Note: The standard Unix exit code of "0" means the build passed; everything else is treated as failure.
+after_success:
+
+# After Failure
+after_failure:
+ - sudo apt-get -qy install tree && - tree -d -L 6 # Print directory structure in the form of a tree.
+ - env
+
+# After Script
+# Test result is exported to TRAVIS_TEST_RESULT.
+after_script:
+  - pwd
+
+notifications:
+  email: false
+
+language: python
+python:
+  - "3.5"
