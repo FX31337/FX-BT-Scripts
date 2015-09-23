@@ -1,5 +1,7 @@
 ### Forex Backtest Scripts
 
+[![Build Status](https://api.travis-ci.org/FX31337/FX-BT-Scripts.svg?branch=master)](https://travis-ci.org/FX31337/FX-BT-Scripts)
+
 #### About
 
 - `dl_bt_dukascopy.py`, `dl_bt_dukascopy.php`
@@ -12,3 +14,7 @@
 
   - CSV into FXT, FXT
   - BI5 into CSV
+
+- `convert_mt_to_csv.py`
+
+  Script for converting FXT/HST format into CSV.
