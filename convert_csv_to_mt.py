@@ -30,7 +30,7 @@ class Input:
             currentTimestamp = tick['timestamp']
             if not endTimestamp or currentTimestamp >= endTimestamp:
                 if endTimestamp:
-                    self._addBar(startTimestamp, currentTimestamp, open, low, high, close, volume)
+                    self._addBar(startTimestamp, currentTimestamp, open, high, low, close, volume)
 
                 startTimestamp = (int(tick['timestamp'])//deltaTimestamp)*deltaTimestamp
                 endTimestamp = startTimestamp + deltaTimestamp
@@ -42,7 +42,7 @@ class Input:
                 close = tick['bidPrice']
                 volume += tick['bidVolume'] + tick['askVolume']
 
-        self._addBar(startTimestamp, currentTimestamp, open, low, high, close, volume)
+        self._addBar(startTimestamp, currentTimestamp, open, high, low, close, volume)
 
 
     def aggregateWithTicks(self):
@@ -59,17 +59,17 @@ class Input:
                 open = high = low = tick['bidPrice']
                 volume = tick['bidVolume'] + tick['askVolume']
 
-                self._addBar(startTimestamp, currentTimestamp, open, low, high, tick['bidPrice'], volume)
+                self._addBar(startTimestamp, currentTimestamp, open, high, low, tick['bidPrice'], volume)
                 self.barCount += 1
             else:
                 high = max(tick['bidPrice'], high)
                 low  = min(tick['bidPrice'], low)
                 volume += tick['bidVolume'] + tick['askVolume']
 
-                self._addBar(startTimestamp, currentTimestamp, open, low, high, tick['bidPrice'], volume)
+                self._addBar(startTimestamp, currentTimestamp, open, high, low, tick['bidPrice'], volume)
 
 
-    def _addBar(self, barTimestamp, tickTimestamp, open, low, high, close, volume):
+    def _addBar(self, barTimestamp, tickTimestamp, open, high, low, close, volume):
         self.uniBars += [{'barTimestamp': barTimestamp,
                           'tickTimestamp': tickTimestamp,
                           'open': open,
