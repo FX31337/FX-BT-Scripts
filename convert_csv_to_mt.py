@@ -341,22 +341,26 @@ if __name__ == '__main__':
         print('[INFO] Server name: %s' % server)
 
     # Reading input file, creating intermediate format for future input sources other than CSV
-    csvInput = CSV(args.inputFile)
-    csvInput.parse()
+    try:
+        csvInput = CSV(args.inputFile)
+        csvInput.parse()
 
-    # Checking output file format argument and doing conversion
-    outputFormat = args.outputFormat.lower()
-    if outputFormat == 'hst4_509':
-        csvInput.aggregate()
-        HST509(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
-    elif outputFormat == 'hst4':
-        csvInput.aggregate()
-        HST574(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
-    elif outputFormat == 'fxt4':
-        csvInput.aggregateWithTicks()
-        FXT(csvInput.uniBars, csvInput.barCount, outputDir + _fxtFilename(symbol, timeframe))
-    else:
-        print('[ERROR] Unknown output file format!')
-        sys.exit(1)
-    if args.verbose:
-        print('[INFO] Output format: %s' % outputFormat)
+        # Checking output file format argument and doing conversion
+        outputFormat = args.outputFormat.lower()
+        if outputFormat == 'hst4_509':
+            csvInput.aggregate()
+            HST509(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
+        elif outputFormat == 'hst4':
+            csvInput.aggregate()
+            HST574(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
+        elif outputFormat == 'fxt4':
+            csvInput.aggregateWithTicks()
+            FXT(csvInput.uniBars, csvInput.barCount, outputDir + _fxtFilename(symbol, timeframe))
+        else:
+            print('[ERROR] Unknown output file format!')
+            sys.exit(1)
+        if args.verbose:
+            print('[INFO] Output format: %s' % outputFormat)
+    except KeyboardInterrupt as e:
+        print('\nExiting by user request...')
+        sys.exit()
