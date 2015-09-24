@@ -30,18 +30,19 @@ class Input:
             currentTimestamp = tick['timestamp']
             if not endTimestamp or currentTimestamp >= endTimestamp:
                 if endTimestamp:
-                    self._addBar(startTimestamp, currentTimestamp, open, low, high, tick['bidPrice'], volume)
+                    self._addBar(startTimestamp, currentTimestamp, open, low, high, close, volume)
 
                 startTimestamp = (int(tick['timestamp'])//deltaTimestamp)*deltaTimestamp
                 endTimestamp = startTimestamp + deltaTimestamp
-                open = high = low = tick['bidPrice']
+                open = high = low = close = tick['bidPrice']
                 volume = tick['bidVolume'] + tick['askVolume']
             else:
                 high = max(tick['bidPrice'], high)
                 low  = min(tick['bidPrice'], low)
+                close = tick['bidPrice']
                 volume += tick['bidVolume'] + tick['askVolume']
 
-        self._addBar(startTimestamp, currentTimestamp, open, low, high, tick['bidPrice'], volume)
+        self._addBar(startTimestamp, currentTimestamp, open, low, high, close, volume)
 
 
     def aggregateWithTicks(self):
