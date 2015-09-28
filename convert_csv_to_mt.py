@@ -30,18 +30,19 @@ class Input:
             currentTimestamp = tick['timestamp']
             if not endTimestamp or currentTimestamp >= endTimestamp:
                 if endTimestamp:
-                    self._addBar(startTimestamp, currentTimestamp, open, low, high, tick['bidPrice'], volume)
+                    self._addBar(startTimestamp, currentTimestamp, open, high, low, close, volume)
 
                 startTimestamp = (int(tick['timestamp'])//deltaTimestamp)*deltaTimestamp
                 endTimestamp = startTimestamp + deltaTimestamp
-                open = high = low = tick['bidPrice']
+                open = high = low = close = tick['bidPrice']
                 volume = tick['bidVolume'] + tick['askVolume']
             else:
                 high = max(tick['bidPrice'], high)
                 low  = min(tick['bidPrice'], low)
+                close = tick['bidPrice']
                 volume += tick['bidVolume'] + tick['askVolume']
 
-        self._addBar(startTimestamp, currentTimestamp, open, low, high, tick['bidPrice'], volume)
+        self._addBar(startTimestamp, currentTimestamp, open, high, low, close, volume)
 
 
     def aggregateWithTicks(self):
@@ -58,17 +59,17 @@ class Input:
                 open = high = low = tick['bidPrice']
                 volume = tick['bidVolume'] + tick['askVolume']
 
-                self._addBar(startTimestamp, currentTimestamp, open, low, high, tick['bidPrice'], volume)
+                self._addBar(startTimestamp, currentTimestamp, open, high, low, tick['bidPrice'], volume)
                 self.barCount += 1
             else:
                 high = max(tick['bidPrice'], high)
                 low  = min(tick['bidPrice'], low)
                 volume += tick['bidVolume'] + tick['askVolume']
 
-                self._addBar(startTimestamp, currentTimestamp, open, low, high, tick['bidPrice'], volume)
+                self._addBar(startTimestamp, currentTimestamp, open, high, low, tick['bidPrice'], volume)
 
 
-    def _addBar(self, barTimestamp, tickTimestamp, open, low, high, close, volume):
+    def _addBar(self, barTimestamp, tickTimestamp, open, high, low, close, volume):
         self.uniBars += [{'barTimestamp': barTimestamp,
                           'tickTimestamp': tickTimestamp,
                           'open': open,
@@ -340,22 +341,26 @@ if __name__ == '__main__':
         print('[INFO] Server name: %s' % server)
 
     # Reading input file, creating intermediate format for future input sources other than CSV
-    csvInput = CSV(args.inputFile)
-    csvInput.parse()
+    try:
+        csvInput = CSV(args.inputFile)
+        csvInput.parse()
 
-    # Checking output file format argument and doing conversion
-    outputFormat = args.outputFormat.lower()
-    if outputFormat == 'hst4_509':
-        csvInput.aggregate()
-        HST509(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
-    elif outputFormat == 'hst4':
-        csvInput.aggregate()
-        HST574(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
-    elif outputFormat == 'fxt4':
-        csvInput.aggregateWithTicks()
-        FXT(csvInput.uniBars, csvInput.barCount, outputDir + _fxtFilename(symbol, timeframe))
-    else:
-        print('[ERROR] Unknown output file format!')
-        sys.exit(1)
-    if args.verbose:
-        print('[INFO] Output format: %s' % outputFormat)
+        # Checking output file format argument and doing conversion
+        outputFormat = args.outputFormat.lower()
+        if outputFormat == 'hst4_509':
+            csvInput.aggregate()
+            HST509(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
+        elif outputFormat == 'hst4':
+            csvInput.aggregate()
+            HST574(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
+        elif outputFormat == 'fxt4':
+            csvInput.aggregateWithTicks()
+            FXT(csvInput.uniBars, csvInput.barCount, outputDir + _fxtFilename(symbol, timeframe))
+        else:
+            print('[ERROR] Unknown output file format!')
+            sys.exit(1)
+        if args.verbose:
+            print('[INFO] Output format: %s' % outputFormat)
+    except KeyboardInterrupt as e:
+        print('\nExiting by user request...')
+        sys.exit()
