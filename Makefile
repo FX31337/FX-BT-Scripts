@@ -13,26 +13,19 @@ test-convert: M1/%.hst M1/%.fxt M5/%.hst M5/%.fxt
 
 M1/%.hst: TF = M1
 M1/%.hst: dukascopy.csv
-	python3 convert_csv_to_mt.py -i dukascopy.csv -s ${symbol} -p 10 -S ${server} -t ${TF} -d ${TF} -f hst4_509 
-	python3 convert_csv_to_mt.py -i dukascopy.csv -s ${symbol} -p 10 -S ${server} -t ${TF} -d ${TF} -f fxt4 
 	python3 convert_csv_to_mt.py -i dukascopy.csv -s ${symbol} -p 10 -S ${server} -t ${TF} -d ${TF} -f hst4 
 
 M1/%.fxt: TF = M1
 M1/%.fxt: dukascopy.csv
-	python3 convert_csv_to_mt.py -i dukascopy.csv -s ${symbol} -p 10 -S ${server} -t ${TF} -d ${TF} -f hst4_509 
 	python3 convert_csv_to_mt.py -i dukascopy.csv -s ${symbol} -p 10 -S ${server} -t ${TF} -d ${TF} -f fxt4 
-	python3 convert_csv_to_mt.py -i dukascopy.csv -s ${symbol} -p 10 -S ${server} -t ${TF} -d ${TF} -f hst4 
 
 M5/%.hst: TF = M5
 M5/%.hst: dukascopy.csv
-	python3 convert_csv_to_mt.py -i dukascopy.csv -s ${symbol} -p 10 -S ${server} -t ${TF} -d ${TF} -f hst4_509 
 	python3 convert_csv_to_mt.py -i dukascopy.csv -s ${symbol} -p 10 -S ${server} -t ${TF} -d ${TF} -f hst4 
 
 M5/%.fxt: TF = M5
 M5/%.fxt: dukascopy.csv
-	python3 convert_csv_to_mt.py -i dukascopy.csv -s ${symbol} -p 10 -S ${server} -t ${TF} -d ${TF} -f hst4_509 
 	python3 convert_csv_to_mt.py -i dukascopy.csv -s ${symbol} -p 10 -S ${server} -t ${TF} -d ${TF} -f fxt4 
-	python3 convert_csv_to_mt.py -i dukascopy.csv -s ${symbol} -p 10 -S ${server} -t ${TF} -d ${TF} -f hst4 
 
 test-dump-hst: M1/${symbol}1.hst M5/${symbol}5.hst
 	find . -name "*.hst" -execdir python3 `realpath convert_mt_to_csv.py` -i {} -f hst4 -o {}.csv ';'
