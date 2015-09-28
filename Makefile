@@ -5,7 +5,8 @@ server = FX
 dl_dir = download/dukascopy
 test: test-help test-download test-convert test-dump-hst test-dump-fxt
 
-test-download: $(dl_dir)/$(symbol)/01/%.csv ; @fixme: http://www.gnu.org/software/make/manual/make.html#Pattern-Rules
+test-download: $(dl_dir)/$(symbol)/01/%.csv
+$(dl_dir)/$(symbol)/01/%.csv:
 	python3 dl_bt_dukascopy.py -v -p ${symbol} -y ${year} -m 1 -c -d $(dl_dir)
 
 test-convert: M1/%.hst M1/%.fxt M5/%.hst M5/%.fxt
@@ -33,11 +34,11 @@ M5/%.fxt: dukascopy.csv
 	python3 convert_csv_to_mt.py -i dukascopy.csv -s ${symbol} -p 10 -S ${server} -t ${TF} -d ${TF} -f fxt4 
 	python3 convert_csv_to_mt.py -i dukascopy.csv -s ${symbol} -p 10 -S ${server} -t ${TF} -d ${TF} -f hst4 
 
-test-dump-hst: M1/%.hst.csv M5/%.hst.csv
-	CMD=$(realpath convert_mt_to_csv.py) find . -name "*.hst" -execdir python3 $CMD -i {} -f hst4 -o {}.csv ';'
+test-dump-hst: M1/${symbol}1.hst M5/${symbol}5.hst
+	find . -name "*.hst" -execdir python3 `realpath convert_mt_to_csv.py` -i {} -f hst4 -o {}.csv ';'
 
-test-dump-fxt: M1/%.fxt.csv M5/%.fxt.csv
-	CMD=$(realpath convert_mt_to_csv.py) find . -name "*.hst" -execdir python3 $CMD -i {} -f fxt4 -o {}.csv ';'
+test-dump-fxt: M1/${symbol}1_0.fxt M5/${symbol}5_0.fxt
+	find . -name "*.fxt" -execdir python3 `realpath convert_mt_to_csv.py` -i {} -f fxt4 -o {}.csv ';'
 
 test-help:
 	python3 convert_csv_to_mt.py --help
