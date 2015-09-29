@@ -28,10 +28,10 @@ M5/%.fxt: dukascopy.csv
 	python3 convert_csv_to_mt.py -i dukascopy.csv -s ${symbol} -p 10 -S ${server} -t ${TF} -d ${TF} -f fxt4 
 
 test-dump-hst: M1/${symbol}1.hst M5/${symbol}5.hst
-	find ~/ -name "*.hst" -execdir python3 `realpath convert_mt_to_csv.py` -i {} -f hst4 -o {}.csv ';'
+	find . -name "*.hst" -execdir python3 `realpath convert_mt_to_csv.py` -i {} -f hst4 -o {}.csv ';'
 
 test-dump-fxt: M1/${symbol}1_0.fxt M5/${symbol}5_0.fxt
-	find ~/ -name "*.fxt" -execdir python3 `realpath convert_mt_to_csv.py` -i {} -f fxt4 -o {}.csv ';'
+	find . -name "*.fxt" -execdir python3 `realpath convert_mt_to_csv.py` -i {} -f fxt4 -o {}.csv ';'
 
 test-help:
 	python3 convert_csv_to_mt.py --help
