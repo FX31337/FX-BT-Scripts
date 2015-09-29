@@ -22,7 +22,7 @@ install:
 # Before Script
 # Use this to prepare your build for testing (e.g. copy database configurations, environment variables, etc.).
 before_script:
-  - nvm deactivate
+  - PATH=${PATH//:\.\/node_modules\/\.bin/}
 
 # Script
 # Main build command to run.
