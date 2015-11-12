@@ -9,7 +9,10 @@ import datetime
 import time
 import urllib.request
 from urllib.error import HTTPError,ContentTooShortError
-import lzma
+try:
+    import lzma
+except ImportError:
+    from backports import lzma
 from struct import *
 import csv
 
