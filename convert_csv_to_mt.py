@@ -172,7 +172,7 @@ class FXT(Output):
                             '\x00'), 'latin1', 'ignore')
         header += bytearray(server.ljust(128, '\x00'), 'latin1', 'ignore')              # Server
         header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')               # Symbol
-        header += pack('<i', 1)                                                         # Period is set statically to 1, since we're generating an ``every tick'' file
+        header += pack('<i', timeframe)                                                 # Period of data aggregation in minutes
         header += pack('<i', 0)                                                         # Model - for what modeling type was the ticks sequence generated, 0 means ``every tick model''
         header += pack('<i', barCount)                                                  # Bars - Amount bars in history
         header += pack('<i', self._timestamp(uniBars[0]))                               # FromDate - Date of first tick
