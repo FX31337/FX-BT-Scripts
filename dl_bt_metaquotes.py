@@ -140,7 +140,7 @@ def decompress(data, year, month):
     i = 0
     bars = []
     while i < len(data) - 16:
-        timestamp = datetime.datetime.fromtimestamp(unpack('<i', data[i + 1:i + 1 + 4])[0], datetime.timezone.utc)
+        timestamp = datetime.datetime.fromtimestamp(unpack('<i', data[i + 1:i + 1 + 4])[0], datetime.timezone.utc)  # This won't be needed anymore when the full structure will be got revealed
         # Type3 test
         if data[i] > 0xbf:
             streak = data[i] - 0xbf
@@ -156,14 +156,17 @@ def decompress(data, year, month):
                 continue
             # Yes, it's really Type1
             streak = data[i] - 0x3f
-            open   = unpack('<i', data[i + 1 + 4:i + 1 + 8])[0]
-            high   = (open + unpack('<h', data[i + 1 + 8:i + 1 + 10])[0])/1e5
-            low    = (open - unpack('<h', data[i + 1 + 10:i + 1 + 12])[0])/1e5
-            close  = (open + unpack('<h', data[i + 1 + 12:i + 1 + 14])[0])/1e5
-            volume = unpack('<H', data[i + 1 + 14:i + 1 + 16])[0]
-            open   /= 1e5
-            bars += [{'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'open': open, 'high': high, 'low': low, 'close': close, 'volume': volume}]
-            i += 1 + streak*16
+            i += 1
+            for s in range(0, streak):
+                timestamp = datetime.datetime.fromtimestamp(unpack('<i', data[i + s*16:i + s*16 + 4])[0], datetime.timezone.utc)
+                open      =         unpack('<i', data[i + s*16 + 4:i  + s*16 +  8])[0]
+                high      = (open + unpack('<h', data[i + s*16 + 8:i  + s*16 + 10])[0])/1e5
+                low       = (open - unpack('<h', data[i + s*16 + 10:i + s*16 + 12])[0])/1e5
+                close     = (open + unpack('<h', data[i + s*16 + 12:i + s*16 + 14])[0])/1e5
+                volume    =         unpack('<H', data[i + s*16 + 14:i + s*16 + 16])[0]
+                open /= 1e5
+                bars += [{'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'open': open, 'high': high, 'low': low, 'close': close, 'volume': volume}]
+            i += streak*16
         else:
             i += 1
     return bars
