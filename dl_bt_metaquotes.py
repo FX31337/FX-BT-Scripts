@@ -213,12 +213,9 @@ if __name__ == '__main__':
                 'USDSEK', 'USDSGD', 'AUDCAD', 'AUDCHF', 'CADCHF', 'EURNZD', 'GBPAUD',
                 'GBPCAD', 'GBPNZD', 'NZDCAD', 'NZDCHF', 'NZDJPY', 'XAGUSD', 'XAUUSD' ]
 
-    pairs  = allPairs                     if args.pairs  == 'all' else args.pairs.split(',')
-    if args.verbose: print('Pairs: %s' % pairs)
+    pairs  = allPairs if args.pairs  == 'all' else args.pairs.split(',')
     years  = range(1970, date.today().year + 1) if args.years  == 'all' else args.years.split(',')
-    if args.verbose: print('Years: %s' % years)
-    months = range(1, 12 + 1)             if args.months == 'all' else args.months.split(',')
-    if args.verbose: print('Months: %s' % months)
+    months = range(1, 12 + 1) if args.months == 'all' else args.months.split(',')
 
     # Build destination directory structure
     for pair in pairs:
