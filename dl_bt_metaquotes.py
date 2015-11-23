@@ -54,14 +54,13 @@ def downloadHistoryFile(pair, year, month, historyFile, destination):
     historyUrlTemplate = 'http://history.metaquotes.net/symbols/%s/%s'
     historyUrl = historyUrlTemplate % (pair, historyFile)
     if args.verbose: print('Downloading history file from %s to %s ...' % (historyUrl, destination))
+    historyPath = os.path.join(destination, pair, str(year), '%02d' % int(month), historyFile)
 
     try:
         request = urllib.request.Request(historyUrl, None, {'User-Agent': userAgent})
-        with urllib.request.urlopen(request) as response:
-            historyPath = os.path.join(destination, pair, str(year), '%02d' % int(month), historyFile)
-            os.makedirs(os.path.dirname(historyPath), mode=0o755, exist_ok=True)
-            with open(historyPath, 'wb') as h:
-                h.write(response.read())
+        os.makedirs(os.path.dirname(historyPath), mode=0o755, exist_ok=True)
+        with urllib.request.urlopen(request) as response, open(historyPath, 'wb') as h:
+            h.write(response.read())
     except URLError as e:
         if hasattr(e, 'reason'):
             error(e.reason)
