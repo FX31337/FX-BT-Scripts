@@ -51,11 +51,14 @@ def findHistoryFile(history, pair, year, month):
 
 
 def downloadHistoryFile(pair, year, month, historyFile, destination):
+    historyPath = os.path.join(destination, pair, str(year), '%02d' % int(month), historyFile)
+    if os.path.isfile(historyPath):
+        if args.verbose: print('Skipping, file already exists.')
+        return
+
     historyUrlTemplate = 'http://history.metaquotes.net/symbols/%s/%s'
     historyUrl = historyUrlTemplate % (pair, historyFile)
     if args.verbose: print('Downloading history file from %s to %s ...' % (historyUrl, destination))
-    historyPath = os.path.join(destination, pair, str(year), '%02d' % int(month), historyFile)
-
     try:
         request = urllib.request.Request(historyUrl, None, {'User-Agent': userAgent})
         os.makedirs(os.path.dirname(historyPath), mode=0o755, exist_ok=True)
