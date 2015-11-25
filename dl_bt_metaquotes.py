@@ -146,7 +146,24 @@ def decompress(data, year, month):
         # Type3 test
         if data[i] > 0xbf:
             streak = data[i] - 0xbf
-            i += 1 + streak*5
+            i += 1
+            for s in range(0, streak):
+                timestamp = lastBar['timestamp'] + datetime.timedelta(minutes=1)
+                open      = lastBar['close'] + unpack('b', bytes([data[i    ]]))[0]
+                high      =            open  + unpack('b', bytes([data[i + 1]]))[0]
+                low       =            open  - unpack('b', bytes([data[i + 2]]))[0]
+                close     =            open  + unpack('b', bytes([data[i + 3]]))[0]
+                volume    =                    unpack('b', bytes([data[i + 4]]))[0]
+                lastBar = {
+                    'timestamp': timestamp,
+                         'open': open,
+                         'high': high,
+                          'low': low,
+                        'close': close,
+                       'volume': volume
+                }
+                bars += [lastBar]
+                i += 5
         # Type2 test
         elif data[i] > 0x7f:
             i += 1
@@ -166,14 +183,15 @@ def decompress(data, year, month):
                 low       = open - unpack('<h', data[i + s*16 + 10:i + s*16 + 12])[0]
                 close     = open + unpack('<h', data[i + s*16 + 12:i + s*16 + 14])[0]
                 volume    =        unpack('<H', data[i + s*16 + 14:i + s*16 + 16])[0]
-                bars += [{
-                    'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                lastBar = {
+                    'timestamp': timestamp,
                          'open': open,
                          'high': high,
                           'low': low,
                         'close': close,
                        'volume': volume
-                }]
+                }
+                bars += [lastBar]
             i += streak*16
         else:
             i += 1
@@ -200,7 +218,7 @@ def convertToCsv(pair, year, month, historyFile, destination):
         csvWriter = csv.writer(csvOutput, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         for bar in bars:
             csvWriter.writerow([
-                bar['timestamp'],
+                bar['timestamp'].strftime('%Y-%m-%d %H:%M:%S'),
                 bar['open']/1e5,
                 bar['high']/1e5,
                 bar['low']/1e5,
