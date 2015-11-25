@@ -246,7 +246,7 @@ if __name__ == '__main__':
     argumentParser.add_argument('-m', '--months',      action='store',      dest='months',      help='Month(s) to download (separated by comma).', default='all')
     argumentParser.add_argument('-d', '--destination', action='store',      dest='destination', help='Directory to download files.', default='download/metaquotes')
     argumentParser.add_argument('-c', '--csv-convert', action='store_true', dest='convert',     help='Perform CSV conversion.')
-    argumentParser.add_argument('-t', '--time-offset', action='store',      dest='timeOffset',  help='Time offset for timestamps in +/-HHMM format.')
+    argumentParser.add_argument('-t', '--time-offset', action='store',      dest='timeOffset',  help='Time offset for timestamps in +/-HHMM format.', default='')
     argumentParser.add_argument('-v', '--verbose',     action='store_true', dest='verbose',     help='Increase output verbosity.')
     args = argumentParser.parse_args()
 
