@@ -217,9 +217,19 @@ def convertToCsv(pair, year, month, historyFile, destination):
         head, data = decode_body(buf)
         bars = decompress(data, year, month)
         csvWriter = csv.writer(csvOutput, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+
+        # Build timedelta object from time offset
+        timeOffsetMatch = re.match(r'(?P<sign>[+-]?)(?P<hours>\d{2})(?P<minutes>\d{2})', args.timeOffset)
+        if timeOffsetMatch:
+            timeOffsetGroup = timeOffsetMatch.groupdict()
+            timeOffset = datetime.timedelta(  hours=int(timeOffsetGroup['sign'] + timeOffsetGroup['hours'  ]),
+                                            minutes=int(timeOffsetGroup['sign'] + timeOffsetGroup['minutes']))
+        else:
+            timeOffset = datetime.timedelta(0)
+
         for bar in bars:
             csvWriter.writerow([
-                bar['timestamp'].strftime('%Y-%m-%d %H:%M:%S'),
+                (bar['timestamp'] + timeOffset).strftime('%Y-%m-%d %H:%M:%S'),
                 bar['open']/1e5,
                 bar['high']/1e5,
                 bar['low']/1e5,
@@ -236,6 +246,7 @@ if __name__ == '__main__':
     argumentParser.add_argument('-m', '--months',      action='store',      dest='months',      help='Month(s) to download (separated by comma).', default='all')
     argumentParser.add_argument('-d', '--destination', action='store',      dest='destination', help='Directory to download files.', default='download/metaquotes')
     argumentParser.add_argument('-c', '--csv-convert', action='store_true', dest='convert',     help='Perform CSV conversion.')
+    argumentParser.add_argument('-t', '--time-offset', action='store',      dest='timeOffset',  help='Time offset for timestamps in +/-HHMM format.')
     argumentParser.add_argument('-v', '--verbose',     action='store_true', dest='verbose',     help='Increase output verbosity.')
     args = argumentParser.parse_args()
 
