@@ -161,13 +161,19 @@ def decompress(data, year, month):
             i += 1
             for s in range(0, streak):
                 timestamp = datetime.datetime.fromtimestamp(unpack('<i', data[i + s*16:i + s*16 + 4])[0], datetime.timezone.utc)
-                open      =         unpack('<i', data[i + s*16 + 4:i  + s*16 +  8])[0]
-                high      = (open + unpack('<h', data[i + s*16 + 8:i  + s*16 + 10])[0])/1e5
-                low       = (open - unpack('<h', data[i + s*16 + 10:i + s*16 + 12])[0])/1e5
-                close     = (open + unpack('<h', data[i + s*16 + 12:i + s*16 + 14])[0])/1e5
-                volume    =         unpack('<H', data[i + s*16 + 14:i + s*16 + 16])[0]
-                open /= 1e5
-                bars += [{'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'open': open, 'high': high, 'low': low, 'close': close, 'volume': volume}]
+                open      =        unpack('<i', data[i + s*16 + 4:i  + s*16 +  8])[0]
+                high      = open + unpack('<h', data[i + s*16 + 8:i  + s*16 + 10])[0]
+                low       = open - unpack('<h', data[i + s*16 + 10:i + s*16 + 12])[0]
+                close     = open + unpack('<h', data[i + s*16 + 12:i + s*16 + 14])[0]
+                volume    =        unpack('<H', data[i + s*16 + 14:i + s*16 + 16])[0]
+                bars += [{
+                    'timestamp': timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+                         'open': open,
+                         'high': high,
+                          'low': low,
+                        'close': close,
+                       'volume': volume
+                }]
             i += streak*16
         else:
             i += 1
@@ -193,7 +199,14 @@ def convertToCsv(pair, year, month, historyFile, destination):
         bars = decompress(data, year, month)
         csvWriter = csv.writer(csvOutput, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         for bar in bars:
-            csvWriter.writerow([bar['timestamp'], bar['open'], bar['high'], bar['low'], bar['close'], bar['volume']])
+            csvWriter.writerow([
+                bar['timestamp'],
+                bar['open']/1e5,
+                bar['high']/1e5,
+                bar['low']/1e5,
+                bar['close']/1e5,
+                bar['volume']
+            ])
 
 
 if __name__ == '__main__':
