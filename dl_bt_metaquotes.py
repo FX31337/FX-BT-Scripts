@@ -177,12 +177,13 @@ def decompress(data, year, month):
             streak = data[i] - 0x3f
             i += 1
             for s in range(0, streak):
-                timestamp = datetime.datetime.fromtimestamp(unpack('<i', data[i + s*16:i + s*16 + 4])[0], datetime.timezone.utc)
-                open      =        unpack('<i', data[i + s*16 + 4:i  + s*16 +  8])[0]
-                high      = open + unpack('<h', data[i + s*16 + 8:i  + s*16 + 10])[0]
-                low       = open - unpack('<h', data[i + s*16 + 10:i + s*16 + 12])[0]
-                close     = open + unpack('<h', data[i + s*16 + 12:i + s*16 + 14])[0]
-                volume    =        unpack('<H', data[i + s*16 + 14:i + s*16 + 16])[0]
+                timestamp = datetime.datetime.fromtimestamp(
+                                   unpack('<i', data[i     :i +  4])[0], datetime.timezone.utc)
+                open      =        unpack('<i', data[i +  4:i +  8])[0]
+                high      = open + unpack('<h', data[i +  8:i + 10])[0]
+                low       = open - unpack('<h', data[i + 10:i + 12])[0]
+                close     = open + unpack('<h', data[i + 12:i + 14])[0]
+                volume    =        unpack('<H', data[i + 14:i + 16])[0]
                 lastBar = {
                     'timestamp': timestamp,
                          'open': open,
@@ -192,7 +193,7 @@ def decompress(data, year, month):
                        'volume': volume
                 }
                 bars += [lastBar]
-            i += streak*16
+                i += 16
         else:
             i += 1
     return bars
