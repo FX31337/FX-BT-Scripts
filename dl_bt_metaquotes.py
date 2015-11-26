@@ -168,7 +168,21 @@ def decompress(data, year, month):
                 i += 5
         # Type2 test
         elif data[i] > 0x7f:
-            i += 1
+            streak = data[i] - 0x7f
+            # TODO Reveal repeater mechanism, until that indicate missing bars with
+            #      EPOCH timestamp and unit open/high/low/close/volume values
+            lastBar = {
+                'timestamp': datetime.datetime.fromtimestamp(0),
+                     'open': 1e5,
+                     'high': 1e5,
+                      'low': 1e5,
+                    'close': 1e5,
+                   'volume': 1,
+                     'type': 2,
+                  'address': i
+            }
+            bars += [lastBar]
+            i += 1 + streak*6
         # Type1 test
         elif data[i] > 0x3f:
             # Check if it's a real Type1 bar or not
