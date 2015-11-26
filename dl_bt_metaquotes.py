@@ -160,7 +160,9 @@ def decompress(data, year, month):
                          'high': high,
                           'low': low,
                         'close': close,
-                       'volume': volume
+                       'volume': volume,
+                         'type': 3,
+                      'address': i
                 }
                 bars += [lastBar]
                 i += 5
@@ -190,13 +192,30 @@ def decompress(data, year, month):
                          'high': high,
                           'low': low,
                         'close': close,
-                       'volume': volume
+                       'volume': volume,
+                         'type': 1,
+                      'address': i
                 }
                 bars += [lastBar]
                 i += 16
         else:
             i += 1
     return bars
+
+
+def anomalyTest(bars):
+    for bar in bars:
+        anomalies = []
+        if bar['open'] > bar['high'] or bar['open'] < bar['low']: anomalies += ['open']
+        if max([bar['open'], bar['high'], bar['low'], bar['close']]) != bar['high']: anomalies += ['high']
+        if min([bar['open'], bar['high'], bar['low'], bar['close']]) != bar['low']: anomalies += ['low']
+        if bar['close'] > bar['high'] or bar['close'] < bar['low']: anomalies += ['close']
+
+        if len(anomalies):
+            print('[ANOMALY] %s  Type-%d  %s' % (bar['timestamp'].strftime('%Y-%m-%d %H:%M:%S'), bar['type'], hex(bar['address'])), end='   ')
+            for anomaly in anomalies:
+                print('%s' % anomaly, end=' ')
+            print()
 
 
 def convertToCsv(pair, year, month, historyFile, destination):
@@ -216,6 +235,8 @@ def convertToCsv(pair, year, month, historyFile, destination):
             raise Exception('Checksum does not match')
         head, data = decode_body(buf)
         bars = decompress(data, year, month)
+        if args.anomaly:
+            anomalyTest(bars)
         csvWriter = csv.writer(csvOutput, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
 
         # Build timedelta object from time offset
@@ -241,13 +262,14 @@ def convertToCsv(pair, year, month, historyFile, destination):
 if __name__ == '__main__':
     # Parse arguments
     argumentParser = argparse.ArgumentParser()
-    argumentParser.add_argument('-p', '--pairs',       action='store',      dest='pairs',       help='Pair(s) to download (separated by comma).', default='all')
-    argumentParser.add_argument('-y', '--years',       action='store',      dest='years',       help='Year(s) to download (separated by comma).', default='all')
-    argumentParser.add_argument('-m', '--months',      action='store',      dest='months',      help='Month(s) to download (separated by comma).', default='all')
-    argumentParser.add_argument('-d', '--destination', action='store',      dest='destination', help='Directory to download files.', default='download/metaquotes')
-    argumentParser.add_argument('-c', '--csv-convert', action='store_true', dest='convert',     help='Perform CSV conversion.')
-    argumentParser.add_argument('-t', '--time-offset', action='store',      dest='timeOffset',  help='Time offset for timestamps in +/-HHMM format.', default='')
-    argumentParser.add_argument('-v', '--verbose',     action='store_true', dest='verbose',     help='Increase output verbosity.')
+    argumentParser.add_argument('-p', '--pairs',        action='store',      dest='pairs',       help='Pair(s) to download (separated by comma).', default='all')
+    argumentParser.add_argument('-y', '--years',        action='store',      dest='years',       help='Year(s) to download (separated by comma).', default='all')
+    argumentParser.add_argument('-m', '--months',       action='store',      dest='months',      help='Month(s) to download (separated by comma).', default='all')
+    argumentParser.add_argument('-d', '--destination',  action='store',      dest='destination', help='Directory to download files.', default='download/metaquotes')
+    argumentParser.add_argument('-c', '--csv-convert',  action='store_true', dest='convert',     help='Perform CSV conversion.')
+    argumentParser.add_argument('-t', '--time-offset',  action='store',      dest='timeOffset',  help='Time offset for timestamps in +/-HHMM format.', default='')
+    argumentParser.add_argument('-a', '--anomaly-test', action='store_true', dest='anomaly',     help='Run anomaly tests during conversion.')
+    argumentParser.add_argument('-v', '--verbose',      action='store_true', dest='verbose',     help='Increase output verbosity.')
     args = argumentParser.parse_args()
 
     allPairs = ['AUDJPY', 'AUDNZD', 'AUDUSD', 'CADJPY', 'CHFJPY', 'EURAUD', 'EURCAD',
