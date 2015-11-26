@@ -150,10 +150,10 @@ def decompress(data, year, month):
             for s in range(0, streak):
                 timestamp = lastBar['timestamp'] + datetime.timedelta(minutes=1)
                 open      = lastBar['close'] + unpack('b', bytes([data[i    ]]))[0]
-                high      =            open  + unpack('b', bytes([data[i + 1]]))[0]
-                low       =            open  - unpack('b', bytes([data[i + 2]]))[0]
+                high      =            open  + unpack('B', bytes([data[i + 1]]))[0]
+                low       =            open  - unpack('B', bytes([data[i + 2]]))[0]
                 close     =            open  + unpack('b', bytes([data[i + 3]]))[0]
-                volume    =                    unpack('b', bytes([data[i + 4]]))[0]
+                volume    =                    unpack('B', bytes([data[i + 4]]))[0]
                 lastBar = {
                     'timestamp': timestamp,
                          'open': open,
