@@ -78,21 +78,29 @@ if __name__ == '__main__':
                                 type=int,
                                 action='store',
                                 dest='spread',
-                                help='TODO',
+                                help='Spread between prices in points.',
                                 default=10)
     argumentParser.add_argument('-d', '--density',
                                 type=int,
                                 action='store',
                                 dest='density',
-                                help='TODO',
+                                help='Data points per minute in generated data.',
                                 default=1)
     argumentParser.add_argument('-p', '--pattern',
                                 action='store',
                                 dest='pattern',
                                 choices=['none', 'wave', 'curve', 'zigzag', 'random'],
-                                help='TODO', default='none')
-    # TODO -v argument
-    argumentParser.add_argument('-o', '--outputFile', action='store', dest='outputFile',       help='TODO')
+                                help='Modelling pattern, all of them are deterministic except of \'random\'.', default='none')
+    argumentParser.add_argument('-v', '--volatility',
+                                type=float,
+                                action='store',
+                                dest='volatility',
+                                help='Volatility gain for models, higher values leads to higher volatility in price values.',
+                                default=1.0)
+    argumentParser.add_argument('-o', '--outputFile',
+                                action='store',
+                                dest='outputFile',
+                                help='Write generated data to file instead of standard output.')
     arguments = argumentParser.parse_args()
 
     # Check date values
