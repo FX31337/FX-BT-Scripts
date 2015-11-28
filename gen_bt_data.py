@@ -114,14 +114,17 @@ if __name__ == '__main__':
 
     if arguments.digits <= 0: error('Digits must be larger than zero!')
 
+    if arguments.startPrice <= 0 or arguments.endPrice <= 0: error('Price must be larger than zero!')
+
     if arguments.spread < 0: error('Spread must be larger or equal to zero!')
     spread = arguments.spread/1e5
 
     if arguments.density <= 0: error('Density must be larger than zero!')
 
-    deltaTime = datetime.timedelta(seconds=60/arguments.density)
+    if arguments.volatility <= 0: error('Volatility must be larger than zero!')
 
     # Select and run appropriate model
+    deltaTime = datetime.timedelta(seconds=60/arguments.density)
     rows = None
     if arguments.pattern == 'none':
         rows = linearModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.digits)
