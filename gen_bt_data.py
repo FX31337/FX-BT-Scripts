@@ -10,12 +10,21 @@ def error(message, exit=True):
     if exit: sys.exit(1)
 
 
+def volumesFromTimestamp(timestamp, spread):
+    longTimestamp = timestamp.timestamp()
+    spread *= 1e5
+    d = int(str(int(longTimestamp/60))[-3:]) + 1
+    bidVolume = int((longTimestamp/d)%(1e3 - spread))
+
+    return (bidVolume, bidVolume + spread)
+
+
 def linearModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, digits):
     timestamp = startDate
     bidPrice = startPrice
     askPrice = bidPrice + spread
-    bidVolume = 0   # TODO -v
-    askVolume = 0   # TODO -v
+    bidVolume = 1
+    askVolume = bidVolume + spread
     deltaPrice = deltaTime/(endDate + datetime.timedelta(days=1) - startDate - deltaTime)*(endPrice - startPrice)
     rows = []
     while timestamp < (endDate + datetime.timedelta(days=1)):
@@ -29,6 +38,7 @@ def linearModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, dig
         timestamp += deltaTime
         bidPrice += deltaPrice
         askPrice += deltaPrice
+        (bidVolume, askVolume) = volumesFromTimestamp(timestamp, spread)
     return rows
 
 
