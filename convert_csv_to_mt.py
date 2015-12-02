@@ -5,166 +5,250 @@ import sys
 import os
 import csv
 import re
-from struct import *
+from struct import pack
 import time
 import datetime
 
 class Input:
-    def __init__(self, fileName):
+    def __init__(self, path):
         if args.verbose:
-            print('[INFO] Trying to read data from %s...' % fileName)
+            print('[INFO] Trying to read data from %s...' % path)
         try:
-            with open(fileName, 'r') as inputFile:
-                self.ticks = inputFile.read().splitlines()
+            self.path = open(path, 'r')
         except OSError as e:
             print("[ERROR] '%s' raised when tried to read the file '%s'" % (e.strerror, e.filename))
             sys.exit(1)
 
 
-    def aggregate(self):
-        self.uniBars = []
-        deltaTimestamp = timeframe*60
-        endTimestamp = None
-
-        for tick in self.ticks:
-            currentTimestamp = tick['timestamp']
-            if not endTimestamp or currentTimestamp >= endTimestamp:
-                if endTimestamp:
-                    self._addBar(startTimestamp, currentTimestamp, open, high, low, close, volume)
-
-                startTimestamp = (int(tick['timestamp'])//deltaTimestamp)*deltaTimestamp
-                endTimestamp = startTimestamp + deltaTimestamp
-                open = high = low = close = tick['bidPrice']
-                volume = tick['bidVolume'] + tick['askVolume']
-            else:
-                high = max(tick['bidPrice'], high)
-                low  = min(tick['bidPrice'], low)
-                close = tick['bidPrice']
-                volume += tick['bidVolume'] + tick['askVolume']
-
-        self._addBar(startTimestamp, currentTimestamp, open, high, low, close, volume)
-
-
-    def aggregateWithTicks(self):
-        self.uniBars = []
-        deltaTimestamp = timeframe*60
-        endTimestamp = None
-        self.barCount = 0
-
-        for tick in self.ticks:
-            currentTimestamp = tick['timestamp']
-            if not endTimestamp or currentTimestamp >= endTimestamp:
-                startTimestamp = (int(tick['timestamp'])//deltaTimestamp)*deltaTimestamp
-                endTimestamp = startTimestamp + deltaTimestamp
-                open = high = low = tick['bidPrice']
-                volume = tick['bidVolume'] + tick['askVolume']
-
-                self._addBar(startTimestamp, currentTimestamp, open, high, low, tick['bidPrice'], volume)
-                self.barCount += 1
-            else:
-                high = max(tick['bidPrice'], high)
-                low  = min(tick['bidPrice'], low)
-                volume += tick['bidVolume'] + tick['askVolume']
-
-                self._addBar(startTimestamp, currentTimestamp, open, high, low, tick['bidPrice'], volume)
+    def __del__(self):
+        self.path.close()
 
 
     def _addBar(self, barTimestamp, tickTimestamp, open, high, low, close, volume):
-        self.uniBars += [{'barTimestamp': barTimestamp,
-                          'tickTimestamp': tickTimestamp,
-                          'open': open,
-                          'high': high,
-                          'low': low,
-                          'close': close,
-                          'volume': volume
-                        }]
+        self.uniBars += [{
+            'barTimestamp': barTimestamp,
+           'tickTimestamp': tickTimestamp,
+                    'open': open,
+                    'high': high,
+                     'low': low,
+                   'close': close,
+                  'volume': volume
+        }]
 
 
 class CSV(Input):
-    def parse(self):
-        self.ticks = csv.reader(self.ticks, delimiter=',')
+    def __iter__(self):
+        return self
 
-        uniTicks = []
-        for tick in self.ticks:
-            uniTicks += [{'timestamp': datetime.datetime.strptime(tick[0], '%Y.%m.%d %H:%M:%S.%f').replace(tzinfo=datetime.timezone.utc).timestamp(),
-                          'bidPrice' : float(tick[1]),
-                          'askPrice' : float(tick[2]),
-                          'bidVolume': float(tick[3]),
-                          'askVolume': float(tick[4])
-                        }]
 
-        self.ticks = uniTicks
+    def __next__(self):
+        line = self.path.readline()
+        if line:
+            return self._parseLine(line)
+        else:
+            raise StopIteration
+
+
+    def _parseLine(self, line):
+        tick = line.split(',')
+        return {
+            'timestamp': datetime.datetime.strptime(  # Storing timestamp as float to preserve its precision
+                               tick[0], '%Y.%m.%d %H:%M:%S.%f').replace(tzinfo=datetime.timezone.utc).timestamp(),
+             'bidPrice': float(tick[1]),
+             'askPrice': float(tick[2]),
+            'bidVolume': float(tick[3]),
+            'askVolume': float(tick[4])               # float() handles ending '\n' character
+        }
 
 
 class Output:
-    def _write(self, content, filename):
+    def __init__(self, timeframe, path):
+        self.deltaTimestamp = timeframe*60
+        self.endTimestamp = None
+        self.barCount = 0
+
         try:
-            with open(filename, 'wb') as o:
-                o.write(content)
+            os.remove(path)  # Remove existing output file before creating an appended new one
+        except FileNotFoundError as e:
+            pass
+        try:
+            self.path = open(path, 'ab')
         except OSError as e:
-            print("[ERROR] '%s' raised when tried to save the file '%s'" % (e.strerror, e.filename))
+            print("[ERROR] '%s' raised when tried to open for appending the file '%s'" % (e.strerror, e.filename))
             sys.exit(1)
 
 
+    def __del__(self):
+        self.path.close()
+
+
+    def _aggregate(self, tick):
+        if not self.endTimestamp or tick['timestamp'] >= self.endTimestamp:
+            uniBar = None
+            if self.endTimestamp: uniBar = {
+                'barTimestamp': self.startTimestamp,
+               'tickTimestamp': tick['timestamp'],
+                        'open': self.open,
+                        'high': self.high,
+                         'low': self.low,
+                       'close': self.close,
+                      'volume': self.volume
+            }
+
+            self.startTimestamp = (int(tick['timestamp'])//self.deltaTimestamp)*self.deltaTimestamp
+            self.endTimestamp = self.startTimestamp + self.deltaTimestamp
+            self.open = self.high = self.low = self.close = tick['bidPrice']
+            self.volume = tick['bidVolume'] + tick['askVolume']
+
+            if uniBar: return (uniBar, True)
+        else:
+            self.high = max(tick['bidPrice'], self.high)
+            self.low  = min(tick['bidPrice'], self.low)
+            self.close = tick['bidPrice']
+            self.volume += tick['bidVolume'] + tick['askVolume']
+
+        uniBar = {
+            'barTimestamp': self.startTimestamp,
+           'tickTimestamp': tick['timestamp'],
+                    'open': self.open,
+                    'high': self.high,
+                     'low': self.low,
+                   'close': self.close,
+                  'volume': self.volume
+        }
+        return (uniBar, False)
+
+
+    def _aggregateWithTicks(self, tick):
+        if not self.endTimestamp or tick['timestamp'] >= self.endTimestamp:
+            self.startTimestamp = (int(tick['timestamp'])//self.deltaTimestamp)*self.deltaTimestamp
+            self.endTimestamp = self.startTimestamp + self.deltaTimestamp
+            self.open = self.high = self.low = tick['bidPrice']
+            self.volume = tick['bidVolume'] + tick['askVolume']
+            self.barCount += 1
+        else:
+            self.high = max(tick['bidPrice'], self.high)
+            self.low  = min(tick['bidPrice'], self.low)
+            self.volume += tick['bidVolume'] + tick['askVolume']
+
+        return {
+            'barTimestamp': self.startTimestamp,
+           'tickTimestamp': tick['timestamp'],
+                    'open': self.open,
+                    'high': self.high,
+                     'low': self.low,
+                   'close': tick['bidPrice'],
+                  'volume': self.volume
+        }
+
+
 class HST509(Output):
-    def __init__(self, uniBars, outputPath):
+    def __init__(self, ticks, path, timeframe, symbol):
+        # Initialize variables in parent constructor
+        super().__init__(timeframe, path)
+
         # Build header (148 Bytes in total)
         header = bytearray()
-        header += pack('<i', 400)                                                       # Version
-        header += bytearray('(C)opyright 2003, MetaQuotes Software Corp.'.ljust(64,     # Copyright
+        header += pack('<i', 400)                                                    # Version
+        header += bytearray('(C)opyright 2003, MetaQuotes Software Corp.'.ljust(64,  # Copyright
                             '\x00'),'latin1', 'ignore')
-        header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')               # Symbol
-        header += pack('<i', timeframe)                                                 # Period
-        header += pack('<i', 5)                                                         # Digits, using the default value of HST format
-        header += pack('<i', int(time.time()))                                          # Time of sign (database creation)
-        header += pack('<i', 0)                                                         # Time of last synchronization
-        header += bytearray(13*4)                                                       # Space for future use
+        header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')            # Symbol
+        header += pack('<i', timeframe)                                              # Period
+        header += pack('<i', 5)                                                      # Digits, using the default value of HST format
+        header += pack('<i', int(time.time()))                                       # Time of sign (database creation)
+        header += pack('<i', 0)                                                      # Time of last synchronization
+        header += bytearray(13*4)                                                    # Space for future use
 
         # Transform universal bar list to binary bar data (44 Bytes per bar)
         bars = bytearray()
-        for uniBar in uniBars:
-            bars += pack('<i', uniBar['barTimestamp'])      # Time
-            bars += pack('<d', uniBar['open'])              # Open
-            bars += pack('<d', uniBar['low'])               # Low
-            bars += pack('<d', uniBar['high'])              # High
-            bars += pack('<d', uniBar['close'])             # Close
-            bars += pack('<d', max(uniBar['volume'], 1.0))  # Volume
+        for tick in ticks:
+            (uniBar, newUniBar) = self._aggregate(tick)
+            if newUniBar:
+                bars += self._packUniBar(uniBar)
+        bars += self._packUniBar(uniBar)
 
-        self._write(header + bars, outputPath)
+        self.path.write(header)
+        self.path.write(bars)
+
+
+    def _packUniBar(self, uniBar):
+        bar = bytearray()
+        bar += pack('<i', uniBar['barTimestamp'])      # Time
+        bar += pack('<d', uniBar['open'])              # Open
+        bar += pack('<d', uniBar['low'])               # Low
+        bar += pack('<d', uniBar['high'])              # High
+        bar += pack('<d', uniBar['close'])             # Close
+        bar += pack('<d', max(uniBar['volume'], 1.0))  # Volume
+
+        return bar
 
 
 class HST574(Output):
-    def __init__(self, uniBars, outputPath):
+    def __init__(self, ticks, path, timeframe, symbol):
+        # Initialize variables in parent constructor
+        super().__init__(timeframe, path)
+
         # Build header (148 Bytes in total)
         header = bytearray()
-        header += pack('<i', 401)                                                       # Version
-        header += bytearray('(C)opyright 2003, MetaQuotes Software Corp.'.ljust(64,     # Copyright
+        header += pack('<i', 401)                                                    # Version
+        header += bytearray('(C)opyright 2003, MetaQuotes Software Corp.'.ljust(64,  # Copyright
                             '\x00'),'latin1', 'ignore')
-        header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')               # Symbol
-        header += pack('<i', timeframe)                                                 # Period
-        header += pack('<i', 5)                                                         # Digits, using the default value of HST format
-        header += pack('<i', int(time.time()))                                          # Time of sign (database creation)
-        header += pack('<i', 0)                                                         # Time of last synchronization
-        header += bytearray(13*4)                                                       # Space for future use
+        header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')            # Symbol
+        header += pack('<i', timeframe)                                              # Period
+        header += pack('<i', 5)                                                      # Digits, using the default value of HST format
+        header += pack('<i', int(time.time()))                                       # Time of sign (database creation)
+        header += pack('<i', 0)                                                      # Time of last synchronization
+        header += bytearray(13*4)                                                    # Space for future use
 
         # Transform universal bar list to binary bar data (60 Bytes per bar)
         bars = bytearray()
-        for uniBar in uniBars:
-            bars += pack('<i', uniBar['barTimestamp'])          # Time
-            bars += bytearray(4)                                # 4 Bytes of padding
-            bars += pack('<d', uniBar['open'])                  # Open
-            bars += pack('<d', uniBar['high'])                  # High
-            bars += pack('<d', uniBar['low'])                   # Low
-            bars += pack('<d', uniBar['close'])                 # Close
-            bars += pack('<Q', max(round(uniBar['volume']), 1)) # Volume
-            bars += pack('<i', 0)                               # Spread
-            bars += pack('<Q', 0)                               # Real volume
+        for tick in ticks:
+            (uniBar, newUniBar) = self._aggregate(tick)
+            if newUniBar:
+                bars += self._packUniBar(uniBar)
+        bars += self._packUniBar(uniBar)
 
-        self._write(header + bars, outputPath)
+        self.path.write(header)
+        self.path.write(bars)
+
+
+    def _packUniBar(self, uniBar):
+        bar = bytearray()
+        bar += pack('<i', uniBar['barTimestamp'])           # Time
+        bar += bytearray(4)                                 # 4 Bytes of padding
+        bar += pack('<d', uniBar['open'])                   # Open
+        bar += pack('<d', uniBar['high'])                   # High
+        bar += pack('<d', uniBar['low'])                    # Low
+        bar += pack('<d', uniBar['close'])                  # Close
+        bar += pack('<Q', max(round(uniBar['volume']), 1))  # Volume
+        bar += pack('<i', 0)                                # Spread
+        bar += pack('<Q', 0)                                # Real volume
+
+        return bar
 
 
 class FXT(Output):
-    def __init__(self, uniBars, barCount, outputPath):
+    def __init__(self, ticks, path, timeframe, server, symbol, spread):
+        # Initialize variables in parent constructor
+        super().__init__(timeframe, path)
+
+        # Transform universal bar list to binary bar data (56 Bytes per bar)
+        bars = bytearray()
+        firstUniBar = lastUniBar = None
+        for tick in ticks:
+            uniBar = self._aggregateWithTicks(tick)
+            if not firstUniBar: firstUniBar = uniBar             # Store first and
+            lastUniBar = uniBar                                  # last bar data for header
+            bars += pack('<i', int(uniBar['barTimestamp']))      # Time
+            bars += bytearray(4)                                 # 4 Bytes of padding
+            bars += pack('<d', uniBar['open'])                   # Open
+            bars += pack('<d', uniBar['high'])                   # High
+            bars += pack('<d', uniBar['low'])                    # Low
+            bars += pack('<d', uniBar['close'])                  # Close
+            bars += pack('<Q', max(round(uniBar['volume']), 1))  # Volume (Document says it's a double, though it's stored as a long int.)
+            bars += pack('<i', int(uniBar['tickTimestamp']))     # Current time within a bar
+            bars += pack('<i', 4)                                # Flag to launch an expert
+
         # Build header (728 Bytes in total)
         header = bytearray()
         header += pack('<i', 405)                                                       # Version
@@ -174,9 +258,9 @@ class FXT(Output):
         header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')               # Symbol
         header += pack('<i', timeframe)                                                 # Period of data aggregation in minutes
         header += pack('<i', 0)                                                         # Model - for what modeling type was the ticks sequence generated, 0 means ``every tick model''
-        header += pack('<i', barCount)                                                  # Bars - Amount bars in history
-        header += pack('<i', self._timestamp(uniBars[0]))                               # FromDate - Date of first tick
-        header += pack('<i', self._timestamp(uniBars[-1]))                              # ToDate - Date of last tick
+        header += pack('<i', self.barCount)                                             # Bars - Amount bars in history
+        header += pack('<i', int(firstUniBar['barTimestamp']))                          # FromDate - Date of first tick
+        header += pack('<i', int(lastUniBar['barTimestamp']))                           # ToDate - Date of last tick
         header += bytearray(4)                                                          # 4 Bytes of padding
         header += pack('<d', 99.9)                                                      # ModelQuality - modeling quality
         # General parameters
@@ -228,24 +312,8 @@ class FXT(Output):
         header += pack('<i', 0)                                                         # FreezeLevel - order's freeze level in points
         header += bytearray(61*4)                                                       # Reserved - Space for future use
 
-        # Transform universal bar list to binary bar data (56 Bytes per bar)
-        bars = bytearray()
-        for uniBar in uniBars:
-            bars += pack('<i', self._timestamp(uniBar))         # Time
-            bars += bytearray(4)                                # 4 Bytes of padding
-            bars += pack('<d', uniBar['open'])                  # Open
-            bars += pack('<d', uniBar['high'])                  # High
-            bars += pack('<d', uniBar['low'])                   # Low
-            bars += pack('<d', uniBar['close'])                 # Close
-            bars += pack('<Q', max(round(uniBar['volume']), 1)) # Volume (Document says it's a double, though it's stored as a long int.)
-            bars += pack('<i', int(uniBar['tickTimestamp']))    # Current time within a bar
-            bars += pack('<i', 4)                               # Flag to launch an expert
-
-        self._write(header + bars, outputPath)
-
-
-    def _timestamp(self, tick):
-        return int(tick['barTimestamp'])
+        self.path.write(header)
+        self.path.write(bars)
 
 
 def _hstFilename(symbol, timeframe):
@@ -323,11 +391,8 @@ if __name__ == '__main__':
     if args.verbose:
         print('[INFO] Spread: %d' % spread)
 
-    # Checking output directory
-    outputDir = args.outputDir
-    if outputDir[-1] != '/':
-        outputDir += '/'
-    os.makedirs(outputDir, 0o755, True)
+    # Create output directory
+    os.makedirs(args.outputDir, 0o755, True)
     if args.verbose:
         print('[INFO] Output directory: %s' % args.outputDir)
 
@@ -340,27 +405,25 @@ if __name__ == '__main__':
     if args.verbose:
         print('[INFO] Server name: %s' % server)
 
+    outputFormat = args.outputFormat.lower()
+    if args.verbose:
+        print('[INFO] Output format: %s' % outputFormat)
+
     # Reading input file, creating intermediate format for future input sources other than CSV
     try:
-        csvInput = CSV(args.inputFile)
-        csvInput.parse()
-
         # Checking output file format argument and doing conversion
-        outputFormat = args.outputFormat.lower()
         if outputFormat == 'hst4_509':
-            csvInput.aggregate()
-            HST509(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
+            outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
+            HST509(CSV(args.inputFile), outputPath, timeframe, symbol)
         elif outputFormat == 'hst4':
-            csvInput.aggregate()
-            HST574(csvInput.uniBars, outputDir + _hstFilename(symbol, timeframe))
+            outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
+            HST574(CSV(args.inputFile), outputPath, timeframe, symbol)
         elif outputFormat == 'fxt4':
-            csvInput.aggregateWithTicks()
-            FXT(csvInput.uniBars, csvInput.barCount, outputDir + _fxtFilename(symbol, timeframe))
+            outputPath = os.path.join(args.outputDir, _fxtFilename(symbol, timeframe))
+            FXT(CSV(args.inputFile), outputPath, timeframe, server, symbol, spread)
         else:
             print('[ERROR] Unknown output file format!')
             sys.exit(1)
-        if args.verbose:
-            print('[INFO] Output format: %s' % outputFormat)
     except KeyboardInterrupt as e:
         print('\nExiting by user request...')
         sys.exit()
