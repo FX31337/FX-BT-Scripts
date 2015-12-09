@@ -4,6 +4,7 @@ import argparse
 import sys
 import datetime
 import csv
+import random
 
 def error(message, exit=True):
     print('[ERROR]', message)
@@ -39,6 +40,30 @@ def linearModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, dig
         bidPrice += deltaPrice
         askPrice += deltaPrice
         (bidVolume, askVolume) = volumesFromTimestamp(timestamp, spread)
+    return rows
+
+
+def randomModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, volatility):
+    timestamp = startDate
+    bidPrice = startPrice
+    askPrice = bidPrice + spread
+    bidVolume = 1
+    askVolume = bidVolume + spread
+    rows = []
+    while timestamp < (endDate + datetime.timedelta(days=1)):
+        rows += [{
+            'timestamp': timestamp,
+             'bidPrice': bidPrice,
+             'askPrice': askPrice,
+            'bidVolume': bidVolume,
+            'askVolume': askVolume
+        }]
+        timestamp += deltaTime
+        bidPrice = 1 + volatility*random.random()
+        askPrice = bidPrice + spread
+        (bidVolume, askVolume) = volumesFromTimestamp(timestamp, spread)
+    rows[-1]['bidPrice'] = endPrice
+    rows[-1]['askPrice'] = endPrice + spread
     return rows
 
 
@@ -138,6 +163,8 @@ if __name__ == '__main__':
     rows = None
     if arguments.pattern == 'none':
         rows = linearModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.digits)
+    elif arguments.pattern == 'random':
+        rows = randomModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.volatility)
 
     # output array stdout/file
     if arguments.outputFile:
