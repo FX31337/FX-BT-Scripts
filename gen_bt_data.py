@@ -20,16 +20,16 @@ def volumesFromTimestamp(timestamp, spread):
     return (bidVolume, bidVolume + spread)
 
 
-def linearModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, digits):
+def linearModel(startDate, endDate, startPrice, endPrice, deltaTime, spread):
     timestamp = startDate
     bidPrice = startPrice
     askPrice = bidPrice + spread
     bidVolume = 1
     askVolume = bidVolume + spread
     deltaPrice = deltaTime/(endDate + datetime.timedelta(days=1) - startDate - deltaTime)*(endPrice - startPrice)
-    rows = []
+    ticks = []
     while timestamp < (endDate + datetime.timedelta(days=1)):
-        rows += [{
+        ticks += [{
             'timestamp': timestamp,
              'bidPrice': bidPrice,
              'askPrice': askPrice,
@@ -40,7 +40,7 @@ def linearModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, dig
         bidPrice += deltaPrice
         askPrice += deltaPrice
         (bidVolume, askVolume) = volumesFromTimestamp(timestamp, spread)
-    return rows
+    return ticks
 
 
 def randomModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, volatility):
@@ -49,9 +49,9 @@ def randomModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, vol
     askPrice = bidPrice + spread
     bidVolume = 1
     askVolume = bidVolume + spread
-    rows = []
+    ticks = []
     while timestamp < (endDate + datetime.timedelta(days=1)):
-        rows += [{
+        ticks += [{
             'timestamp': timestamp,
              'bidPrice': bidPrice,
              'askPrice': askPrice,
@@ -62,9 +62,9 @@ def randomModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, vol
         bidPrice = 1 + volatility*random.random()
         askPrice = bidPrice + spread
         (bidVolume, askVolume) = volumesFromTimestamp(timestamp, spread)
-    rows[-1]['bidPrice'] = endPrice
-    rows[-1]['askPrice'] = endPrice + spread
-    return rows
+    ticks[-1]['bidPrice'] = endPrice
+    ticks[-1]['askPrice'] = endPrice + spread
+    return ticks
 
 
 def writeToCsv(rows, filename):
@@ -162,7 +162,7 @@ if __name__ == '__main__':
     deltaTime = datetime.timedelta(seconds=60/arguments.density)
     rows = None
     if arguments.pattern == 'none':
-        rows = linearModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.digits)
+        rows = linearModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread)
     elif arguments.pattern == 'random':
         rows = randomModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.volatility)
 
