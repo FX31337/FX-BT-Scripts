@@ -5,6 +5,7 @@ import sys
 import datetime
 import csv
 import random
+from math import ceil, exp
 
 def error(message, exit=True):
     print('[ERROR]', message)
@@ -39,6 +40,32 @@ def linearModel(startDate, endDate, startPrice, endPrice, deltaTime, spread):
         timestamp += deltaTime
         bidPrice += deltaPrice
         askPrice += deltaPrice
+        (bidVolume, askVolume) = volumesFromTimestamp(timestamp, spread)
+    return ticks
+
+
+def curveModel(startDate, endDate, startPrice, endPrice, deltaTime, spread):
+    timestamp = startDate
+    bidPrice = startPrice
+    askPrice = bidPrice + spread
+    bidVolume = 1
+    askVolume = bidVolume + spread
+    deltaPrice = endPrice - startPrice
+    count = ceil((endDate + datetime.timedelta(days=1) - startDate)/deltaTime)
+    d = count/2  # Denominator for curve shaping
+    ticks = []
+    for i in range(0, count):
+        ticks += [{
+            'timestamp': timestamp,
+             'bidPrice': bidPrice,
+             'askPrice': askPrice,
+            'bidVolume': bidVolume,
+            'askVolume': askVolume
+        }]
+        i += 1
+        timestamp += deltaTime
+        bidPrice = startPrice + (1 - (exp(i/d) - exp((count - 1)/d))/(1 - exp((count - 1)/d)))*deltaPrice
+        askPrice = bidPrice + spread
         (bidVolume, askVolume) = volumesFromTimestamp(timestamp, spread)
     return ticks
 
@@ -163,6 +190,8 @@ if __name__ == '__main__':
     rows = None
     if arguments.pattern == 'none':
         rows = linearModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread)
+    elif arguments.pattern == 'curve':
+        rows = curveModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread)
     elif arguments.pattern == 'random':
         rows = randomModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.volatility)
 
