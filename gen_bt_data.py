@@ -44,7 +44,7 @@ def linearModel(startDate, endDate, startPrice, endPrice, deltaTime, spread):
     return ticks
 
 
-def waveModel(startDate, endDate, startPrice, endPrice, deltaTime, spread):
+def waveModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, volatility):
     timestamp = startDate
     bidPrice = startPrice
     askPrice = bidPrice + spread
@@ -64,7 +64,7 @@ def waveModel(startDate, endDate, startPrice, endPrice, deltaTime, spread):
         }]
         i += 1
         timestamp += deltaTime
-        bidPrice = abs(startPrice + (1 + sin(i/(count - 1)*3*pi))*i/(count - 1)*deltaPrice)
+        bidPrice = abs(startPrice + (1 + volatility*sin(i/(count - 1)*3*pi))*i/(count - 1)*deltaPrice)
         askPrice = bidPrice + spread
         (bidVolume, askVolume) = volumesFromTimestamp(timestamp, spread)
     return ticks
@@ -217,7 +217,7 @@ if __name__ == '__main__':
     if arguments.pattern == 'none':
         rows = linearModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread)
     elif arguments.pattern == 'wave':
-        rows = waveModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread)
+        rows = waveModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.volatility)
     elif arguments.pattern == 'curve':
         rows = curveModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread)
     elif arguments.pattern == 'random':
