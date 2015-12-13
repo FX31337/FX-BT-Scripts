@@ -65,8 +65,8 @@ def waveModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, volat
         i += 1
         timestamp += deltaTime
         # Select appropriate formula depending on starting and ending prices
-        if deltaPrice > 0:
-            bidPrice = abs(startPrice + (1 + volatility*sin(i/(count - 1)*3*pi))*i/(count - 1)*deltaPrice)
+        if abs(deltaPrice) > 0:
+            bidPrice = abs(startPrice + i/(count - 1)*deltaPrice + volatility*sin(i/(count - 1)*3*pi))
         else:
             bidPrice = abs(startPrice + (volatility*sin(i/(count - 1)*3*pi)))
         bidPrice = max(bidPrice, 1e-5)  # Don't let price to fall down to zero
