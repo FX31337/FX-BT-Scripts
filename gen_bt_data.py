@@ -125,28 +125,16 @@ def randomModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, vol
     return ticks
 
 
-def writeToCsv(rows, filename):
-    with open(filename, 'w') as csvOutput:
-        csvWriter = csv.writer(csvOutput, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        for row in rows:
-            csvWriter.writerow([
-                row['timestamp'].strftime('%Y.%m.%d %H:%M:%S.%f')[:-3],
-                round(row['bidPrice'], 5),
-                round(row['askPrice'], 5),
-                round(row['bidVolume'], 2),
-                round(row['askVolume'], 2)
-            ])
-
-
-def dump(rows):
+def toCsv(rows, digits, output):
+    csvWriter = csv.writer(output, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
     for row in rows:
-        print('%s,%.5f,%.5f,%.2f,%.2f' % (
+        csvWriter.writerow([
             row['timestamp'].strftime('%Y.%m.%d %H:%M:%S.%f')[:-3],
-            row['bidPrice'],
-            row['askPrice'],
-            row['bidVolume'],
-            row['askVolume']
-        ))
+            ('{:.%df}' % (digits)).format(row['bidPrice']),
+            ('{:.%df}' % (digits)).format(row['askPrice']),
+            ('{:.%df}' % (digits)).format(row['bidVolume']),
+            ('{:.%df}' % (digits)).format(row['askVolume'])
+        ])
 
 
 if __name__ == '__main__':
@@ -230,6 +218,7 @@ if __name__ == '__main__':
 
     # output array stdout/file
     if arguments.outputFile:
-        writeToCsv(rows, arguments.outputFile)
+        with open(arguments.outputFile, 'w') as outputFile:
+            toCsv(rows, arguments.digits, outputFile)
     else:
-        dump(rows)
+        toCsv(rows, arguments.digits, sys.stdout)
