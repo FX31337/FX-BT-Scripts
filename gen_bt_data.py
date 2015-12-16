@@ -44,7 +44,7 @@ def linearModel(startDate, endDate, startPrice, endPrice, deltaTime, spread):
     return ticks
 
 
-def zigzagModel(startDate, endDate, startPrice, endPrice, deltaTime, spread):
+def zigzagModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, digits):
     timestamp = startDate
     bidPrice = startPrice
     askPrice = bidPrice + spread
@@ -71,6 +71,7 @@ def zigzagModel(startDate, endDate, startPrice, endPrice, deltaTime, spread):
             bidPrice += (forward + 2*backward)/forward*lift
         else:
             bidPrice -= lift
+        bidPrice = max(bidPrice, 10**-digits)  # Don't let price to fall below displayable precision
         askPrice = bidPrice + spread
         (bidVolume, askVolume) = volumesFromTimestamp(timestamp, spread)
 
@@ -258,7 +259,7 @@ if __name__ == '__main__':
     if arguments.pattern == 'none':
         rows = linearModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread)
     elif arguments.pattern == 'zigzag':
-        rows = zigzagModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread)
+        rows = zigzagModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.digits)
     elif arguments.pattern == 'wave':
         rows = waveModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.digits, arguments.volatility)
     elif arguments.pattern == 'curve':
