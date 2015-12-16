@@ -44,6 +44,54 @@ def linearModel(startDate, endDate, startPrice, endPrice, deltaTime, spread):
     return ticks
 
 
+def zigzagModel(startDate, endDate, startPrice, endPrice, deltaTime, spread):
+    timestamp = startDate
+    bidPrice = startPrice
+    askPrice = bidPrice + spread
+    bidVolume = 1
+    askVolume = bidVolume + spread
+    deltaPrice = endPrice - startPrice
+    count = ceil((endDate + datetime.timedelta(days=1) - startDate)/deltaTime)
+    lift = deltaPrice/count
+    forward = 500
+    backward = 400
+    ticks = []
+    # Calculate zigzag body
+    for i in range(0, count - backward):
+        ticks += [{
+            'timestamp': timestamp,
+             'bidPrice': bidPrice,
+             'askPrice': askPrice,
+            'bidVolume': bidVolume,
+            'askVolume': askVolume
+        }]
+        i += 1
+        timestamp += deltaTime
+        if i%(forward + backward) < forward:
+            bidPrice += (forward + 2*backward)/forward*lift
+        else:
+            bidPrice -= lift
+        askPrice = bidPrice + spread
+        (bidVolume, askVolume) = volumesFromTimestamp(timestamp, spread)
+
+    # Calculate tail as a linear line
+    lift = (endPrice - bidPrice)/(backward - 1)
+    for i in range(count - backward, count):
+        ticks += [{
+            'timestamp': timestamp,
+             'bidPrice': bidPrice,
+             'askPrice': askPrice,
+            'bidVolume': bidVolume,
+            'askVolume': askVolume
+        }]
+        i += 1
+        timestamp += deltaTime
+        bidPrice += lift
+        askPrice = bidPrice + spread
+        (bidVolume, askVolume) = volumesFromTimestamp(timestamp, spread)
+    return ticks
+
+
 def waveModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, digits, volatility):
     timestamp = startDate
     bidPrice = startPrice
@@ -209,6 +257,8 @@ if __name__ == '__main__':
     rows = None
     if arguments.pattern == 'none':
         rows = linearModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread)
+    elif arguments.pattern == 'zigzag':
+        rows = zigzagModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread)
     elif arguments.pattern == 'wave':
         rows = waveModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.digits, arguments.volatility)
     elif arguments.pattern == 'curve':
