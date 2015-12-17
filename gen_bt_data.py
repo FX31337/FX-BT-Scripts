@@ -44,7 +44,7 @@ def linearModel(startDate, endDate, startPrice, endPrice, deltaTime, spread):
     return ticks
 
 
-def zigzagModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, digits, volatility):
+def zigzagModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, volatility):
     timestamp = startDate
     bidPrice = startPrice
     askPrice = bidPrice + spread
@@ -71,7 +71,6 @@ def zigzagModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, dig
             bidPrice += (forward + 2*backward)/forward*lift
         else:
             bidPrice -= lift
-        bidPrice = max(bidPrice, 10**-digits)  # Don't let price to fall below displayable precision
         askPrice = bidPrice + spread
         (bidVolume, askVolume) = volumesFromTimestamp(timestamp, spread)
 
@@ -93,7 +92,7 @@ def zigzagModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, dig
     return ticks
 
 
-def waveModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, digits, volatility):
+def waveModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, volatility):
     timestamp = startDate
     bidPrice = startPrice
     askPrice = bidPrice + spread
@@ -118,7 +117,6 @@ def waveModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, digit
             bidPrice = abs(startPrice + i/(count - 1)*deltaPrice + volatility*sin(i/(count - 1)*3*pi))
         else:
             bidPrice = abs(startPrice + (volatility*sin(i/(count - 1)*3*pi)))
-        bidPrice = max(bidPrice, 10**-digits)  # Don't let price to fall below displayable precision
         askPrice = bidPrice + spread
         (bidVolume, askVolume) = volumesFromTimestamp(timestamp, spread)
     return ticks
@@ -179,8 +177,8 @@ def toCsv(rows, digits, output):
     for row in rows:
         csvWriter.writerow([
             row['timestamp'].strftime('%Y.%m.%d %H:%M:%S.%f')[:-3],
-            ('{:.%df}' % (digits)).format(row['bidPrice']),
-            ('{:.%df}' % (digits)).format(row['askPrice']),
+            ('{:.%df}' % (digits)).format(max(row['bidPrice'], 10**-digits)),
+            ('{:.%df}' % (digits)).format(max(row['askPrice'], 10**-digits)),
             ('{:.%df}' % (digits)).format(row['bidVolume']),
             ('{:.%df}' % (digits)).format(row['askVolume'])
         ])
@@ -259,9 +257,9 @@ if __name__ == '__main__':
     if arguments.pattern == 'none':
         rows = linearModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread)
     elif arguments.pattern == 'zigzag':
-        rows = zigzagModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.digits, arguments.volatility)
+        rows = zigzagModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.volatility)
     elif arguments.pattern == 'wave':
-        rows = waveModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.digits, arguments.volatility)
+        rows = waveModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.volatility)
     elif arguments.pattern == 'curve':
         rows = curveModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.volatility)
     elif arguments.pattern == 'random':
