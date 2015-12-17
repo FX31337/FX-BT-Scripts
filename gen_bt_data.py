@@ -44,7 +44,7 @@ def linearModel(startDate, endDate, startPrice, endPrice, deltaTime, spread):
     return ticks
 
 
-def zigzagModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, digits):
+def zigzagModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, digits, volatility):
     timestamp = startDate
     bidPrice = startPrice
     askPrice = bidPrice + spread
@@ -54,7 +54,7 @@ def zigzagModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, dig
     count = ceil((endDate + datetime.timedelta(days=1) - startDate)/deltaTime)
     lift = deltaPrice/count
     forward = 500
-    backward = 400
+    backward = int(volatility*50)
     ticks = []
     # Calculate zigzag body
     for i in range(0, count - backward):
@@ -259,7 +259,7 @@ if __name__ == '__main__':
     if arguments.pattern == 'none':
         rows = linearModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread)
     elif arguments.pattern == 'zigzag':
-        rows = zigzagModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.digits)
+        rows = zigzagModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.digits, arguments.volatility)
     elif arguments.pattern == 'wave':
         rows = waveModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.digits, arguments.volatility)
     elif arguments.pattern == 'curve':
