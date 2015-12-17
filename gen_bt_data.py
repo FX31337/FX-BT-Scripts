@@ -124,7 +124,7 @@ def waveModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, digit
     return ticks
 
 
-def curveModel(startDate, endDate, startPrice, endPrice, deltaTime, spread):
+def curveModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, volatility):
     timestamp = startDate
     bidPrice = startPrice
     askPrice = bidPrice + spread
@@ -132,7 +132,7 @@ def curveModel(startDate, endDate, startPrice, endPrice, deltaTime, spread):
     askVolume = bidVolume + spread
     deltaPrice = endPrice - startPrice
     count = ceil((endDate + datetime.timedelta(days=1) - startDate)/deltaTime)
-    d = count/2  # Denominator for curve shaping
+    d = count/volatility  # A kind of volatility interpretation via curve shaping
     ticks = []
     for i in range(0, count):
         ticks += [{
@@ -263,7 +263,7 @@ if __name__ == '__main__':
     elif arguments.pattern == 'wave':
         rows = waveModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.digits, arguments.volatility)
     elif arguments.pattern == 'curve':
-        rows = curveModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread)
+        rows = curveModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.volatility)
     elif arguments.pattern == 'random':
         rows = randomModel(startDate, endDate, arguments.startPrice, arguments.endPrice, deltaTime, spread, arguments.volatility)
 
