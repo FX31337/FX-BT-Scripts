@@ -154,8 +154,11 @@ def randomModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, vol
     askPrice = bidPrice + spread
     bidVolume = 1
     askVolume = bidVolume + spread
+    deltaPrice = endPrice - startPrice
+    count = ceil((endDate + datetime.timedelta(days=1) - startDate)/deltaTime)
+    lift = deltaPrice/(count - 2)
     ticks = []
-    while timestamp < (endDate + datetime.timedelta(days=1)):
+    for i in range(0, count):
         ticks += [{
             'timestamp': timestamp,
              'bidPrice': bidPrice,
@@ -164,7 +167,7 @@ def randomModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, vol
             'askVolume': askVolume
         }]
         timestamp += deltaTime
-        bidPrice = 1 + volatility*random.random()
+        bidPrice = startPrice + i*lift + volatility*random.random()*startPrice/100
         askPrice = bidPrice + spread
         (bidVolume, askVolume) = volumesFromTimestamp(timestamp, spread)
     ticks[-1]['bidPrice'] = endPrice
