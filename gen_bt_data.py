@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# Script to generate backtest data in CSV format.
+# Example usage:
+#  ./gen_bt_data.py -s 10 -p random -v 100 2014.01.01 2014.01.30 2.0 4.0 | gnuplot -p -e "set datafile separator ','; plot '-' using 3 w l"
 
 import argparse
 import sys
@@ -154,9 +157,8 @@ def randomModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, vol
     askPrice = bidPrice + spread
     bidVolume = 1
     askVolume = bidVolume + spread
-    deltaPrice = endPrice - startPrice
+    deltaPrice = deltaTime/(endDate + datetime.timedelta(days=1) - startDate - deltaTime)*(endPrice - startPrice)
     count = ceil((endDate + datetime.timedelta(days=1) - startDate)/deltaTime)
-    lift = deltaPrice/(count - 2)
     ticks = []
     for i in range(0, count):
         ticks += [{
@@ -167,7 +169,7 @@ def randomModel(startDate, endDate, startPrice, endPrice, deltaTime, spread, vol
             'askVolume': askVolume
         }]
         timestamp += deltaTime
-        bidPrice = startPrice + i*lift + volatility*random.random()*startPrice/100
+        bidPrice += deltaPrice + deltaPrice * (random.random()-0.5) * volatility
         askPrice = bidPrice + spread
         (bidVolume, askVolume) = volumesFromTimestamp(timestamp, spread)
     ticks[-1]['bidPrice'] = endPrice
