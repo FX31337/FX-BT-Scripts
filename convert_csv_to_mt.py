@@ -19,10 +19,8 @@ class Input:
             print("[ERROR] '%s' raised when tried to read the file '%s'" % (e.strerror, e.filename))
             sys.exit(1)
 
-
     def __del__(self):
         self.path.close()
-
 
     def _addBar(self, barTimestamp, tickTimestamp, open, high, low, close, volume):
         self.uniBars += [{
@@ -35,11 +33,9 @@ class Input:
                   'volume': volume
         }]
 
-
 class CSV(Input):
     def __iter__(self):
         return self
-
 
     def __next__(self):
         line = self.path.readline()
@@ -48,18 +44,16 @@ class CSV(Input):
         else:
             raise StopIteration
 
-
     def _parseLine(self, line):
         tick = line.split(',')
         return {
-            'timestamp': datetime.datetime.strptime(  # Storing timestamp as float to preserve its precision
-                               tick[0], '%Y.%m.%d %H:%M:%S.%f').replace(tzinfo=datetime.timezone.utc).timestamp(),
+            # Storing timestamp as float to preserve its precision.
+            'timestamp': time.mktime(datetime.datetime.strptime(tick[0], '%Y.%m.%d %H:%M:%S.%f').replace(tzinfo=datetime.timezone.utc).timetuple()),
              'bidPrice': float(tick[1]),
              'askPrice': float(tick[2]),
             'bidVolume': float(tick[3]),
             'askVolume': float(tick[4])               # float() handles ending '\n' character
         }
-
 
 class Output:
     def __init__(self, timeframe, path):
