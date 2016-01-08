@@ -69,7 +69,7 @@ class Output:
 
         try:
             os.remove(path)  # Remove existing output file before creating an appended new one
-        except FileNotFoundError as e:
+        except (OSError, IOError) as e:
             pass
         try:
             self.path = open(path, 'ab')
