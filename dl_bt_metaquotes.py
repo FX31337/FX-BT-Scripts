@@ -136,17 +136,35 @@ def decode_body(buf, decompress=True):
       return head, body
 
 
+# MetaQuotes Format Decompressor
+#
+# A .dat file contains 3 main types of blocks: Type-1, Type-2 and Type-3.
+# Every data file starts with Type-1 block(s) since this type stores exact
+# values for timestamp, open/high/low/close prices and the volume. After a
+# Type-1 block it can be continued with incremental types (Type-2 or Type-3).
+# Each Type-3 block represents a minute data with incremental open/high/low/close
+# price and volume data. Type-2 blocks contain highly compressable minute data
+# which have the same values or have just a small difference between eachother,
+# but it would need further investigation.
+#
 def decompress(data, year, month):
-    startDate = datetime.datetime(int(year), int(month)    , 1, 0, 0, tzinfo=datetime.timezone.utc)
-    endDate   = datetime.datetime(int(year), int(month) + 1, 1, 0, 0, tzinfo=datetime.timezone.utc)
     i = 0
     bars = []
-    while i < len(data) - 16:
-        timestamp = datetime.datetime.fromtimestamp(unpack('<i', data[i + 1:i + 1 + 4])[0], datetime.timezone.utc)  # This won't be needed anymore when the full structure will be got revealed
-        # Type3 test
+    while i < len(data):
+        # Type-3 Block
+        #   Description : one minute step data, stores only incremental values
+        #   Block length: 1 byte flag + streak*5 bytes of data
+        #   Flag codes  : 0xca..0xff stores the length of streak in this type of block
+        #   Field_1     : 1 byte, open price incremental stored as a signed char and added to previous close price
+        #   Field_2     : 1 byte, high price incremental stored as an unsigned char and added to open price
+        #   Field_3     : 1 byte, low price incremental stored as an unsigned char and subtracted from open price
+        #   Field_4     : 1 byte, close price incremental stored as a signed char and added to open price
+        #   Field_5     : 1 byte, volume incremental TODO
         if data[i] > 0xbf:
-            streak = data[i] - 0xbf
-            i += 1
+            streak = data[i] - 0xbf  # Get the number of streaks hiding inside this block
+            i += 1                   # Move index to first data byte of current streak
+
+            # Transform streak bytes into usable data and collect them in 'bars' list
             for s in range(0, streak):
                 timestamp = lastBar['timestamp'] + datetime.timedelta(minutes=1)
                 open      = lastBar['close'] + unpack('b', bytes([data[i    ]]))[0]
@@ -154,6 +172,7 @@ def decompress(data, year, month):
                 low       =            open  - unpack('B', bytes([data[i + 2]]))[0]
                 close     =            open  + unpack('b', bytes([data[i + 3]]))[0]
                 volume    =                    unpack('B', bytes([data[i + 4]]))[0]
+
                 lastBar = {
                     'timestamp': timestamp,
                          'open': open,
@@ -165,10 +184,24 @@ def decompress(data, year, month):
                       'address': i
                 }
                 bars += [lastBar]
+
+                # Move index to first byte of next block or type
                 i += 5
-        # Type2 test
+
+        # Type-2 Block
+        #   Description : kind of repeater type for highly compressable one minute step data
+        #   Block length: 1 byte flag + streak*6 bytes of data
+        #   Flag codes  : 0x8a..0xbf stores the length of streak in this type of block
+        #   Field_1     : TODO
+        #   Field_2     : TODO
+        #   Field_3     : TODO
+        #   Field_4     : TODO
+        #   Field_5     : TODO
+        #   Field_6     : TODO
         elif data[i] > 0x7f:
-            streak = data[i] - 0x7f
+            streak = data[i] - 0x7f  # Get the number of streaks hiding inside this block
+            i += 1                   # Move index to first data byte of current streak
+
             # TODO Reveal repeater mechanism, until that indicate missing bars with
             #      EPOCH timestamp and unit open/high/low/close/volume values
             lastBar = {
@@ -181,25 +214,36 @@ def decompress(data, year, month):
                      'type': 2,
                   'address': i
             }
-            bars += [lastBar]
-            i += 1 + streak*6
-        # Type1 test
+            bars += [lastBar]  # *WARNING* It adds just one bar for now but the block can contain much more bars!
+
+            # Move index to first byte of next block or type
+            i += streak*6
+
+        # Type-1 Block
+        #   Description : kind of synchronization type, stores exact values
+        #   Block length: 1 byte flag + streak*16 bytes of data
+        #   Flag codes  : 0x4a..0x7f stores the length of streak in this type of block
+        #   Byte order  : Little-Endian
+        #   Field_1     : 4 bytes, timestamp stored as an unsigned integer
+        #   Field_2     : 4 bytes, open price stored as an unsigned integer and multiplied by 100,000
+        #   Field_3     : 4 bytes, high price stored as a unsigned short added to open price
+        #   Field_4     : 4 bytes, low price stored as a unsigned short added to open price
+        #   Field_5     : 4 bytes, close price stored as a signed short added to open price
+        #   Field_6     : 4 bytes, volume TODO *PROBABLY* stored as an unsigned integer
         elif data[i] > 0x3f:
-            # Check if it's a real Type1 bar or not
-            if timestamp < startDate or timestamp >= endDate:
-                i += 1
-                continue
-            # Yes, it's really Type1
-            streak = data[i] - 0x3f
-            i += 1
+            streak = data[i] - 0x3f  # Get the number of streaks hiding inside this block
+            i += 1                   # Move index to first data byte of current streak
+
+            # Transform streak bytes into usable data and collect them in 'bars' list
             for s in range(0, streak):
                 timestamp = datetime.datetime.fromtimestamp(
-                                   unpack('<i', data[i     :i +  4])[0], datetime.timezone.utc)
-                open      =        unpack('<i', data[i +  4:i +  8])[0]
-                high      = open + unpack('<h', data[i +  8:i + 10])[0]
-                low       = open - unpack('<h', data[i + 10:i + 12])[0]
+                                   unpack('<I', data[i     :i +  4])[0], datetime.timezone.utc)
+                open      =        unpack('<I', data[i +  4:i +  8])[0]
+                high      = open + unpack('<H', data[i +  8:i + 10])[0]
+                low       = open - unpack('<H', data[i + 10:i + 12])[0]
                 close     = open + unpack('<h', data[i + 12:i + 14])[0]
                 volume    =        unpack('<H', data[i + 14:i + 16])[0]
+
                 lastBar = {
                     'timestamp': timestamp,
                          'open': open,
@@ -211,6 +255,8 @@ def decompress(data, year, month):
                       'address': i
                 }
                 bars += [lastBar]
+
+                # Move index to first byte of next block or type
                 i += 16
         else:
             i += 1
