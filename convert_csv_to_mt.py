@@ -251,59 +251,59 @@ class FXT(Output):
         header += bytearray(server.ljust(128, '\x00'), 'latin1', 'ignore')              # Server
         header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')               # Symbol
         header += pack('<i', timeframe)                                                 # Period of data aggregation in minutes
-        header += pack('<i', 0)                                                         # Model - for what modeling type was the ticks sequence generated, 0 means ``every tick model''
-        header += pack('<i', self.barCount)                                             # Bars - Amount bars in history
+        header += pack('<i', 0)                                                         # Model - for what modeling type was the ticks sequence generated (0 every tick).
+        header += pack('<i', self.barCount)                                             # Bars - amount of bars in history.
         header += pack('<i', int(firstUniBar['barTimestamp']))                          # FromDate - Date of first tick
         header += pack('<i', int(lastUniBar['barTimestamp']))                           # ToDate - Date of last tick
-        header += bytearray(4)                                                          # 4 Bytes of padding
-        header += pack('<d', 99.9)                                                      # ModelQuality - modeling quality
+        header += bytearray(4)                                                          # Add 4 bytes of padding. This potentially can be totalTicks.
+        header += pack('<d', 99.0)                                                      # Modeling quality.
         # General parameters
         header += bytearray('EUR'.ljust(12, '\x00'), 'latin1', 'ignore')                # Currency - currency base
         header += pack('<i', spread)                                                    # Spread in points.
         header += pack('<i', 5)                                                         # Digits, using the default value of FXT format
-        header += bytearray(4)                                                          # 4 Bytes of padding
+        header += bytearray(4)                                                          # Add 4 bytes of padding.
         header += pack('<d', 1e-5)                                                      # Point
         header += pack('<i', 1)                                                         # LotMin - minimum lot
         header += pack('<i', 50000)                                                     # LotMax - maximum lot
         header += pack('<i', 1)                                                         # LotStep
         header += pack('<i', 0)                                                         # StopsLevel - stops level value
         header += pack('<i', 1)                                                         # GtcPendings - instruction to close pending orders at the end of day, true by default
-        header += bytearray(4)                                                          # 4 Bytes of padding
+        header += bytearray(4)                                                          # Add 4 bytes of padding.
         # Profit Calculation parameters
         header += pack('<d', 100000.0)                                                  # ContractSize - contract size
         header += pack('<d', 0.0)                                                       # TickValue - value of one tick
         header += pack('<d', 0.0)                                                       # TickSize - size of one tick
-        header += pack('<i', 0)                                                         # ProfitMode - profit calculation mode {PROFIT_CALC_FOREX, PROFIT_CALC_CFD, PROFIT_CALC_FUTURES}
+        header += pack('<i', 0)                                                         # Profit calculation mode {PROFIT_CALC_FOREX, PROFIT_CALC_CFD, PROFIT_CALC_FUTURES}
         # Swap calculation
-        header += pack('<i', 0)                                                         # SwapEnable - enable swap, true by default
-        header += pack('<i', 0)                                                         # SwapType - type of swap {SWAP_BY_POINTS, SWAP_BY_DOLLARS, SWAP_BY_INTEREST}
-        header += bytearray(4)                                                          # 4 Bytes of padding
+        header += pack('<i', 1)                                                         # Enable swap (default: True).
+        header += pack('<i', 0)                                                         # Type of swap {SWAP_BY_POINTS, SWAP_BY_DOLLARS, SWAP_BY_INTEREST}
+        header += bytearray(4)                                                          # Add 4 bytes of padding.
         header += pack('<d', 0.0)                                                       # SwapLong
         header += pack('<d', 0.0)                                                       # SwapShort - swap overnight value
-        header += pack('<i', 2)                                                         # SwapRolloverThreeDays - three-days swap rollover
+        header += pack('<i', 3)                                                         # Three-days swap rollover - number of day of triple swaps.
         # Margin calculation
-        header += pack('<i', 100)                                                       # Leverage, 100 by default
-        header += pack('<i', 1)                                                         # FreeMarginMode - free margin calculation mode {MARGIN_DONT_USE, MARGIN_USE_ALL, MARGIN_USE_PROFIT, MARGIN_USE_LOSS}
-        header += pack('<i', 0)                                                         # MarginMode - margin calculation mode {MARGIN_CALC_FOREX,MARGIN_CALC_CFD,MARGIN_CALC_FUTURES,MARGIN_CALC_CFDINDEX}
-        header += pack('<i', 100)                                                       # MarginStopout - margin stopout level
-        header += pack('<i', 0)                                                         # MarginStopoutMode - stop out check mode {MARGIN_TYPE_PERCENT, MARGIN_TYPE_CURRENCY}
-        header += pack('<d', 100000.0)                                                  # MarginInitial - margin requirements
-        header += pack('<d', 100000.0)                                                  # MarginMaintenance - margin maintenance requirements
-        header += pack('<d', 50000.0)                                                   # MarginHedged - margin requirements for hedged positions
-        header += pack('<d', 1.25)                                                      # MarginDivider
-        header += bytearray('EUR'.ljust(12, '\x00'), 'latin1', 'ignore')                # MarginCurrency
-        header += bytearray(4)                                                          # 4 Bytes of padding
+        header += pack('<i', 100)                                                       # Leverage (default: 100).
+        header += pack('<i', 1)                                                         # Free margin calculation mode {MARGIN_DONT_USE, MARGIN_USE_ALL, MARGIN_USE_PROFIT, MARGIN_USE_LOSS}
+        header += pack('<i', 0)                                                         # Margin calculation mode {MARGIN_CALC_FOREX,MARGIN_CALC_CFD,MARGIN_CALC_FUTURES,MARGIN_CALC_CFDINDEX}
+        header += pack('<i', 30)                                                        # Margin stopout level (default: 30).
+        header += pack('<i', 0)                                                         # Margin stop out check mode {MARGIN_TYPE_PERCENT, MARGIN_TYPE_CURRENCY}
+        header += pack('<d', 0.0)                                                       # Margin requirements.
+        header += pack('<d', 0.0)                                                       # Margin maintenance requirements.
+        header += pack('<d', 0.0)                                                       # Margin requirements for hedged positions.
+        header += pack('<d', 1.0)                                                       # Margin divider.
+        header += bytearray('EUR'.ljust(12, '\x00'), 'latin1', 'ignore')                # Margin currency.
+        header += bytearray(4)                                                          # Padding space - add 4 bytes to align the next double.
         # Commission calculation
-        header += pack('<d', 0.0)                                                       # CommissionBase - basic commission
-        header += pack('<i', 1)                                                         # CommissionType - basic commission type {COMM_TYPE_MONEY, COMM_TYPE_PIPS, COMM_TYPE_PERCENT}
-        header += pack('<i', 0)                                                         # CommissionLots - commission per lot or per deal {COMMISSION_PER_LOT, COMMISSION_PER_DEAL}
+        header += pack('<d', 0.0)                                                       # Basic commission.
+        header += pack('<i', 0)                                                         # Basic commission type {COMM_TYPE_MONEY, COMM_TYPE_PIPS, COMM_TYPE_PERCENT}
+        header += pack('<i', 0)                                                         # Commission per lot or per deal {COMMISSION_PER_LOT, COMMISSION_PER_DEAL}
         # For internal use
-        header += pack('<i', 0)                                                         # FromBar - FromDate bar number
-        header += pack('<i', 0)                                                         # ToBar - ToDate bar number
-        header += pack('<6i', 1, 0, 0, 0, 0, 0)                                         # StartPeriod - number of bar at which the smaller period modeling started
-        header += pack('<i', 0)                                                         # SetFrom - begin date from tester settings
-        header += pack('<i', 0)                                                         # SetTo - end date from tester settings
-        header += pack('<i', 0)                                                         # FreezeLevel - order's freeze level in points
+        header += pack('<i', 0)                                                         # FromDate bar number.
+        header += pack('<i', 0)                                                         # ToDate bar number.
+        header += pack('<6i', 1, 0, 0, 0, 0, 0)                                         # Number of bar at which the smaller period modeling started.
+        header += pack('<i', 0)                                                         # Begin date from tester settings (must be zero).
+        header += pack('<i', 0)                                                         # End date from tester settings (must be zero).
+        header += pack('<i', 0)                                                         # Order's freeze level in points.
         header += bytearray(61*4)                                                       # Reserved - Space for future use
 
         self.path.write(header)
