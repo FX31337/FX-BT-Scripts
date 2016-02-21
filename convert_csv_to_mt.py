@@ -304,7 +304,8 @@ class FXT(Output):
         header += pack('<i', 0)                                                         # Begin date from tester settings (must be zero).
         header += pack('<i', 0)                                                         # End date from tester settings (must be zero).
         header += pack('<i', 0)                                                         # Order's freeze level in points.
-        header += bytearray(61*4)                                                       # Reserved - Space for future use
+        header += pack('<i', 0)                                                         # For generating errors.
+        header += bytearray(60*4)                                                       # Reserved - Space for future use
 
         self.path.write(header)
         self.path.write(bars)
