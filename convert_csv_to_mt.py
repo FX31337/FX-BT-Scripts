@@ -259,7 +259,7 @@ class FXT(Output):
         header += pack('<d', 99.9)                                                      # ModelQuality - modeling quality
         # General parameters
         header += bytearray('EUR'.ljust(12, '\x00'), 'latin1', 'ignore')                # Currency - currency base
-        header += pack('<i', spread)                                                    # Spread in pips
+        header += pack('<i', spread)                                                    # Spread in points.
         header += pack('<i', 5)                                                         # Digits, using the default value of FXT format
         header += bytearray(4)                                                          # 4 Bytes of padding
         header += pack('<d', 1e-5)                                                      # Point
@@ -330,7 +330,7 @@ if __name__ == '__main__':
     argumentParser.add_argument('-t', '--timeframe',
         action='store',      dest='timeframe', help='one of the timeframe values: M1, M5, M15, M30, H1, H4, D1, W1, MN', default='M1')
     argumentParser.add_argument('-p', '--spread',
-        action='store',      dest='spread', help='spread value in pips', default=20)
+        action='store',      dest='spread', help='spread value in points', default=20)
     argumentParser.add_argument('-d', '--output-dir',
         action='store',      dest='outputDir', help='destination directory to save the output file', default='.')
     argumentParser.add_argument('-S', '--server',
