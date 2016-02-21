@@ -209,7 +209,8 @@ class HST574(Output):
     def _packUniBar(self, uniBar):
         bar = bytearray()
         bar += pack('<i', uniBar['barTimestamp'])           # Time
-        bar += bytearray(4)                                 # 4 Bytes of padding
+        bar += bytearray(4)                                 # Add 4 bytes of padding.
+        # OHLCV values.
         bar += pack('<d', uniBar['open'])                   # Open
         bar += pack('<d', uniBar['high'])                   # High
         bar += pack('<d', uniBar['low'])                    # Low
@@ -223,7 +224,7 @@ class HST574(Output):
 
 class FXT(Output):
     def __init__(self, ticks, path, timeframe, server, symbol, spread):
-        # Initialize variables in parent constructor
+        # Initialize variables in parent constructor.
         super().__init__(timeframe, path)
 
         # Transform universal bar list to binary bar data (56 Bytes per bar)
@@ -231,17 +232,18 @@ class FXT(Output):
         firstUniBar = lastUniBar = None
         for tick in ticks:
             uniBar = self._aggregateWithTicks(tick)
-            if not firstUniBar: firstUniBar = uniBar             # Store first and
-            lastUniBar = uniBar                                  # last bar data for header
-            bars += pack('<i', int(uniBar['barTimestamp']))      # Time
-            bars += bytearray(4)                                 # 4 Bytes of padding
+            if not firstUniBar: firstUniBar = uniBar             # Store first and ...
+            lastUniBar = uniBar                                  # ... last bar data for header.
+            bars += pack('<i', int(uniBar['barTimestamp']))      # Bar datetime.
+            bars += bytearray(4)                                 # Add 4 bytes of padding.
+            # OHLCV values.
             bars += pack('<d', uniBar['open'])                   # Open
             bars += pack('<d', uniBar['high'])                   # High
             bars += pack('<d', uniBar['low'])                    # Low
             bars += pack('<d', uniBar['close'])                  # Close
-            bars += pack('<Q', max(round(uniBar['volume']), 1))  # Volume (Document says it's a double, though it's stored as a long int.)
-            bars += pack('<i', int(uniBar['tickTimestamp']))     # Current time within a bar
-            bars += pack('<i', 4)                                # Flag to launch an expert
+            bars += pack('<Q', max(round(uniBar['volume']), 1))  # Volume (documentation says it's a double, though it's stored as a long int).
+            bars += pack('<i', int(uniBar['tickTimestamp']))     # The current time within a bar.
+            bars += pack('<i', 4)                                # Flag to launch an expert (0 - bar will be modified, but the expert will not be launched).
 
         # Build header (728 Bytes in total)
         header = bytearray()
