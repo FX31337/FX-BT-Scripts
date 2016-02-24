@@ -235,9 +235,8 @@ class Dukascopy:
             try:
                 urllib.request.urlretrieve(self.url, filename=self.path)
             except HTTPError as err:
-                if err.code == 404:
-                    print("Error: %s, reason: %s." % (err.code, err.reason));
-                    return False
+                print("Error: %s, reason: %s." % (err.code, err.reason));
+                return False
             except ContentTooShortError as err:
                 print("Error: The downloaded data is less than the expected amount, so skipping.")
                 return False
