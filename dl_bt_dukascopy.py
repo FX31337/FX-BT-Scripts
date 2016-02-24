@@ -15,6 +15,7 @@ except ImportError:
     from backports import lzma
 from struct import *
 import csv
+import subprocess
 
 intlist = lambda l: list(map(int, l))
 
@@ -258,12 +259,18 @@ class Dukascopy:
         print("Converting into CSV (%s)..." % (new_path))
 
         # Opening, uncompressing & reading raw data
-        lzma._BUFFER_SIZE = 1023 # Fix for liblzma bug: EOFError
         try:
             with lzma.open(self.path) as f:
                 data = f.read()
+        # Workaround for liblzma bug (https://bugs.python.org/issue21872)
         except EOFError:
-            return False
+            print("Info: Ran into liblzma decompressor bug, falling back to command line decompression...")
+            try:
+                pipe = subprocess.Popen(['xz', '-dc', self.path], stdout=subprocess.PIPE)
+            except FileNotFoundError:
+                print("Error: Unable to find the 'xz' LZMA decompressor utility in your PATH, moving on.")
+                return False
+            data, error = pipe.communicate()
 
         # Opening output CSV file for write
         f = open(new_path, 'w', newline='')
