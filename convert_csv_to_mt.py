@@ -258,9 +258,9 @@ class FXT(Output):
         header += pack('<i', int(firstUniBar['barTimestamp']))                          # FromDate - Date of first tick
         header += pack('<i', int(lastUniBar['barTimestamp']))                           # ToDate - Date of last tick
         header += bytearray(4)                                                          # Add 4 bytes of padding. This potentially can be totalTicks.
-        header += pack('<d', 99.0)                                                      # Modeling quality.
+        header += pack('<d', 99.9)                                                      # Modeling quality (max. 99.9).
         # General parameters
-        header += bytearray('EUR'.ljust(12, '\x00'), 'latin1', 'ignore')                # Currency - currency base
+        header += bytearray('EUR'.ljust(12, '\x00'), 'latin1', 'ignore')                # Base currency (12 bytes).
         header += pack('<i', spread)                                                    # Spread in points.
         header += pack('<i', 5)                                                         # Digits, using the default value of FXT format
         header += bytearray(4)                                                          # Add 4 bytes of padding.
@@ -269,7 +269,7 @@ class FXT(Output):
         header += pack('<i', 50000)                                                     # LotMax - maximum lot
         header += pack('<i', 1)                                                         # LotStep
         header += pack('<i', 0)                                                         # StopsLevel - stops level value
-        header += pack('<i', 1)                                                         # GtcPendings - instruction to close pending orders at the end of day, true by default
+        header += pack('<i', 0)                                                         # GTC (Good till cancel) - instruction to close pending orders at end of day (default: False).
         header += bytearray(4)                                                          # Add 4 bytes of padding.
         # Profit Calculation parameters
         header += pack('<d', 100000.0)                                                  # ContractSize - contract size
@@ -280,11 +280,11 @@ class FXT(Output):
         header += pack('<i', 1)                                                         # Enable swap (default: True).
         header += pack('<i', 0)                                                         # Type of swap {SWAP_BY_POINTS, SWAP_BY_DOLLARS, SWAP_BY_INTEREST}
         header += bytearray(4)                                                          # Add 4 bytes of padding.
-        header += pack('<d', 0.0)                                                       # SwapLong
-        header += pack('<d', 0.0)                                                       # SwapShort - swap overnight value
-        header += pack('<i', 3)                                                         # Three-days swap rollover - number of day of triple swaps.
+        header += pack('<d', 0.0)                                                       # Swap of the buy order - long overnight swap value.
+        header += pack('<d', 0.0)                                                       # Swap of the sell order - short overnight swap value.
+        header += pack('<i', 3)                                                         # Day of week to charge 3 days swap rollover. Default: WEDNESDAY (3).
         # Margin calculation
-        header += pack('<i', 100)                                                       # Leverage (default: 100).
+        header += pack('<i', 100)                                                       # Account leverage (default: 100).
         header += pack('<i', 1)                                                         # Free margin calculation mode {MARGIN_DONT_USE, MARGIN_USE_ALL, MARGIN_USE_PROFIT, MARGIN_USE_LOSS}
         header += pack('<i', 0)                                                         # Margin calculation mode {MARGIN_CALC_FOREX,MARGIN_CALC_CFD,MARGIN_CALC_FUTURES,MARGIN_CALC_CFDINDEX}
         header += pack('<i', 30)                                                        # Margin stopout level (default: 30).
@@ -292,7 +292,7 @@ class FXT(Output):
         header += pack('<d', 0.0)                                                       # Margin requirements.
         header += pack('<d', 0.0)                                                       # Margin maintenance requirements.
         header += pack('<d', 0.0)                                                       # Margin requirements for hedged positions.
-        header += pack('<d', 1.0)                                                       # Margin divider.
+        header += pack('<d', 1.0)                                                       # Margin divider used for leverage calculation.
         header += bytearray('EUR'.ljust(12, '\x00'), 'latin1', 'ignore')                # Margin currency.
         header += bytearray(4)                                                          # Padding space - add 4 bytes to align the next double.
         # Commission calculation
@@ -300,9 +300,14 @@ class FXT(Output):
         header += pack('<i', 0)                                                         # Basic commission type {COMM_TYPE_MONEY, COMM_TYPE_PIPS, COMM_TYPE_PERCENT}
         header += pack('<i', 0)                                                         # Commission per lot or per deal {COMMISSION_PER_LOT, COMMISSION_PER_DEAL}
         # For internal use
-        header += pack('<i', 0)                                                         # FromDate bar number.
-        header += pack('<i', 0)                                                         # ToDate bar number.
-        header += pack('<6i', 1, 0, 0, 0, 0, 0)                                         # Number of bar at which the smaller period modeling started.
+        header += pack('<i', 0)                                                         # Index of the first bar at which modeling started (0 for the first bar).
+        header += pack('<i', 0)                                                         # Index of the last bar at which modeling started (0 for the last bar).
+        header += pack('<i', 0)                                                         # Bar index where modeling started using M1 bars (0 for the first bar).
+        header += pack('<i', 0)                                                         # Bar index where modeling started using M5 bars (0 for the first bar).
+        header += pack('<i', 0)                                                         # Bar index where modeling started using M15 bars (0 for the first bar).
+        header += pack('<i', 0)                                                         # Bar index where modeling started using M30 bars (0 for the first bar).
+        header += pack('<i', 0)                                                         # Bar index where modeling started using H1 bars (0 for the first bar).
+        header += pack('<i', 0)                                                         # Bar index where modeling started using H4 bars (0 for the first bar).
         header += pack('<i', 0)                                                         # Begin date from tester settings (must be zero).
         header += pack('<i', 0)                                                         # End date from tester settings (must be zero).
         header += pack('<i', 0)                                                         # Order's freeze level in points.
