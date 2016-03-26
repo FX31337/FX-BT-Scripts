@@ -360,30 +360,21 @@ if __name__ == '__main__':
         print('[INFO] Symbol name: %s' % symbol)
 
     # Converting timeframe argument to minutes
-    timeframe = args.timeframe.lower()
-    if timeframe == 'm1':
-        timeframe = 1
-    elif timeframe == 'm5':
-        timeframe = 5
-    elif timeframe == 'm15':
-        timeframe = 15
-    elif timeframe == 'm30':
-        timeframe = 30
-    elif timeframe == 'h1':
-        timeframe = 60
-    elif timeframe == 'h4':
-        timeframe = 240
-    elif timeframe == 'd1':
-        timeframe = 1440
-    elif timeframe == 'w1':
-        timeframe = 10080
-    elif timeframe == 'mn':
-        timeframe = 43200
-    else:
-        print('[ERROR] Bad timeframe setting!')
-        sys.exit(1)
+    timeframe_list = []
+    timeframe_conv = {
+            'm1': 1, 'm5':  5, 'm15': 15, 'm30':  30,
+            'h1':60, 'h4':240, 'd1':1440, 'w1':10080, 'mn':43200
+    }
+
+    for arg in args.timeframe.lower().split(','):
+        if arg in timeframe_conv:
+            timeframe_list.append(timeframe_conv[arg])
+        else:
+            print('[ERROR] Bad timeframe setting \'{}\'!'.format(arg))
+            sys.exit(1)
+
     if args.verbose:
-        print('[INFO] Timeframe: %s - %d minute(s)' % (args.timeframe.upper(), timeframe))
+        print('[INFO] Timeframe: %s - %s minute(s)' % (args.timeframe.upper(), timeframe_list))
 
     # Checking spread argument
     spread = int(args.spread)
@@ -408,21 +399,26 @@ if __name__ == '__main__':
     if args.verbose:
         print('[INFO] Output format: %s' % outputFormat)
 
-    # Reading input file, creating intermediate format for future input sources other than CSV
-    try:
-        # Checking output file format argument and doing conversion
-        if outputFormat == 'hst4_509':
-            outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
-            HST509(CSV(args.inputFile), outputPath, timeframe, symbol)
-        elif outputFormat == 'hst4':
-            outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
-            HST574(CSV(args.inputFile), outputPath, timeframe, symbol)
-        elif outputFormat == 'fxt4':
-            outputPath = os.path.join(args.outputDir, _fxtFilename(symbol, timeframe))
-            FXT(CSV(args.inputFile), outputPath, timeframe, server, symbol, spread)
-        else:
-            print('[ERROR] Unknown output file format!')
-            sys.exit(1)
-    except KeyboardInterrupt as e:
-        print('\nExiting by user request...')
-        sys.exit()
+    multiple_timeframes = len(timeframe_list) > 1
+
+    for timeframe in timeframe_list:
+        if multiple_timeframes:
+            print('Converting the {}m timeframe'.format(timeframe))
+        # Reading input file, creating intermediate format for future input sources other than CSV
+        try:
+            # Checking output file format argument and doing conversion
+            if outputFormat == 'hst4_509':
+                outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
+                HST509(CSV(args.inputFile), outputPath, timeframe, symbol)
+            elif outputFormat == 'hst4':
+                outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
+                HST574(CSV(args.inputFile), outputPath, timeframe, symbol)
+            elif outputFormat == 'fxt4':
+                outputPath = os.path.join(args.outputDir, _fxtFilename(symbol, timeframe))
+                FXT(CSV(args.inputFile), outputPath, timeframe, server, symbol, spread)
+            else:
+                print('[ERROR] Unknown output file format!')
+                sys.exit(1)
+        except KeyboardInterrupt as e:
+            print('\nExiting by user request...')
+            sys.exit()
