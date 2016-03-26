@@ -238,7 +238,7 @@ class Dukascopy:
                 print("Error: %s, reason: %s." % (err.code, err.reason));
                 return False
             except socket.error as err:
-                print("Netword error: %s." % (err.strerror));
+                print("Network error: %s." % (err.strerror));
                 return False
             except ContentTooShortError as err:
                 print("Error: The downloaded data is less than the expected amount, so skipping.")
