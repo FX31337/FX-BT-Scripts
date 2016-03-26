@@ -7,7 +7,7 @@ import os
 import argparse
 import datetime
 import time
-import urllib.request
+import urllib.request, socket
 from urllib.error import HTTPError,ContentTooShortError
 try:
     import lzma
@@ -236,6 +236,9 @@ class Dukascopy:
                 urllib.request.urlretrieve(self.url, filename=self.path)
             except HTTPError as err:
                 print("Error: %s, reason: %s." % (err.code, err.reason));
+                return False
+            except socket.error as err:
+                print("Network error: %s." % (err.strerror));
                 return False
             except ContentTooShortError as err:
                 print("Error: The downloaded data is less than the expected amount, so skipping.")
