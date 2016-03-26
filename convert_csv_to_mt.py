@@ -399,7 +399,11 @@ if __name__ == '__main__':
     if args.verbose:
         print('[INFO] Output format: %s' % outputFormat)
 
+    multiple_timeframes = len(timeframe_list) > 1
+
     for timeframe in timeframe_list:
+        if multiple_timeframes:
+            print('Converting the {}m timeframe'.format(timeframe))
         # Reading input file, creating intermediate format for future input sources other than CSV
         try:
             # Checking output file format argument and doing conversion
