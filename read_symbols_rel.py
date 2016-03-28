@@ -42,6 +42,19 @@ def pretty_print_time(obj, x):
 def pretty_print_string(obj, x):
     return x.decode('utf-8')
 
+class TicksRaw(BStruct):
+    _endianness = '<'
+    _fields = [
+            ('symbol', '12s', pretty_print_string),
+            ('time', 'I', pretty_print_time),
+            ('bid', 'd'),
+            ('ask', 'd'),
+            ('counter', 'I'),
+            ('unknown', 'I'),
+            ]
+    _size = get_fields_size(_fields)
+    assert(_size == 40)
+
 class SymbolSel(BStruct):
     _endianness = '<'
     _fields = [
@@ -69,7 +82,8 @@ class SymbolSel(BStruct):
             ]
     _size = get_fields_size(_fields)
     assert(_size == 128)
-def dump_content(filename):
+
+def dump_sel_content(filename):
     try:
         fp = open(filename, 'rb')
     except OSError as e:
@@ -87,11 +101,33 @@ def dump_content(filename):
         obj = SymbolSel(buf)
         print(obj)
 
+def dump_raw_content(filename):
+    try:
+        fp = open(filename, 'rb')
+    except OSError as e:
+            print("[ERROR] '%s' raised when tried to read the file '%s'" % (e.strerror, filename))
+            sys.exit(1)
+
+    while True:
+        buf = fp.read(TicksRaw._size)
+
+        if len(buf) != TicksRaw._size:
+            break
+
+        obj = TicksRaw(buf)
+        print(obj)
+
 if __name__ == '__main__':
     # Parse the arguments
     argumentParser = argparse.ArgumentParser(add_help=False)
     argumentParser.add_argument('-i', '--input-file', action='store', dest='inputFile', help='input file', required=True)
+    argumentParser.add_argument('-t', '--input-type', action='store', dest='inputType', help='input type, either sel or raw', required=True)
     argumentParser.add_argument('-h', '--help', action='help', help='Show this help message and exit')
     args = argumentParser.parse_args()
 
-    dump_content(args.inputFile)
+    if args.inputType == 'sel':
+        dump_sel_content(args.inputFile)
+    elif args.inputType == 'raw':
+        dump_raw_content(args.inputFile)
+    else:
+        print('Invalid type {}!'.format(args.inputType))
