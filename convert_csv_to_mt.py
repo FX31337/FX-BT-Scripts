@@ -33,12 +33,23 @@ class Input:
                   'volume': volume
         }]
 
+def string_to_timestamp(s):
+    return datetime.datetime(
+            int(s[0:4]),   # Year
+            int(s[5:7]),   # Month
+            int(s[8:10]),  # Day
+            int(s[11:13]), # Hour
+            int(s[14:16]), # Minute
+            int(s[17:19]), # Second
+            int(s[20:]),   # Microseconds
+            datetime.timezone.utc)
+
 class CSV(Input):
     def __iter__(self):
         return self
 
     def __next__(self):
-        line = self.path.readline()
+        line = self.path.readline(512)
         if line:
             return self._parseLine(line)
         else:
@@ -48,7 +59,8 @@ class CSV(Input):
         tick = line.split(',')
         return {
             # Storing timestamp as float to preserve its precision.
-            'timestamp': time.mktime(datetime.datetime.strptime(tick[0], '%Y.%m.%d %H:%M:%S.%f').replace(tzinfo=datetime.timezone.utc).timetuple()),
+            # 'timestamp': time.mktime(datetime.datetime.strptime(tick[0], '%Y.%m.%d %H:%M:%S.%f').replace(tzinfo=datetime.timezone.utc).timetuple()),
+            'timestamp': string_to_timestamp(tick[0]).timestamp(),
              'bidPrice': float(tick[1]),
              'askPrice': float(tick[2]),
             'bidVolume': float(tick[3]),
@@ -203,7 +215,6 @@ class HST574(Output):
         self.path.write(header)
         self.path.write(bars)
 
-
     def _packUniBar(self, uniBar):
         bar = bytearray()
         bar += pack('<i', uniBar['barTimestamp'])           # Time
@@ -232,16 +243,13 @@ class FXT(Output):
             uniBar = self._aggregateWithTicks(tick)
             if not firstUniBar: firstUniBar = uniBar             # Store first and ...
             lastUniBar = uniBar                                  # ... last bar data for header.
-            bars += pack('<i', int(uniBar['barTimestamp']))      # Bar datetime.
-            bars += bytearray(4)                                 # Add 4 bytes of padding.
-            # OHLCV values.
-            bars += pack('<d', uniBar['open'])                   # Open
-            bars += pack('<d', uniBar['high'])                   # High
-            bars += pack('<d', uniBar['low'])                    # Low
-            bars += pack('<d', uniBar['close'])                  # Close
-            bars += pack('<Q', max(round(uniBar['volume']), 1))  # Volume (documentation says it's a double, though it's stored as a long int).
-            bars += pack('<i', int(uniBar['tickTimestamp']))     # The current time within a bar.
-            bars += pack('<i', 4)                                # Flag to launch an expert (0 - bar will be modified, but the expert will not be launched).
+            bars += pack('<iiddddQii',
+                    int(uniBar['barTimestamp']),                                 # Bar datetime.
+                    0,                                                           # Add 4 bytes of padding.
+                    uniBar['open'],uniBar['high'],uniBar['low'],uniBar['close'], # OHLCV values.
+                    max(round(uniBar['volume']), 1),                             # Volume (documentation says it's a double, though it's stored as a long int).
+                    int(uniBar['tickTimestamp']),                                # The current time within a bar.
+                    4)                                                           # Flag to launch an expert (0 - bar will be modified, but the expert will not be launched).
 
         # Build header (728 Bytes in total)
         header = bytearray()
