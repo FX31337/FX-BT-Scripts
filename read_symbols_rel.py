@@ -83,51 +83,47 @@ class SymbolSel(BStruct):
     _size = get_fields_size(_fields)
     assert(_size == 128)
 
-def dump_sel_content(filename):
+class Symgroups(BStruct):
+    _endianness = '<'
+    _fields = [
+            ('name', '16s', pretty_print_string),
+            ('description', '60s', pretty_print_string),
+            ('backgroundColor', 'I')
+            ]
+    _size = get_fields_size(_fields)
+    assert(_size == 80)
+
+def dump_content(filename, offset, strucc):
     try:
         fp = open(filename, 'rb')
     except OSError as e:
             print("[ERROR] '%s' raised when tried to read the file '%s'" % (e.strerror, filename))
             sys.exit(1)
 
-    magic = fp.read(4)
+    fp.seek(offset)
 
     while True:
-        buf = fp.read(SymbolSel._size)
+        buf = fp.read(strucc._size)
 
-        if len(buf) != SymbolSel._size:
+        if len(buf) != strucc._size:
             break
 
-        obj = SymbolSel(buf)
-        print(obj)
-
-def dump_raw_content(filename):
-    try:
-        fp = open(filename, 'rb')
-    except OSError as e:
-            print("[ERROR] '%s' raised when tried to read the file '%s'" % (e.strerror, filename))
-            sys.exit(1)
-
-    while True:
-        buf = fp.read(TicksRaw._size)
-
-        if len(buf) != TicksRaw._size:
-            break
-
-        obj = TicksRaw(buf)
+        obj = strucc(buf)
         print(obj)
 
 if __name__ == '__main__':
     # Parse the arguments
     argumentParser = argparse.ArgumentParser(add_help=False)
     argumentParser.add_argument('-i', '--input-file', action='store', dest='inputFile', help='input file', required=True)
-    argumentParser.add_argument('-t', '--input-type', action='store', dest='inputType', help='input type, either sel or raw', required=True)
+    argumentParser.add_argument('-t', '--input-type', action='store', dest='inputType', help='input type, either sel,raw or symgroups', required=True)
     argumentParser.add_argument('-h', '--help', action='help', help='Show this help message and exit')
     args = argumentParser.parse_args()
 
     if args.inputType == 'sel':
-        dump_sel_content(args.inputFile)
+        dump_content(args.inputFile, 4, SymbolSel)
     elif args.inputType == 'raw':
-        dump_raw_content(args.inputFile)
+        dump_content(args.inputFile, 0, TicksRaw)
+    elif args.inputType == 'symgroups':
+        dump_content(args.inputFile, 0, Symgroups)
     else:
         print('Invalid type {}!'.format(args.inputType))
