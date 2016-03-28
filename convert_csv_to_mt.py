@@ -159,7 +159,6 @@ class HST509(Output):
             (uniBar, newUniBar) = self._aggregate(tick)
             if newUniBar:
                 bars += self._packUniBar(uniBar)
-        bars += self._packUniBar(uniBar)
 
         self.path.write(header)
         self.path.write(bars)
@@ -200,7 +199,6 @@ class HST574(Output):
             (uniBar, newUniBar) = self._aggregate(tick)
             if newUniBar:
                 bars += self._packUniBar(uniBar)
-        bars += self._packUniBar(uniBar)
 
         self.path.write(header)
         self.path.write(bars)
