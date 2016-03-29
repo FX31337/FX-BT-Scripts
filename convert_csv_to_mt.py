@@ -9,6 +9,27 @@ from struct import pack
 import time
 import datetime
 
+class Spinner:
+    def __init__(self, step):
+        self._n = self._x = 0
+        self._chars = '\\|/-'
+        self._step = step
+
+    def spin(self):
+        self._n += 1
+
+        if self._n % self._step == 0:
+            sys.stdout.write('\b' + self._chars[self._x % 4])
+            sys.stdout.flush()
+
+            self._x += 1
+
+            if self._x >= 4:
+                self._x = 0
+
+            self._n = 0
+
+spinner = Spinner(100000)
 
 class Parsed(list):
 
@@ -27,7 +48,6 @@ class Parsed(list):
             'close': close,
             'volume': volume
         }]
-
 
 class CSV:
     def __init__(self, path):
@@ -166,6 +186,8 @@ class HST509(Output):
             if newUniBar:
                 bars += self._packUniBar(uniBar)
 
+            spinner.spin()
+
         self.path.write(header)
         self.path.write(bars)
 
@@ -205,6 +227,8 @@ class HST574(Output):
             (uniBar, newUniBar) = self._aggregate(tick)
             if newUniBar:
                 bars += self._packUniBar(uniBar)
+
+            spinner.spin()
 
         self.path.write(header)
         self.path.write(bars)
@@ -248,6 +272,8 @@ class FXT(Output):
             bars += pack('<Q', max(round(uniBar['volume']), 1))  # Volume (documentation says it's a double, though it's stored as a long int).
             bars += pack('<i', int(uniBar['tickTimestamp']))     # The current time within a bar.
             bars += pack('<i', 4)                                # Flag to launch an expert (0 - bar will be modified, but the expert will not be launched).
+
+            spinner.spin()
 
         # Build header (728 Bytes in total)
         header = bytearray()
