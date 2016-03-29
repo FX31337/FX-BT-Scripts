@@ -1,5 +1,5 @@
 PATH  := "$(PATH):$(PWD)"
-SHELL := env PATH=$(PATH) /bin/bash -x
+SHELL := env PATH=$(PATH) /bin/bash -xe
 pair    = EURUSD
 year 	  = 2014
 server  = FX
