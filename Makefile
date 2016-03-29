@@ -1,5 +1,6 @@
 PATH  := "$(PATH):$(PWD)"
 SHELL := env PATH=$(PATH) /bin/bash -xe
+xargs := $(shell which gxargs xargs | head -n1)
 pair    = EURUSD
 year 	  = 2014
 server  = FX
