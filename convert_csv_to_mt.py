@@ -10,20 +10,26 @@ import time
 import datetime
 
 class Spinner:
-    def __init__(self):
-        self._n = 0
+    def __init__(self, step):
+        self._n = self._x = 0
         self._chars = '\\|/-'
+        self._step = step
 
     def spin(self):
-        sys.stdout.write('\b' + self._chars[self._n % 4])
-        sys.stdout.flush()
-
         self._n += 1
 
-        if self._n >= 4:
+        if self._n % self._step == 0:
+            sys.stdout.write('\b' + self._chars[self._x % 4])
+            sys.stdout.flush()
+
+            self._x += 1
+
+            if self._x >= 4:
+                self._x = 0
+
             self._n = 0
 
-spinner = Spinner()
+spinner = Spinner(100000)
 
 class Parsed(list):
 
