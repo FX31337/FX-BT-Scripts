@@ -1,9 +1,10 @@
 PATH  := "$(PATH):$(PWD)"
 SHELL := env PATH=$(PATH) /bin/bash -xe
+xargs := $(shell which gxargs xargs | head -n1)
 pair    = EURUSD
 year 	  = 2014
 server  = FX
-dl_dir  = download/dukascopy
+dl_dir  = download/ds
 csvfile = ticks.csv
 spread=20
 
@@ -29,35 +30,30 @@ d1_fxt=$(pair)1440_0.fxt
 w1_fxt=$(pair)10080_0.fxt
 mn_fxt=$(pair)43200_0.fxt
 
-test: test-help test-download test-convert test-dump-hst test-dump-fxt
+test: test-help $(m1_hst) $(m1_fxt) test-dump-hst test-dump-fxt
 
-test-convert: convert_csv_to_mt.py $(csvfile) $(m1_hst).gz $(m1_fxt).gz
+$(dl_dir)/$(pair)/$(year)/01: dl_bt_dukascopy.py
+	dl_bt_dukascopy.py -v -p ${pair} -y ${year} -m 1 -c -d $(dl_dir)
 
-test-download: $(dl_dir)/$(pair)/01/%.csv
-$(dl_dir)/$(pair)/01/%.csv:
-	python3 dl_bt_dukascopy.py -v -p ${pair} -y ${year} -m 1 -c -d $(dl_dir)
+test-dump-hst:
+	find . -name "*.hst" -execdir convert_mt_to_csv.py -i {} -f hst4 -o {}.csv ';'
 
-test-dump-hst: M1/${pair}1.hst M5/${pair}5.hst
-	find . -name "*.hst" -execdir python3 `realpath convert_mt_to_csv.py` -i {} -f hst4 -o {}.csv ';'
+test-dump-fxt:
+	find . -name "*.fxt" -execdir convert_mt_to_csv.py -i {} -f fxt4 -o {}.csv ';'
 
-test-dump-fxt: M1/${pair}1_0.fxt M5/${pair}5_0.fxt
-	find . -name "*.fxt" -execdir python3 `realpath convert_mt_to_csv.py` -i {} -f fxt4 -o {}.csv ';'
-
-test-help:
+test-help: convert_csv_to_mt.py dl_bt_dukascopy.py convert_mt_to_csv.py
 	python3 convert_csv_to_mt.py --help
 	python3 dl_bt_dukascopy.py --help
 	python3 convert_mt_to_csv.py --help
 
-$(csvfile):
-	find . -name '*.csv' -print0 | sort -z | $(xargs) -r0 cat | tee $(csvfile) > /dev/null
-# find . -name '*.csv' -print0 | sort -z | $(xargs) -r0 cat | tee $(csvfile) | pv -ps $(size) > /dev/null
-
 # Generate HST files.
-$(m1_hst).gz:
+$(m1_hst): $(csvfile) convert_csv_to_mt.py
 	convert_csv_to_mt.py -v -i $(csvfile) -s $(pair) -p $(spread) -S default -t M1,M5,M15,M30,H1,H4,D1,W1,MN -f hst4
-	gzip -v *.hst
 
 # Generate FXT files.
-$(m1_fxt).gz:
+$(m1_fxt): $(csvfile) convert_csv_to_mt.py
 	convert_csv_to_mt.py -v -i $(csvfile) -s $(pair) -p $(spread) -S default -t M1,M5,M15,M30,H1,H4,D1,W1,MN -f fxt4
-	gzip -v *.fxt
+
+$(csvfile): $(dl_dir)/$(pair)/$(year)/01
+	find . -name '*.csv' -print0 | sort -z | $(xargs) -r0 cat | tee $(csvfile) > /dev/null
+# find . -name '*.csv' -print0 | sort -z | $(xargs) -r0 cat | tee $(csvfile) | pv -ps $(size) > /dev/null
