@@ -8,6 +8,7 @@ import re
 from struct import pack
 import time
 import datetime
+import mmap
 
 class Input:
     def __init__(self, path):
@@ -45,18 +46,22 @@ def string_to_timestamp(s):
             datetime.timezone.utc)
 
 class CSV(Input):
+    def __init__(self, path):
+        super().__init__(path)
+        self._map_obj = mmap.mmap(self.path.fileno(), 0, prot=mmap.PROT_READ)
+
     def __iter__(self):
         return self
 
     def __next__(self):
-        line = self.path.readline(512)
+        line = self._map_obj.readline()
         if line:
             return self._parseLine(line)
         else:
             raise StopIteration
 
     def _parseLine(self, line):
-        tick = line.split(',')
+        tick = line.split(b',')
         return {
             # Storing timestamp as float to preserve its precision.
             # 'timestamp': time.mktime(datetime.datetime.strptime(tick[0], '%Y.%m.%d %H:%M:%S.%f').replace(tzinfo=datetime.timezone.utc).timetuple()),
