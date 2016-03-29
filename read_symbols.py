@@ -43,7 +43,7 @@ def pretty_print_time(obj, x):
     return datetime.datetime.fromtimestamp(x)
 
 def pretty_print_string(obj, x):
-    return x.decode('utf-8')
+    return x.decode('utf-8').rstrip('\0')
 
 def pretty_print_ignore(obj, x):
     return '<...>'
