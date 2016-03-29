@@ -9,31 +9,36 @@ from struct import pack
 import time
 import datetime
 
-class Input:
+
+class Parsed(list):
+
+    def __init__(self, *args):
+        list.__init__(self, *args)
+        self.name = 'ParsedList'
+
+
+    def _addBar(self, barTimestamp, tickTimestamp, open, high, low, close, volume):
+        self.uniBars += [{
+            'barTimestamp': barTimestamp,
+            'tickTimestamp': tickTimestamp,
+            'open': open,
+            'high': high,
+            'low': low,
+            'close': close,
+            'volume': volume
+        }]
+
+
+class CSV:
     def __init__(self, path):
         if args.verbose:
-            print('[INFO] Trying to read data from %s...' % path)
+            print('[INFO] Pre parsing %s...' % path)
         try:
             self.path = open(path, 'r')
         except OSError as e:
             print("[ERROR] '%s' raised when tried to read the file '%s'" % (e.strerror, e.filename))
             sys.exit(1)
 
-    def __del__(self):
-        self.path.close()
-
-    def _addBar(self, barTimestamp, tickTimestamp, open, high, low, close, volume):
-        self.uniBars += [{
-            'barTimestamp': barTimestamp,
-           'tickTimestamp': tickTimestamp,
-                    'open': open,
-                    'high': high,
-                     'low': low,
-                   'close': close,
-                  'volume': volume
-        }]
-
-class CSV(Input):
     def __iter__(self):
         return self
 
@@ -49,11 +54,12 @@ class CSV(Input):
         return {
             # Storing timestamp as float to preserve its precision.
             'timestamp': time.mktime(datetime.datetime.strptime(tick[0], '%Y.%m.%d %H:%M:%S.%f').replace(tzinfo=datetime.timezone.utc).timetuple()),
-             'bidPrice': float(tick[1]),
-             'askPrice': float(tick[2]),
+            'bidPrice': float(tick[1]),
+            'askPrice': float(tick[2]),
             'bidVolume': float(tick[3]),
             'askVolume': float(tick[4])               # float() handles ending '\n' character
         }
+
 
 class Output:
     def __init__(self, timeframe, path):
@@ -397,6 +403,14 @@ if __name__ == '__main__':
     if args.verbose:
         print('[INFO] Output format: %s' % outputFormat)
 
+    # Reading input file to memory, converting time.
+    if args.verbose:
+        print('[INFO] Reading input file into memory, converting time. Input file: %s' % args.inputFile)
+
+    ticks = Parsed()
+    for line in CSV(args.inputFile):
+        ticks.append(line)
+
     multiple_timeframes = len(timeframe_list) > 1
 
     for timeframe in timeframe_list:
@@ -407,13 +421,13 @@ if __name__ == '__main__':
             # Checking output file format argument and doing conversion
             if outputFormat == 'hst4_509':
                 outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
-                HST509(CSV(args.inputFile), outputPath, timeframe, symbol)
+                HST509(ticks, outputPath, timeframe, symbol)
             elif outputFormat == 'hst4':
                 outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
-                HST574(CSV(args.inputFile), outputPath, timeframe, symbol)
+                HST574(ticks, outputPath, timeframe, symbol)
             elif outputFormat == 'fxt4':
                 outputPath = os.path.join(args.outputDir, _fxtFilename(symbol, timeframe))
-                FXT(CSV(args.inputFile), outputPath, timeframe, server, symbol, spread)
+                FXT(ticks, outputPath, timeframe, server, symbol, spread)
             else:
                 print('[ERROR] Unknown output file format!')
                 sys.exit(1)
