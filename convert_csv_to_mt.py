@@ -48,10 +48,7 @@ def string_to_timestamp(s):
 class CSV(Input):
     def __init__(self, path):
         super().__init__(path)
-
-        self._map_obj = mmap.mmap(self.path.fileno(), 0,
-                flags=mmap.MAP_SHARED,
-                prot=mmap.PROT_READ)
+        self._map_obj = mmap.mmap(self.path.fileno(), 0, prot=mmap.PROT_READ)
 
     def __iter__(self):
         return self
@@ -94,6 +91,7 @@ class Output:
 
     def __del__(self):
         self.path.close()
+
 
     def _aggregate(self, tick):
         if not self.endTimestamp or tick['timestamp'] >= self.endTimestamp:
@@ -159,9 +157,7 @@ class HST509(Output):
     def __init__(self, ticks, path, timeframe, symbol):
         # Initialize variables in parent constructor
         super().__init__(timeframe, path)
-        bars = bytearray()
 
-    def flush(self):
         # Build header (148 Bytes in total)
         header = bytearray()
         header += pack('<i', 400)                                                    # Version
@@ -174,13 +170,16 @@ class HST509(Output):
         header += pack('<i', 0)                                                      # Time of last synchronization
         header += bytearray(13*4)                                                    # Space for future use
 
+        # Transform universal bar list to binary bar data (44 Bytes per bar)
+        bars = bytearray()
+        for tick in ticks:
+            (uniBar, newUniBar) = self._aggregate(tick)
+            if newUniBar:
+                bars += self._packUniBar(uniBar)
+
         self.path.write(header)
         self.path.write(bars)
 
-    def pack_tick(self, tick):
-        (uniBar, newUniBar) = self._aggregate(tick)
-        if newUniBar:
-            bars += self._packUniBar(uniBar)
 
     def _packUniBar(self, uniBar):
         bar = bytearray()
@@ -198,15 +197,7 @@ class HST574(Output):
     def __init__(self, ticks, path, timeframe, symbol):
         # Initialize variables in parent constructor
         super().__init__(timeframe, path)
-        bars = bytearray()
 
-    def pack_tick(self, tick):
-        # Transform universal bar list to binary bar data (60 Bytes per bar)
-        (uniBar, newUniBar) = self._aggregate(tick)
-        if newUniBar:
-            bars += self._packUniBar(uniBar)
-
-    def flush(self):
         # Build header (148 Bytes in total)
         header = bytearray()
         header += pack('<i', 401)                                                    # Version
@@ -218,6 +209,13 @@ class HST574(Output):
         header += pack('<i', int(time.time()))                                       # Time of sign (database creation)
         header += pack('<i', 0)                                                      # Time of last synchronization
         header += bytearray(13*4)                                                    # Space for future use
+
+        # Transform universal bar list to binary bar data (60 Bytes per bar)
+        bars = bytearray()
+        for tick in ticks:
+            (uniBar, newUniBar) = self._aggregate(tick)
+            if newUniBar:
+                bars += self._packUniBar(uniBar)
 
         self.path.write(header)
         self.path.write(bars)
@@ -239,8 +237,13 @@ class HST574(Output):
 
 
 class FXT(Output):
-    def pack_tick(self, tick):
+    def __init__(self, ticks, path, timeframe, server, symbol, spread):
+        # Initialize variables in parent constructor.
+        super().__init__(timeframe, path)
+
         # Transform universal bar list to binary bar data (56 Bytes per bar)
+        bars = bytearray()
+        firstUniBar = lastUniBar = None
         for tick in ticks:
             uniBar = self._aggregateWithTicks(tick)
             if not firstUniBar: firstUniBar = uniBar             # Store first and ...
@@ -253,13 +256,6 @@ class FXT(Output):
                     int(uniBar['tickTimestamp']),                                # The current time within a bar.
                     4)                                                           # Flag to launch an expert (0 - bar will be modified, but the expert will not be launched).
 
-    def __init__(self, ticks, path, timeframe, server, symbol, spread):
-        # Initialize variables in parent constructor.
-        super().__init__(timeframe, path)
-        bars = bytearray()
-        firstUniBar = lastUniBar = None
-
-    def flush():
         # Build header (728 Bytes in total)
         header = bytearray()
         header += pack('<i', 405)                                                       # FXT header version: 405
@@ -416,31 +412,24 @@ if __name__ == '__main__':
 
     multiple_timeframes = len(timeframe_list) > 1
 
-    # Reading input file, creating intermediate format for future input sources other than CSV
-    obj = []
-
     for timeframe in timeframe_list:
-        # Checking output file format argument and doing conversion
-        if outputFormat == 'hst4_509':
-            outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
-            o = HST509(None, outputPath, timeframe, symbol)
-        elif outputFormat == 'hst4':
-            outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
-            o = HST574(None, outputPath, timeframe, symbol)
-        elif outputFormat == 'fxt4':
-            outputPath = os.path.join(args.outputDir, _fxtFilename(symbol, timeframe))
-            o = FXT(None, outputPath, timeframe, server, symbol, spread)
-        else:
-            print('[ERROR] Unknown output file format!')
-            sys.exit(1)
-
-        obj.append(o)
-
-    try:
-        for tick in CSV(args.inputFile):
-            map(lambda x: x.pack_tick(tick), obj)
-
-        map(lambda x: x.flush(), obj)
-    except KeyboardInterrupt as e:
-        print('\nExiting by user request...')
-        sys.exit()
+        if multiple_timeframes:
+            print('Converting the {}m timeframe'.format(timeframe))
+        # Reading input file, creating intermediate format for future input sources other than CSV
+        try:
+            # Checking output file format argument and doing conversion
+            if outputFormat == 'hst4_509':
+                outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
+                HST509(CSV(args.inputFile), outputPath, timeframe, symbol)
+            elif outputFormat == 'hst4':
+                outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
+                HST574(CSV(args.inputFile), outputPath, timeframe, symbol)
+            elif outputFormat == 'fxt4':
+                outputPath = os.path.join(args.outputDir, _fxtFilename(symbol, timeframe))
+                FXT(CSV(args.inputFile), outputPath, timeframe, server, symbol, spread)
+            else:
+                print('[ERROR] Unknown output file format!')
+                sys.exit(1)
+        except KeyboardInterrupt as e:
+            print('\nExiting by user request...')
+            sys.exit()
