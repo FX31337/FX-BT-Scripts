@@ -8,6 +8,7 @@ import re
 from struct import pack
 import time
 import datetime
+import mmap
 
 class Spinner:
     def __init__(self, step):
@@ -31,55 +32,67 @@ class Spinner:
 
 spinner = Spinner(100000)
 
-class Parsed(list):
-
-    def __init__(self, *args):
-        list.__init__(self, *args)
-        self.name = 'ParsedList'
-
-
-    def _addBar(self, barTimestamp, tickTimestamp, open, high, low, close, volume):
-        self.uniBars += [{
-            'barTimestamp': barTimestamp,
-            'tickTimestamp': tickTimestamp,
-            'open': open,
-            'high': high,
-            'low': low,
-            'close': close,
-            'volume': volume
-        }]
-
-class CSV:
+class Input:
     def __init__(self, path):
         if args.verbose:
-            print('[INFO] Pre parsing %s...' % path)
+            print('[INFO] Trying to read data from %s...' % path)
         try:
             self.path = open(path, 'r')
         except OSError as e:
             print("[ERROR] '%s' raised when tried to read the file '%s'" % (e.strerror, e.filename))
             sys.exit(1)
 
+    def __del__(self):
+        self.path.close()
+
+    def _addBar(self, barTimestamp, tickTimestamp, open, high, low, close, volume):
+        self.uniBars += [{
+            'barTimestamp': barTimestamp,
+           'tickTimestamp': tickTimestamp,
+                    'open': open,
+                    'high': high,
+                     'low': low,
+                   'close': close,
+                  'volume': volume
+        }]
+
+def string_to_timestamp(s):
+    return datetime.datetime(
+            int(s[0:4]),   # Year
+            int(s[5:7]),   # Month
+            int(s[8:10]),  # Day
+            int(s[11:13]), # Hour
+            int(s[14:16]), # Minute
+            int(s[17:19]), # Second
+            int(s[20:]),   # Microseconds
+            datetime.timezone.utc)
+
+class CSV(Input):
+    def __init__(self, path):
+        super().__init__(path)
+        self._map_obj = mmap.mmap(self.path.fileno(), 0, prot=mmap.PROT_READ)
+
     def __iter__(self):
         return self
 
     def __next__(self):
-        line = self.path.readline()
+        line = self._map_obj.readline()
         if line:
             return self._parseLine(line)
         else:
             raise StopIteration
 
     def _parseLine(self, line):
-        tick = line.split(',')
+        tick = line.split(b',')
         return {
             # Storing timestamp as float to preserve its precision.
-            'timestamp': time.mktime(datetime.datetime.strptime(tick[0], '%Y.%m.%d %H:%M:%S.%f').replace(tzinfo=datetime.timezone.utc).timetuple()),
-            'bidPrice': float(tick[1]),
-            'askPrice': float(tick[2]),
+            # 'timestamp': time.mktime(datetime.datetime.strptime(tick[0], '%Y.%m.%d %H:%M:%S.%f').replace(tzinfo=datetime.timezone.utc).timetuple()),
+            'timestamp': string_to_timestamp(tick[0]).timestamp(),
+             'bidPrice': float(tick[1]),
+             'askPrice': float(tick[2]),
             'bidVolume': float(tick[3]),
             'askVolume': float(tick[4])               # float() handles ending '\n' character
         }
-
 
 class Output:
     def __init__(self, timeframe, path):
@@ -262,16 +275,13 @@ class FXT(Output):
             uniBar = self._aggregateWithTicks(tick)
             if not firstUniBar: firstUniBar = uniBar             # Store first and ...
             lastUniBar = uniBar                                  # ... last bar data for header.
-            bars += pack('<i', int(uniBar['barTimestamp']))      # Bar datetime.
-            bars += bytearray(4)                                 # Add 4 bytes of padding.
-            # OHLCV values.
-            bars += pack('<d', uniBar['open'])                   # Open
-            bars += pack('<d', uniBar['high'])                   # High
-            bars += pack('<d', uniBar['low'])                    # Low
-            bars += pack('<d', uniBar['close'])                  # Close
-            bars += pack('<Q', max(round(uniBar['volume']), 1))  # Volume (documentation says it's a double, though it's stored as a long int).
-            bars += pack('<i', int(uniBar['tickTimestamp']))     # The current time within a bar.
-            bars += pack('<i', 4)                                # Flag to launch an expert (0 - bar will be modified, but the expert will not be launched).
+            bars += pack('<iiddddQii',
+                    int(uniBar['barTimestamp']),                                 # Bar datetime.
+                    0,                                                           # Add 4 bytes of padding.
+                    uniBar['open'],uniBar['high'],uniBar['low'],uniBar['close'], # OHLCV values.
+                    max(round(uniBar['volume']), 1),                             # Volume (documentation says it's a double, though it's stored as a long int).
+                    int(uniBar['tickTimestamp']),                                # The current time within a bar.
+                    4)                                                           # Flag to launch an expert (0 - bar will be modified, but the expert will not be launched).
 
             spinner.spin()
 
@@ -433,10 +443,6 @@ if __name__ == '__main__':
     if args.verbose:
         print('[INFO] Reading input file into memory, converting time. Input file: %s' % args.inputFile)
 
-    ticks = Parsed()
-    for line in CSV(args.inputFile):
-        ticks.append(line)
-
     multiple_timeframes = len(timeframe_list) > 1
 
     for timeframe in timeframe_list:
@@ -447,13 +453,13 @@ if __name__ == '__main__':
             # Checking output file format argument and doing conversion
             if outputFormat == 'hst4_509':
                 outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
-                HST509(ticks, outputPath, timeframe, symbol)
+                HST509(CSV(args.inputFile), outputPath, timeframe, symbol)
             elif outputFormat == 'hst4':
                 outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
-                HST574(ticks, outputPath, timeframe, symbol)
+                HST574(CSV(args.inputFile), outputPath, timeframe, symbol)
             elif outputFormat == 'fxt4':
                 outputPath = os.path.join(args.outputDir, _fxtFilename(symbol, timeframe))
-                FXT(ticks, outputPath, timeframe, server, symbol, spread)
+                FXT(CSV(args.inputFile), outputPath, timeframe, server, symbol, spread)
             else:
                 print('[ERROR] Unknown output file format!')
                 sys.exit(1)
