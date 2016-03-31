@@ -5,7 +5,7 @@ import sys
 import os
 import csv
 import re
-from struct import pack
+from struct import pack, pack_into, calcsize
 import time
 import datetime
 import mmap
@@ -105,7 +105,7 @@ class Output:
         except (OSError, IOError) as e:
             pass
         try:
-            self.path = open(path, 'ab')
+            self.path = open(path, 'wb')
         except OSError as e:
             print("[ERROR] '%s' raised when tried to open for appending the file '%s'" % (e.strerror, e.filename))
             sys.exit(1)
@@ -114,6 +114,8 @@ class Output:
     def __del__(self):
         self.path.close()
 
+    def finalize(self):
+        pass
 
     def _aggregate(self, tick):
         if not self.endTimestamp or tick['timestamp'] >= self.endTimestamp:
@@ -192,18 +194,13 @@ class HST509(Output):
         header += pack('<i', 0)                                                      # Time of last synchronization
         header += bytearray(13*4)                                                    # Space for future use
 
-        # Transform universal bar list to binary bar data (44 Bytes per bar)
-        bars = bytearray()
-        for tick in ticks:
-            (uniBar, newUniBar) = self._aggregate(tick)
-            if newUniBar:
-                bars += self._packUniBar(uniBar)
-
-            spinner.spin()
-
         self.path.write(header)
-        self.path.write(bars)
 
+    def pack_tick(self, tick):
+        # Transform universal bar list to binary bar data (44 Bytes per bar)
+        (uniBar, newUniBar) = self._aggregate(tick)
+        if newUniBar:
+            self.path.write(self._packUniBar(uniBar))
 
     def _packUniBar(self, uniBar):
         bar = bytearray()
@@ -234,18 +231,13 @@ class HST574(Output):
         header += pack('<i', 0)                                                      # Time of last synchronization
         header += bytearray(13*4)                                                    # Space for future use
 
-        # Transform universal bar list to binary bar data (60 Bytes per bar)
-        bars = bytearray()
-        for tick in ticks:
-            (uniBar, newUniBar) = self._aggregate(tick)
-            if newUniBar:
-                bars += self._packUniBar(uniBar)
-
-            spinner.spin()
-
         self.path.write(header)
-        self.path.write(bars)
 
+    def pack_tick(self, tick):
+        # Transform universal bar list to binary bar data (60 Bytes per bar)
+        (uniBar, newUniBar) = self._aggregate(tick)
+        if newUniBar:
+            self.path.write(self._packUniBar(uniBar))
 
     def _packUniBar(self, uniBar):
         bar = bytearray()
@@ -262,28 +254,12 @@ class HST574(Output):
 
         return bar
 
-
 class FXT(Output):
     def __init__(self, ticks, path, timeframe, server, symbol, spread):
         # Initialize variables in parent constructor.
         super().__init__(timeframe, path)
-
-        # Transform universal bar list to binary bar data (56 Bytes per bar)
-        bars = bytearray()
-        firstUniBar = lastUniBar = None
-        for tick in ticks:
-            uniBar = self._aggregateWithTicks(tick)
-            if not firstUniBar: firstUniBar = uniBar             # Store first and ...
-            lastUniBar = uniBar                                  # ... last bar data for header.
-            bars += pack('<iiddddQii',
-                    int(uniBar['barTimestamp']),                                 # Bar datetime.
-                    0,                                                           # Add 4 bytes of padding.
-                    uniBar['open'],uniBar['high'],uniBar['low'],uniBar['close'], # OHLCV values.
-                    max(round(uniBar['volume']), 1),                             # Volume (documentation says it's a double, though it's stored as a long int).
-                    int(uniBar['tickTimestamp']),                                # The current time within a bar.
-                    4)                                                           # Flag to launch an expert (0 - bar will be modified, but the expert will not be launched).
-
-            spinner.spin()
+        self._priv = (timeframe, server, symbol, spread)
+        self._firstUniBar = self._lastUniBar = None
 
         # Build header (728 Bytes in total)
         header = bytearray()
@@ -294,9 +270,9 @@ class FXT(Output):
         header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')               # Symbol pair.
         header += pack('<i', timeframe)                                                 # Period of data aggregation in minutes (timeframe).
         header += pack('<i', 0)                                                         # Model type: 0 - every tick, 1 - control points, 2 - bar open.
-        header += pack('<i', self.barCount)                                             # Bars - amount of bars in history.
-        header += pack('<i', int(firstUniBar['barTimestamp']))                          # Modelling start date - date of the first tick.
-        header += pack('<i', int(lastUniBar['barTimestamp']))                           # Modelling end date - date of the last tick.
+        header += pack('<I', 0)                                                         # Bars - amount of bars in history.
+        header += pack('<i', 0)                                                         # Modelling start date - date of the first tick.
+        header += pack('<i', 0)                                                         # Modelling end date - date of the last tick.
         header += bytearray(4)                                                          # Add 4 bytes of padding. This potentially can be totalTicks.
         header += pack('<d', 99.9)                                                      # Modeling quality (max. 99.9).
         # General parameters
@@ -355,7 +331,31 @@ class FXT(Output):
         header += bytearray(60*4)                                                       # Reserved - Space for future use
 
         self.path.write(header)
-        self.path.write(bars)
+
+    def pack_tick(self, tick):
+        # Transform universal bar list to binary bar data (56 Bytes per bar)
+        uniBar = self._aggregateWithTicks(tick)
+        if not self._firstUniBar: self._firstUniBar = uniBar             # Store first and ...
+        self._lastUniBar = uniBar                                  # ... last bar data for header.
+        self.path.write(pack('<iiddddQii',
+                int(uniBar['barTimestamp']),                                 # Bar datetime.
+                0,                                                           # Add 4 bytes of padding.
+                uniBar['open'],uniBar['high'],uniBar['low'],uniBar['close'], # OHLCV values.
+                max(round(uniBar['volume']), 1),                             # Volume (documentation says it's a double, though it's stored as a long int).
+                int(uniBar['tickTimestamp']),                                # The current time within a bar.
+                4))                                                           # Flag to launch an expert (0 - bar will be modified, but the expert will not be launched).
+
+    def finalize(self):
+        # Fixup the header
+        self.path.seek(216)
+
+        fix  = bytearray()
+        fix += pack('<III',
+                self.barCount,
+                int(self._firstUniBar['barTimestamp']),                    # Modelling start date - date of the first tick.
+                int(self._lastUniBar['barTimestamp']))                     # Modelling end date - date of the last tick.
+
+        self.path.write(fix)
 
 def _hstFilename(symbol, timeframe):
     return '%s%d.hst' % (symbol, timeframe)
@@ -439,30 +439,39 @@ if __name__ == '__main__':
     if args.verbose:
         print('[INFO] Output format: %s' % outputFormat)
 
-    # Reading input file to memory, converting time.
-    if args.verbose:
-        print('[INFO] Reading input file into memory, converting time. Input file: %s' % args.inputFile)
-
     multiple_timeframes = len(timeframe_list) > 1
+
+    queue = []
 
     for timeframe in timeframe_list:
         if multiple_timeframes:
-            print('Converting the {}m timeframe'.format(timeframe))
-        # Reading input file, creating intermediate format for future input sources other than CSV
-        try:
-            # Checking output file format argument and doing conversion
-            if outputFormat == 'hst4_509':
-                outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
-                HST509(CSV(args.inputFile), outputPath, timeframe, symbol)
-            elif outputFormat == 'hst4':
-                outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
-                HST574(CSV(args.inputFile), outputPath, timeframe, symbol)
-            elif outputFormat == 'fxt4':
-                outputPath = os.path.join(args.outputDir, _fxtFilename(symbol, timeframe))
-                FXT(CSV(args.inputFile), outputPath, timeframe, server, symbol, spread)
-            else:
-                print('[ERROR] Unknown output file format!')
-                sys.exit(1)
-        except KeyboardInterrupt as e:
-            print('\nExiting by user request...')
-            sys.exit()
+            print('Queueing the {}m timeframe for conversion'.format(timeframe))
+        # Checking output file format argument and doing conversion
+        if outputFormat == 'hst4_509':
+            outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
+            o = HST509(None, outputPath, timeframe, symbol)
+        elif outputFormat == 'hst4':
+            outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
+            o = HST574(None, outputPath, timeframe, symbol)
+        elif outputFormat == 'fxt4':
+            outputPath = os.path.join(args.outputDir, _fxtFilename(symbol, timeframe))
+            o = FXT(None, outputPath, timeframe, server, symbol, spread)
+        else:
+            print('[ERROR] Unknown output file format!')
+            sys.exit(1)
+
+        queue.append(o)
+
+    # Process the queue, process all the timeframes at the same time to
+    # amortize the cost of the parsing
+    try:
+        for tick in CSV(args.inputFile):
+            for obj in queue:
+                obj.pack_tick(tick)
+            spinner.spin()
+
+        for obj in queue:
+            obj.finalize()
+    except KeyboardInterrupt as e:
+        print('\nExiting by user request...')
+        sys.exit()
