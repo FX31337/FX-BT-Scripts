@@ -308,22 +308,26 @@ if __name__ == '__main__':
     parser.add_argument("-d", "--download-dir", action="store",       dest="dest",      help="Directory to download files.", default="download/dukascopy")
     parser.add_argument("-c", "--csv-convert",  action="store_true",  dest="csv",       help="Perform CSV conversion.")
     parser.add_argument("-p", "--pairs",        action="store",       dest="pairs",     help="Pair(s) to download (separated by comma).", default="all")
+    parser.add_argument("-u", "--hours",        action="store",       dest="hours",     help="Hour(s) to download (separated by comma).", default="all")
+    parser.add_argument("-s", "--days",         action="store",       dest="days",      help="Day(s) to download (separated by comma).", default="all")
     parser.add_argument("-m", "--months",       action="store",       dest="months",    help="Month(s) to download (separated by comma).", default="all")
     parser.add_argument("-y", "--years",        action="store",       dest="years",     help="Year(s) to download (separated by comma).", default="all")
     args = parser.parse_args()
 
     curr_year = datetime.date.today().year
     pairs =  list(all_currencies.keys()) if args.pairs  == "all" else args.pairs.split(',')
+    hours  = range(1, 23+1)              if args.hours  == "all" else intlist(args.hours.split(','))
+    days   = range(1, 31+1)              if args.days   == "all" else intlist(args.days.split(','))
     months = range(1, 12+1)              if args.months == "all" else intlist(args.months.split(','))
-    years =  range(1997, curr_year+1)    if args.years  == "all" else intlist(args.years.split(','))
+    years  = range(1997, curr_year+1)    if args.years  == "all" else intlist(args.years.split(','))
 
     try:
         currencies = []
         for pair in sorted(pairs):
             for year in sorted(years):
                 for month in sorted(months):
-                    for day in range(1, 31+1):
-                        for hour in range(0, 23+1):
+                    for day in sorted(days):
+                        for hour in sorted(hours):
                             try:
                                 dt = datetime.datetime(year=year, month=month, day=day, hour=hour)
                                 unix = time.mktime(dt.timetuple())
