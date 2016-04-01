@@ -34,7 +34,7 @@ mn_fxt=$(pair)43200_0.fxt
 
 all: test check
 
-test: help $(m1_hst) $(m1_fxt) \
+test: test-syntax $(m1_hst) $(m1_fxt) \
 		$(addsuffix .hst.dump, $(basename $(wildcard *.hst))) \
 		$(addsuffix .fxt.dump, $(basename $(wildcard *.fxt)))
 
@@ -54,11 +54,11 @@ $(dl_dir)/$(pair)/$(year)/01: dl_bt_dukascopy.py
 %.fxt.dump: %.fxt
 	convert_mt_to_csv.py -f fxt4 -i $< -o $@
 
-help: convert_csv_to_mt.py dl_bt_dukascopy.py convert_mt_to_csv.py
-	python3 convert_csv_to_mt.py --help > /dev/null
-	python3 dl_bt_dukascopy.py --help > /dev/null
-	python3 convert_mt_to_csv.py --help > /dev/null
-	@touch help
+test-syntax: convert_csv_to_mt.py dl_bt_dukascopy.py convert_mt_to_csv.py
+	find . -name "*.py" -execdir python -m py_compile {} ';'
+	find . -name "*.php" -execdir php -l {} ';'
+	find . -name "*.rb" -execdir ruby -c {} ';'
+	@touch test-syntax
 
 # Generate HST files.
 $(m1_hst): $(csvfile) convert_csv_to_mt.py

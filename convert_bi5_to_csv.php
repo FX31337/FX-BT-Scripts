@@ -48,7 +48,7 @@ if (PHP_SAPI != "cli") {
 
 if ($argc < 4) {
     echo("Syntax: ".__FILE__." CURRENCY_PAIR START_DATE END_DATE OUT_FILE\nSTART_DATE and END_DATE must be of the form YYYYMMDD\nExample: ".__FILE__." EURUSD 20070201 20090830 out.csv\n");
-    exit(1);
+    exit;
 }
 $pair = $argv[1];
 if (!file_exists($pair)) {
