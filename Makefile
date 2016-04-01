@@ -30,21 +30,35 @@ d1_fxt=$(pair)1440_0.fxt
 w1_fxt=$(pair)10080_0.fxt
 mn_fxt=$(pair)43200_0.fxt
 
-test: test-help $(m1_hst) $(m1_fxt) test-dump-hst test-dump-fxt
+.PHONY: all test clean check
+
+all: test check
+
+test: help $(m1_hst) $(m1_fxt) \
+		$(addsuffix .hst.dump, $(basename $(wildcard *.hst))) \
+		$(addsuffix .fxt.dump, $(basename $(wildcard *.fxt)))
+
+clean:
+	git clean -fd
+
+check: $(csvfile) $(pair)1_0.fxt.dump
+	@test "$(shell wc -l $(csvfile) | grep -o "^\S\+")" = "$(shell wc -l $(pair)1_0.fxt.dump | grep -o "^\S\+")" \
+		|| { echo ERROR: Number of ticks do not match; exit 2; } \
 
 $(dl_dir)/$(pair)/$(year)/01: dl_bt_dukascopy.py
-	dl_bt_dukascopy.py -v -p ${pair} -y ${year} -m 1 -c -d $(dl_dir)
+	dl_bt_dukascopy.py -v -p ${pair} -y ${year} -m 2,4 -d 2,4 -h 2,4,6,8 -c -D $(dl_dir)
 
-test-dump-hst:
-	find . -name "*.hst" -execdir convert_mt_to_csv.py -i {} -f hst4 -o {}.csv ';'
+%.hst.dump: %.hst
+	convert_mt_to_csv.py -f hst4 -i $< -o $@
 
-test-dump-fxt:
-	find . -name "*.fxt" -execdir convert_mt_to_csv.py -i {} -f fxt4 -o {}.csv ';'
+%.fxt.dump: %.fxt
+	convert_mt_to_csv.py -f fxt4 -i $< -o $@
 
-test-help: convert_csv_to_mt.py dl_bt_dukascopy.py convert_mt_to_csv.py
-	python3 convert_csv_to_mt.py --help
-	python3 dl_bt_dukascopy.py --help
-	python3 convert_mt_to_csv.py --help
+help: convert_csv_to_mt.py dl_bt_dukascopy.py convert_mt_to_csv.py
+	python3 convert_csv_to_mt.py --help > /dev/null
+	python3 dl_bt_dukascopy.py --help > /dev/null
+	python3 convert_mt_to_csv.py --help > /dev/null
+	@touch help
 
 # Generate HST files.
 $(m1_hst): $(csvfile) convert_csv_to_mt.py

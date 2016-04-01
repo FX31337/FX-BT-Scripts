@@ -445,7 +445,7 @@ if __name__ == '__main__':
 
     for timeframe in timeframe_list:
         if multiple_timeframes:
-            print('Queueing the {}m timeframe for conversion'.format(timeframe))
+            print('[INFO] Queueing the {}m timeframe for conversion'.format(timeframe))
         # Checking output file format argument and doing conversion
         if outputFormat == 'hst4_509':
             outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
@@ -470,8 +470,10 @@ if __name__ == '__main__':
                 obj.pack_tick(tick)
             spinner.spin()
 
+        print('[INFO] Finalizing...')
         for obj in queue:
             obj.finalize()
+        print('[INFO] Done.')
     except KeyboardInterrupt as e:
-        print('\nExiting by user request...')
+        print('\n[INFO] Exiting by user request...')
         sys.exit()
