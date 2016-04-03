@@ -28,9 +28,9 @@ class BStruct():
         for (name, _, *fmt) in self._fields:
             val_repr = getattr(self, name)
 
-            # Pretty print the value using the custom formatter
+            # Pretty print the value using the custom formatter.
             if len(fmt):
-                pp, = fmt
+                pp ,= fmt
                 val_repr = pp(self, getattr(self, name))
 
             ret += '{} = {}\n'.format(name, val_repr)
@@ -151,6 +151,83 @@ class SymbolsRaw(BStruct):
     _size = get_fields_size(_fields)
     assert(_size == 1936)
 
+class FxtHeader(BStruct):
+    _endianness = '<'
+    _fields = [
+            # Build header
+            ('headerVersion', 'I'),
+            ('copyright', '64s', pretty_print_string),
+            ('server', '128s', pretty_print_string),
+            ('symbol', '12s', pretty_print_string),
+            ('timeframe', 'i'),
+            ('modelType', 'i'),
+            ('totalBars', 'I'),
+            ('modelStart', 'I', pretty_print_time),
+            ('modelEnd', 'I', pretty_print_time),
+            ('padding1', '4s', pretty_print_ignore),
+
+            # General parameters
+            ('modelQuality', 'd'),
+            ('baseCurrency', '12s', pretty_print_string),
+            ('spread', 'I'),
+            ('digits', 'I'),
+            ('padding2', '4s', pretty_print_ignore),
+            ('pointSize', 'd'),
+            ('minLotSize', 'i'),
+            ('maxLotSize', 'i'),
+            ('lotStep', 'i'),
+            ('stopLevel', 'i'),
+            ('GTC', 'i'),
+            ('padding3', '4s', pretty_print_ignore),
+
+            # Profit Calculation parameters
+            ('contractSize', 'd'),
+            ('tickValue', 'd'),
+            ('tickSize', 'd'),
+            ('profitMode', 'i'),
+            ('swapEnabled', 'i'),
+            ('swapMethod', 'i'),
+            ('padding4', '4s', pretty_print_ignore),
+            ('swapLong', 'd'),
+            ('swapShort', 'd'),
+            ('swapRollover', 'i'),
+
+            # Margin calculation
+            ('accountLeverage', 'i'), # Default: 100
+            ('freeMarginMode', 'i'),
+            ('marginCalcMode', 'i'),
+            ('marginStopoutLevel', 'i'),
+            ('marginStopoutMode', 'i'),
+            ('marginRequirements', 'd'),
+            ('marginMaintenanceReq', 'd'),
+            ('marginHedgedPosReq', 'd'),
+            ('marginLeverageDivider', 'd'),
+            ('marginCurrency', '12s', pretty_print_string),
+            ('padding5', '4s', pretty_print_ignore),
+
+            # Commission calculation
+            ('commission', 'd'),
+            ('commissionType', 'i'),
+            ('commissionPerEntry', 'i'),
+
+            # For internal use
+            ('indexOfFirstBar', 'i'),
+            ('indexOfLastBar', 'i'),
+            ('indexOfM1Bar', 'i'),
+            ('indexOfM5Bar', 'i'),
+            ('indexOfM15Bar', 'i'),
+            ('indexOfM30Bar', 'i'),
+            ('indexOfH1Bar', 'i'),
+            ('indexOfH4Bar', 'i'),
+            ('beginDate', 'I', pretty_print_time),
+            ('endDate', 'I', pretty_print_time),
+            ('freezeLevel', 'i'),
+            ('numberOfErrors', 'I'),
+            ('reserved', '240s', pretty_print_ignore),
+            ]
+    _size = get_fields_size(_fields)
+    assert(_size == 728)
+
 def dump_content(filename, offset, strucc):
     """
     Dump the content of the file "filename" starting from offset and using the
@@ -190,5 +267,7 @@ if __name__ == '__main__':
         dump_content(args.inputFile, 0, SymbolsRaw)
     elif args.inputType == 'symgroups':
         dump_content(args.inputFile, 0, Symgroups)
+    elif args.inputType == 'fxt-header':
+        dump_content(args.inputFile, 0, FxtHeader)
     else:
         print('Invalid type {}!'.format(args.inputType))

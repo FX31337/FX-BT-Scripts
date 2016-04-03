@@ -277,8 +277,8 @@ class FXT(Output):
         header += pack('<d', 99.9)                                                      # Modeling quality (max. 99.9).
         # General parameters
         header += bytearray('EUR'.ljust(12, '\x00'), 'latin1', 'ignore')                # Base currency (12 bytes).
-        header += pack('<i', spread)                                                    # Spread in points.
-        header += pack('<i', 5)                                                         # Digits, using the default value of FXT format
+        header += pack('<I', spread)                                                    # Spread in points.
+        header += pack('<I', 5)                                                         # Digits, using the default value of FXT format
         header += bytearray(4)                                                          # Add 4 bytes of padding.
         header += pack('<d', 1e-5)                                                      # Point size (e.g. 0.00001).
         header += pack('<i', 1)                                                         # Minimal lot size in centi lots (hundredths).
@@ -327,7 +327,7 @@ class FXT(Output):
         header += pack('<i', 0)                                                         # Begin date from tester settings (must be zero).
         header += pack('<i', 0)                                                         # End date from tester settings (must be zero).
         header += pack('<i', 0)                                                         # Order's freeze level in points.
-        header += pack('<i', 0)                                                         # Number of errors during model generation which needs to be fixed before testing.
+        header += pack('<I', 0)                                                         # Number of errors during model generation which needs to be fixed before testing.
         header += bytearray(60*4)                                                       # Reserved - Space for future use
 
         self.path.write(header)
