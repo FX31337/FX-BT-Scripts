@@ -296,7 +296,7 @@ class FXT(Output):
         header += pack('<i', 0)                                                         # Enable swap (default: False).
         header += pack('<I', 0)                                                         # Swap calculation method: 0 - in points, 1 - in the symbol base currency, 2 - by interest, 3 - in the margin currency.
         header += bytearray(4)                                                          # Add 4 bytes of padding.
-        header += pack('<d', 0.33)                                                      # Swap of the buy order - long overnight swap value.
+        header += pack('<d', 0.0)                                                       # Swap of the buy order - long overnight swap value.
         header += pack('<d', 0.0)                                                       # Swap of the sell order - short overnight swap value.
         header += pack('<I', 3)                                                         # Day of week to charge 3 days swap rollover. Default: WEDNESDAY (3).
         # Margin calculation
