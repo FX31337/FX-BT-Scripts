@@ -305,8 +305,8 @@ class FXT(Output):
         header += pack('<I', 0)                                                         # Margin calculation mode: 0 - Forex, 1 - CFD, 2 - Futures, 3 - CFD for indexes.
         header += pack('<I', 30)                                                        # Margin stopout level (default: 30).
         header += pack('<I', 0)                                                         # Margin stop out check mode {MARGIN_TYPE_PERCENT, MARGIN_TYPE_CURRENCY}
-        header += pack('<d', 100000.0)                                                  # Margin requirements.
-        header += pack('<d', 100000.0)                                                  # Margin maintenance requirements.
+        header += pack('<d', 0.0)                                                       # Margin requirements.
+        header += pack('<d', 0.0)                                                       # Margin maintenance requirements.
         header += pack('<d', 50000.0)                                                   # Margin requirements for hedged positions.
         header += pack('<d', 1.25)                                                      # Margin divider used for leverage calculation.
         header += bytearray('USD'.ljust(12, '\x00'), 'latin1', 'ignore')                # Margin currency.
