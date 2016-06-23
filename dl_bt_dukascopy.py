@@ -58,7 +58,7 @@ all_currencies = {
     "XAGUSD": 1289491200, # starting from 2010.11.11 16:00
     "XAUUSD": 1305010800, # starting from 2011.05.10 07:00
 
-    "ADSDsadR": 1426201200, # starting from 2015.03.13 00:00
+    "ADSDEEUR": 1426201200, # starting from 2015.03.13 00:00
     "ALVDEEUR": 1429394400, # starting from 2015.04.19 00:00
     "AUSIDXAUD": 1402524000, # starting from 2014.06.12 00:00
     "BASDEEUR": 1429678800, # starting from 2015.04.22 07:00
