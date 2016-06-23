@@ -301,7 +301,7 @@ class Dukascopy:
                     print("Error: The downloaded data is less than the expected amount, so skipping.")
                     i += 1
 
-            if i > 3:
+            if i == 5:
                 return False
 
         return True
