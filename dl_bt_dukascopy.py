@@ -58,7 +58,7 @@ all_currencies = {
     "XAGUSD": 1289491200, # starting from 2010.11.11 16:00
     "XAUUSD": 1305010800, # starting from 2011.05.10 07:00
 
-    "ADSDEEUR": 1426201200, # starting from 2015.03.13 00:00
+    "ADSDsadR": 1426201200, # starting from 2015.03.13 00:00
     "ALVDEEUR": 1429394400, # starting from 2015.04.19 00:00
     "AUSIDXAUD": 1402524000, # starting from 2014.06.12 00:00
     "BASDEEUR": 1429678800, # starting from 2015.04.22 07:00
@@ -280,17 +280,30 @@ class Dukascopy:
         else:
             if not os.path.exists(os.path.dirname(self.path)):
                 os.makedirs(os.path.dirname(self.path))
-            try:
-                urllib.request.urlretrieve(self.url, filename=self.path)
-            except HTTPError as err:
-                print("Error: %s, reason: %s." % (err.code, err.reason));
+            i = 1
+            while i <= 5:
+                try:
+                    urllib.request.urlretrieve(self.url, filename=self.path)
+                    break
+                except HTTPError as err:
+                    print("Error: %s, reason: %s. Retrying (%i).." % (err.code, err.reason, i));
+                    i += 1
+                except IOError as err:
+                    print("Error: %s, reason: %s. Retrying (%i).." % (err.code, err.reason, i));
+                    i += 1
+                except socket.timeout as err:
+                    print("Network error: %s. Retrying (%i).." % (err.strerror, i));
+                    i += 1
+                except socket.error as err:
+                    print("Network error: %s. Retrying (%i).." % (err.strerror, i));
+                    i += 1
+                except ContentTooShortError as err:
+                    print("Error: The downloaded data is less than the expected amount, so skipping.")
+                    i += 1
+
+            if i > 3:
                 return False
-            except socket.error as err:
-                print("Network error: %s." % (err.strerror));
-                return False
-            except ContentTooShortError as err:
-                print("Error: The downloaded data is less than the expected amount, so skipping.")
-                return False
+
         return True
 
     def bt5_to_csv(self):
