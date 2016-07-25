@@ -261,10 +261,10 @@ class FXT(Output):
         self._priv = (timeframe, server, symbol, spread)
         self._firstUniBar = self._lastUniBar = None
 
-        # Build header (728 Bytes in total)
+        # Build header (728 Bytes in total).
         header = bytearray()
         header += pack('<I', 405)                                                       # FXT header version: 405
-        header += bytearray('Copyright 2001-2015, MetaQuotes Software Corp.'.ljust(64,  # Copyright
+        header += bytearray('Copyright 2001-2015, MetaQuotes Software Corp.'.ljust(64,  # Copyright text.
                             '\x00'), 'latin1', 'ignore')
         header += bytearray(server.ljust(128, '\x00'), 'latin1', 'ignore')              # Account server name.
         header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')               # Symbol pair.
@@ -275,10 +275,10 @@ class FXT(Output):
         header += pack('<I', 0)                                                         # Modelling end date - date of the last tick.
         header += bytearray(4)                                                          # Add 4 bytes of padding. This potentially can be totalTicks.
         header += pack('<d', 99.9)                                                      # Modeling quality (max. 99.9).
-        # General parameters
+        # General parameters.
         header += bytearray('EUR'.ljust(12, '\x00'), 'latin1', 'ignore')                # Base currency (12 bytes).
         header += pack('<I', spread)                                                    # Spread in points.
-        header += pack('<I', 5)                                                         # Digits, using the default value of FXT format
+        header += pack('<I', 5)                                                         # Digits, using the default value of FXT format.
         header += bytearray(4)                                                          # Add 4 bytes of padding.
         header += pack('<d', 1e-5)                                                      # Point size (e.g. 0.00001).
         header += pack('<I', 1)                                                         # Minimal lot size in centi lots (hundredths).
@@ -287,7 +287,7 @@ class FXT(Output):
         header += pack('<I', 10)                                                        # Stops level value (orders stop distance in points).
         header += pack('<I', 1)                                                         # GTC (Good till cancel) - instruction to close pending orders at end of day (default: True).
         header += bytearray(4)                                                          # Add 4 bytes of padding.
-        # Profit Calculation parameters
+        # Profit Calculation parameters.
         header += pack('<d', 100000.0)                                                  # ContractSize - contract size
         header += pack('<d', 0.0)                                                       # Tick value in quote currency (empty).
         header += pack('<d', 0.0)                                                       # Size of one tick (empty).
@@ -299,7 +299,7 @@ class FXT(Output):
         header += pack('<d', 0.0)                                                       # Swap of the buy order - long overnight swap value.
         header += pack('<d', 0.0)                                                       # Swap of the sell order - short overnight swap value.
         header += pack('<I', 3)                                                         # Day of week to charge 3 days swap rollover. Default: WEDNESDAY (3).
-        # Margin calculation
+        # Margin calculation.
         header += pack('<I', 100)                                                       # Account leverage (default: 100).
         header += pack('<I', 1)                                                         # Free margin calculation mode {MARGIN_DONT_USE, MARGIN_USE_ALL, MARGIN_USE_PROFIT, MARGIN_USE_LOSS}
         header += pack('<I', 0)                                                         # Margin calculation mode: 0 - Forex, 1 - CFD, 2 - Futures, 3 - CFD for indexes.
@@ -311,11 +311,11 @@ class FXT(Output):
         header += pack('<d', 1.25)                                                      # Margin divider used for leverage calculation.
         header += bytearray('USD'.ljust(12, '\x00'), 'latin1', 'ignore')                # Margin currency.
         header += bytearray(4)                                                          # Padding space - add 4 bytes to align the next double.
-        # Commission calculation
+        # Commission calculation.
         header += pack('<d', 0.0)                                                       # Basic commission.
-        header += pack('<i', 1)                                                         # Basic commission type {COMM_TYPE_MONEY, COMM_TYPE_PIPS, COMM_TYPE_PERCENT}
-        header += pack('<i', 0)                                                         # Commission per lot or per deal {COMMISSION_PER_LOT, COMMISSION_PER_DEAL}
-        # For internal use
+        header += pack('<i', 1)                                                         # Basic commission type {COMM_TYPE_MONEY, COMM_TYPE_PIPS, COMM_TYPE_PERCENT}.
+        header += pack('<i', 0)                                                         # Commission per lot or per deal {COMMISSION_PER_LOT, COMMISSION_PER_DEAL}.
+        # For internal use.
         header += pack('<I', 1)                                                         # Index of the first bar at which modeling started (0 for the first bar).
         header += pack('<I', 0)                                                         # Index of the last bar at which modeling started (0 for the last bar).
         header += pack('<I', 0)                                                         # Bar index where modeling started using M1 bars (0 for the first bar).
@@ -328,7 +328,7 @@ class FXT(Output):
         header += pack('<I', 0)                                                         # End date from tester settings (must be zero).
         header += pack('<I', 0)                                                         # Order's freeze level in points.
         header += pack('<I', 0)                                                         # Number of errors during model generation which needs to be fixed before testing.
-        header += bytearray(60*4)                                                       # Reserved - Space for future use
+        header += bytearray(60*4)                                                       # Reserved - Space for future use.
 
         self.path.write(header)
 
@@ -475,10 +475,12 @@ if __name__ == '__main__':
                 obj.pack_tick(tick)
             spinner.spin()
 
-        print('[INFO] Finalizing...')
+        if args.verbose:
+            print('[INFO] Finalizing...')
         for obj in queue:
             obj.finalize()
-        print('[INFO] Done.')
+        if args.verbose:
+            print('[INFO] Done.')
     except KeyboardInterrupt as e:
         print('\n[INFO] Exiting by user request...')
         sys.exit()

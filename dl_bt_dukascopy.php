@@ -95,7 +95,7 @@ if (empty($symbols)) {
       "USATECHIDXUSD" => 1356994800, # starting from 2013.01.01 00:00
       "VNADEEUR" => 1428962400, # starting from 2015.04.14 00:00
       "VOW3DEEUR" => 1428962400, # starting from 2015.04.14 00:00
-    
+
       // commodities - energy
       #"E_Light" => 1324375200, // Light starting from 2011.12.20 10:00
       #"E_Brent" => 1326988800, // Brent starting from 2012.01.19 16:00
