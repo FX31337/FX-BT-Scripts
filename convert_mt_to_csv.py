@@ -58,7 +58,7 @@ class HST4_509(Input):
 
     def __str__(self):
         table = ''
-        separator = '  '
+        separator = ','
         for row in self.rows:
             table += '{:<19}'.format('{:%Y-%m-%d %H:%M:%S}'.format(row['timestamp']))
             table += separator
@@ -111,23 +111,23 @@ class HST4(Input):
 
     def __str__(self):
         table = ''
-        separator = '  '
+        separator = ','
         for row in self.rows:
             table += '{:<19}'.format('{:%Y-%m-%d %H:%M:%S}'.format(row['timestamp']))
             table += separator
-            table += '{:>9.5f}'.format(row['open'])
+            table += '{:>.5f}'.format(row['open'])
             table += separator
-            table += '{:>9.5f}'.format(row['high'])
+            table += '{:>.5f}'.format(row['high'])
             table += separator
-            table += '{:>9.5f}'.format(row['low'])
+            table += '{:>.5f}'.format(row['low'])
             table += separator
-            table += '{:>9.5f}'.format(row['close'])
+            table += '{:>.5f}'.format(row['close'])
             table += separator
-            table += '{:>9d}'.format(row['volume'])
+            table += '{:>d}'.format(row['volume'])
             table += separator
-            table += '{:>3d}'.format(row['spread'])
+            table += '{:>d}'.format(row['spread'])
             table += separator
-            table += '{:>9d}'.format(row['realVolume'])
+            table += '{:>d}'.format(row['realVolume'])
             table += '\n'
         return table[:-1]
 
@@ -171,19 +171,19 @@ class FXT4(Input):
 
     def __str__(self):
         table = ''
-        separator = '  '
+        separator = ','
         for row in self.rows:
             table += '{:<19}'.format('{:%Y-%m-%d %H:%M:%S}'.format(row['barTimestamp']))
             table += separator
-            table += '{:>9.5f}'.format(row['open'])
+            table += '{:>.5f}'.format(row['open'])
             table += separator
-            table += '{:>9.5f}'.format(row['high'])
+            table += '{:>.5f}'.format(row['high'])
             table += separator
-            table += '{:>9.5f}'.format(row['low'])
+            table += '{:>.5f}'.format(row['low'])
             table += separator
-            table += '{:>9.5f}'.format(row['close'])
+            table += '{:>.5f}'.format(row['close'])
             table += separator
-            table += '{:>9d}'.format(row['volume'])
+            table += '{:>d}'.format(row['volume'])
             table += separator
             table += '{:<19}'.format('{:%Y-%m-%d %H:%M:%S}'.format(row['tickTimestamp']))
             table += separator
