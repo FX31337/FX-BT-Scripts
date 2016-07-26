@@ -60,7 +60,7 @@ class HST4_509(Input):
         table = ''
         separator = ','
         for row in self.rows:
-            table += '{:<19}'.format('{:%Y-%m-%d %H:%M:%S}'.format(row['timestamp']))
+            table += '{:<19}'.format('{:%Y.%m.%d %H:%M:%S}'.format(row['timestamp']))
             table += separator
             table += '{:>9.5f}'.format(row['open'])
             table += separator
@@ -113,7 +113,7 @@ class HST4(Input):
         table = ''
         separator = ','
         for row in self.rows:
-            table += '{:<19}'.format('{:%Y-%m-%d %H:%M:%S}'.format(row['timestamp']))
+            table += '{:<19}'.format('{:%Y.%m.%d %H:%M:%S}'.format(row['timestamp']))
             table += separator
             table += '{:>.5f}'.format(row['open'])
             table += separator
@@ -173,7 +173,7 @@ class FXT4(Input):
         table = ''
         separator = ','
         for row in self.rows:
-            table += '{:<19}'.format('{:%Y-%m-%d %H:%M:%S}'.format(row['barTimestamp']))
+            table += '{:<19}'.format('{:%Y.%m.%d %H:%M:%S}'.format(row['barTimestamp']))
             table += separator
             table += '{:>.5f}'.format(row['open'])
             table += separator
@@ -185,7 +185,7 @@ class FXT4(Input):
             table += separator
             table += '{:>d}'.format(row['volume'])
             table += separator
-            table += '{:<19}'.format('{:%Y-%m-%d %H:%M:%S}'.format(row['tickTimestamp']))
+            table += '{:<19}'.format('{:%Y.%m.%d %H:%M:%S}'.format(row['tickTimestamp']))
             table += separator
             table += '{:>d}'.format(row['flag'])
             table += '\n'

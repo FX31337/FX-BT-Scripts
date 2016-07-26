@@ -96,7 +96,7 @@ class CSV(Input):
 
 class Output:
     def __init__(self, timeframe, path):
-        self.deltaTimestamp = timeframe*60
+        self.deltaTimestamp = timeframe * 60
         self.endTimestamp = None
         self.barCount = 0
 
@@ -130,7 +130,7 @@ class Output:
                       'volume': self.volume
             }
 
-            self.startTimestamp = (int(tick['timestamp'])//self.deltaTimestamp)*self.deltaTimestamp
+            self.startTimestamp = (int(tick['timestamp']) // self.deltaTimestamp) * self.deltaTimestamp
             self.endTimestamp = self.startTimestamp + self.deltaTimestamp
             self.open = self.high = self.low = self.close = tick['bidPrice']
             self.volume = tick['bidVolume'] + tick['askVolume']
@@ -156,7 +156,7 @@ class Output:
 
     def _aggregateWithTicks(self, tick):
         if not self.endTimestamp or tick['timestamp'] >= self.endTimestamp:
-            self.startTimestamp = (int(tick['timestamp'])//self.deltaTimestamp)*self.deltaTimestamp
+            self.startTimestamp = (int(tick['timestamp']) // self.deltaTimestamp) * self.deltaTimestamp
             self.endTimestamp = self.startTimestamp + self.deltaTimestamp
             self.open = self.high = self.low = tick['bidPrice']
             self.volume = tick['bidVolume'] + tick['askVolume']
