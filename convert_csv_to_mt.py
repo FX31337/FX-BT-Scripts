@@ -248,7 +248,7 @@ class HST574(Output):
         bar += pack('<d', uniBar['high'])                   # High
         bar += pack('<d', uniBar['low'])                    # Low
         bar += pack('<d', uniBar['close'])                  # Close
-        bar += pack('<Q', max(round(uniBar['volume']), 1))  # Volume
+        bar += pack('<Q', max(int(uniBar['volume']), 1))    # Volume
         bar += pack('<i', 0)                                # Spread
         bar += pack('<Q', 0)                                # Real volume
 
@@ -341,7 +341,7 @@ class FXT(Output):
                 int(uniBar['barTimestamp']),                                 # Bar datetime.
                 0,                                                           # Add 4 bytes of padding.
                 uniBar['open'],uniBar['high'],uniBar['low'],uniBar['close'], # OHLCV values.
-                max(round(uniBar['volume']), 1),                             # Volume (documentation says it's a double, though it's stored as a long int).
+                max(int(uniBar['volume']), 1),                               # Volume (documentation says it's a double, though it's stored as a long int).
                 int(uniBar['tickTimestamp']),                                # The current time within a bar.
                 4))                                                          # Flag to launch an expert (0 - bar will be modified, but the expert will not be launched).
 
