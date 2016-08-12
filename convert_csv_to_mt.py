@@ -78,7 +78,8 @@ class CSV(Input):
     def __next__(self):
         line = self._map_obj.readline()
         if line:
-            return self._parseLine(line)
+            isLastRow = self._map_obj.tell () == self._map_obj.size ()
+            return (self._parseLine(line), isLastRow)
         else:
             raise StopIteration
 
@@ -233,11 +234,28 @@ class HST574(Output):
 
         self.path.write(header)
 
-    def pack_tick(self, tick):
+    def pack_ticks(self, ticks):
         # Transform universal bar list to binary bar data (60 Bytes per bar)
-        (uniBar, newUniBar) = self._aggregate(tick)
-        if newUniBar:
-            self.path.write(self._packUniBar(uniBar))
+        ticksAggregated  = {
+            'barTimestamp':  ticks[0]['timestamp'],
+            'tickTimestamp': ticks[0]['timestamp'],
+            'open':          ticks[0]['bidPrice'],
+            'low':           ticks[0]['bidPrice'],
+            'high':          ticks[0]['bidPrice'],
+            'close':         ticks[0]['bidPrice'],
+            'volume':        0
+        }
+
+        for tick in ticks:
+            if tick['merge']:
+                ticksAggregated['low']     = min(ticksAggregated['low'],  tick['bidPrice'])
+                ticksAggregated['high']    = max(ticksAggregated['high'], tick['bidPrice'])
+                ticksAggregated['volume'] += tick['bidVolume'] + tick['askVolume']
+
+
+            #   high = max(tickToAggregate.high)
+
+        self.path.write(self._packUniBar(ticksAggregated))
 
     def _packUniBar(self, uniBar):
         bar = bytearray()
@@ -332,18 +350,29 @@ class FXT(Output):
 
         self.path.write(header)
 
-    def pack_tick(self, tick):
+    def pack_ticks(self, ticks):
         # Transform universal bar list to binary bar data (56 Bytes per bar)
-        uniBar = self._aggregateWithTicks(tick)
-        if not self._firstUniBar: self._firstUniBar = uniBar             # Store first and ...
-        self._lastUniBar = uniBar                                        # ... last bar data for header.
-        self.path.write(pack('<iiddddQii',
-                int(uniBar['barTimestamp']),                                 # Bar datetime.
-                0,                                                           # Add 4 bytes of padding.
-                uniBar['open'],uniBar['high'],uniBar['low'],uniBar['close'], # OHLCV values.
-                max(int(uniBar['volume']), 1),                               # Volume (documentation says it's a double, though it's stored as a long int).
-                int(uniBar['tickTimestamp']),                                # The current time within a bar.
-                4))                                                          # Flag to launch an expert (0 - bar will be modified, but the expert will not be launched).
+        for tick in ticks:
+            # We're getting an array  
+            uniBar = {
+                'barTimestamp': tick['barTimestamp'],
+               'tickTimestamp': tick['timestamp'],
+                        'open': tick['bidPrice'],
+                        'high': tick['bidPrice'],
+                         'low': tick['bidPrice'],
+                       'close': tick['bidPrice'],
+                      'volume': tick['bidVolume']
+            }
+
+            if not self._firstUniBar: self._firstUniBar = uniBar             # Store first and ...
+            self._lastUniBar = uniBar                                        # ... last bar data for header.
+            self.path.write(pack('<iiddddQii',
+                    int(uniBar['barTimestamp']),                                 # Bar datetime.
+                    0,                                                           # Add 4 bytes of padding.
+                    uniBar['open'],uniBar['high'],uniBar['low'],uniBar['close'], # OHLCV values.
+                    max(int(uniBar['volume']), 1),                               # Volume (documentation says it's a double, though it's stored as a long int).
+                    int(uniBar['tickTimestamp']),                                # The current time within a bar.
+                    4))                                                          # Flag to launch an expert (0 - bar will be modified, but the expert will not be launched).
 
     def finalize(self):
         # Fixup the header.
@@ -470,10 +499,61 @@ if __name__ == '__main__':
     # Process the queue, process all the timeframes at the same time to
     # amortize the cost of the parsing
     try:
-        for tick in CSV(args.inputFile):
-            for obj in queue:
-                obj.pack_tick(tick)
+        # Getting first output from the queue
+        # @fixit We should iterate over queue
+        obj = queue[0]
+
+        ticks = CSV(args.inputFile);
+
+        startTimestamp = None
+
+        # We will retrieve all ticks in the timeframe into following array and update their LowBid/HighBid
+        ticksToJoin      = [];
+        ticksToAggregate = [];
+
+        for (tick, isLastRow) in ticks:
+            # Beginning of the bar's timeline.
+            tick['barTimestamp'] = int(tick['timestamp']) - int(tick['timestamp']) % obj.deltaTimestamp
+
+            # Tick's timestamp will be rounded to 1 for M1 and 60 for other.
+            tick['timestamp'] = int(tick['timestamp']) - int(tick['timestamp']) % (1 if obj.deltaTimestamp == 60 else 60)
+
+            if not startTimestamp:
+                startTimestamp = tick['barTimestamp']
+
+            # Tick after this time won't be used for LowBid/HighBid aggregation.
+            endTimestampAggregate = startTimestamp + 60
+
+            # Determines the end of the current bar.
+            endTimestampTimeline  = startTimestamp + obj.deltaTimestamp
+
+            # Indicates whether we use tick's LowBid/HighBid when aggregating.
+            # E.g., when aggregating M5 we use only the first 1 min of data.  
+            tick['merge'] = tick['timestamp'] < endTimestampAggregate
+
+            if tick['timestamp'] >= endTimestampTimeline:
+            # Tick is beyond current bar's timeline, aggregating unaggregated
+            # ticks:
+                if len(ticksToAggregate) > 0:
+                    obj.pack_ticks(ticksToAggregate)
+                
+                # Next bar's timeline will begin from this new tick's bar
+                # timestamp.
+                startTimestamp   = tick['barTimestamp']
+
+                # Tick beyond delta timeframe will be aggregated in the next
+                # timeframe 
+                ticksToAggregate = [tick]
+            else:
+            # Tick is within the current bar's timeline, queuing for
+            # aggregation.
+                ticksToAggregate.append(tick)
+
             spinner.spin()
+
+        # Writting the last tick if not yet written.
+        if len(ticksToAggregate) > 0:
+            obj.pack_ticks(ticksToAggregate)
 
         if args.verbose:
             print('[INFO] Finalizing...')
