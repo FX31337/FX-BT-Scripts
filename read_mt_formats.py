@@ -5,7 +5,8 @@ import argparse
 import sys
 
 def get_fields_size(spec):
-    fmt_str = ''.join(x[1] for x in spec)
+    # Prepend an endianness mark to prevent calcsize to insert padding bytes
+    fmt_str = '=' + ''.join(x[1] for x in spec)
     return struct.calcsize(fmt_str)
 
 class BStruct():
@@ -27,7 +28,6 @@ class BStruct():
 
         for (name, _, *fmt) in self._fields:
             val_repr = getattr(self, name)
-
             # Pretty print the value using the custom formatter.
             if len(fmt):
                 pp ,= fmt
@@ -45,6 +45,9 @@ def pretty_print_time(obj, x):
 
 def pretty_print_string(obj, x):
     return x.decode('utf-8').rstrip('\0')
+
+def pretty_print_wstring(obj, x):
+    return x.decode('utf-16')
 
 def pretty_print_ignore(obj, x):
     return '<...>'
@@ -228,6 +231,105 @@ class FxtHeader(BStruct):
     _size = get_fields_size(_fields)
     assert(_size == 728)
 
+class HccHeader(BStruct):
+    _endianness = '<'
+    _fields = [
+            ('magic', 'I'),
+            ('copyright', '128s', pretty_print_wstring),
+            ('name', '32s', pretty_print_wstring),
+            ('title', '64s', pretty_print_wstring)
+            ]
+    _size = get_fields_size(_fields)
+    assert(_size == 228)
+
+class HccTable(BStruct):
+    _endianness = '<'
+    _fields = [
+            ('unknown_0', 'I'),
+            ('unknown_1', 'I', pretty_print_time),
+            ('unknown_2', 'H'),
+            ('size', 'I'),
+            ('off',  'I', pretty_print_hex),
+            ]
+    _size = get_fields_size(_fields)
+    assert(_size == 18)
+
+class HccRecordHeader(BStruct):
+    _endianness = '<'
+    _fields = [
+            ('magic', 'H'),
+            ('label', '64s', pretty_print_wstring),
+            ('unknown_0', '18s', pretty_print_ignore),
+            ('rows', 'I'),
+            ('unknown_1', '101s', pretty_print_ignore),
+            ]
+    _size = get_fields_size(_fields)
+    assert(_size == 189)
+
+class HccRecord(BStruct):
+    _endianness = '<'
+    _fields = [
+            ('separator', 'I', pretty_print_ignore),
+            ('time', 'I', pretty_print_time),
+            ('open', 'd'),
+            ('high', 'd'),
+            ('low', 'd'),
+            ('close', 'd'),
+            ]
+    _size = get_fields_size(_fields)
+    assert(_size == 40)
+
+def dump_hcc_content(filename):
+    try:
+        fp = open(filename, 'rb')
+    except OSError as e:
+            print("[ERROR] '%s' raised when tried to read the file '%s'" % (e.strerror, filename))
+            sys.exit(1)
+
+    buf = fp.read(HccHeader._size)
+    obj = HccHeader(buf)
+
+    assert(obj.magic == 501)
+
+    print(obj)
+
+    while True:
+        buf = fp.read(HccTable._size)
+        obj = HccTable(buf)
+
+        # Quite crude, but seems to work
+        if obj.off == obj.size == 0:
+            break
+
+        print(obj)
+
+        was = fp.tell()
+        fp.seek(obj.off)
+
+        buf = fp.read(HccRecordHeader._size)
+        obj = HccRecordHeader(buf)
+
+        assert(obj.magic == 0x81)
+
+        print(obj)
+
+        for i in range(obj.rows):
+            buf = fp.read(HccRecord._size)
+            obj = HccRecord(buf)
+
+            assert(obj.separator & 0x00088884 == 0x00088884)
+
+            print(obj)
+
+            # Skip the eventual trailing bytes
+            extra1 = (obj.separator >> 28) & 15
+            extra2 = (obj.separator >> 24) & 15
+            extra3 = (obj.separator >> 20) & 15
+
+            fp.seek(extra1 + extra2 + extra3, 1)
+
+        fp.seek(was)
+
 def dump_content(filename, offset, strucc):
     """
     Dump the content of the file "filename" starting from offset and using the
@@ -269,5 +371,7 @@ if __name__ == '__main__':
         dump_content(args.inputFile, 0, Symgroups)
     elif args.inputType == 'fxt-header':
         dump_content(args.inputFile, 0, FxtHeader)
+    elif args.inputType == 'hcc-header':
+        dump_hcc_content(args.inputFile)
     else:
         print('Invalid type {}!'.format(args.inputType))
