@@ -7,6 +7,8 @@ import datetime
 import csv
 import math
 
+from bstruct_defs import *
+
 class Input:
     def __init__(self, fileName):
         if args.verbose:
@@ -19,7 +21,8 @@ class Input:
             sys.exit(1)
 
         self._checkFormat()
-        self.numberOfRows = (len(self.content) - self.headerLength)//self.rowLength
+        if self.rowLength != 0:
+            self.numberOfRows = (len(self.content) - self.headerLength)//self.rowLength
         self._parse()
 
 
@@ -32,10 +35,89 @@ class Input:
             print('[ERROR] Unsupported format version!')
             sys.exit(1)
 
-
     def _parse(self):
         pass
 
+class HCC(Input):
+    rowLength = 0
+    headerLength = 228
+    version = 501
+
+    def _checkFormat(self):
+        header = HccHeader(self.content)
+
+        if header.magic != 501:
+            print('[ERROR] Unsupported format version!')
+            sys.exit(1)
+
+    def _parse(self):
+        self.rows = []
+
+        # Skip the header
+        base = HccHeader._size
+
+        # Consume all the tables
+        while True:
+            t = HccTable(self.content, base)
+
+            if t.off == t.size == 0:
+                break
+
+            # Consume all the records
+            rh = HccRecordHeader(self.content, t.off)
+            assert(rh.magic == 0x81)
+
+            # We have to keep track of the cursor as some records have various
+            # trailing bytes
+            row_base = t.off + HccRecordHeader._size
+            for i in range(rh.rows):
+                tick = HccRecord(self.content, row_base)
+
+                assert(tick.separator & 0x00088884 == 0x00088884)
+
+                self.rows += [{
+                    'timestamp': datetime.datetime.fromtimestamp(tick.time),
+                    'open'     : tick.open,
+                    'high'     : tick.high,
+                    'low'      : tick.low,
+                    'close'    : tick.close
+                    }]
+
+                row_base += HccRecord._size + (
+                        ((tick.separator >> 28) & 15) +
+                        ((tick.separator >> 24) & 15) +
+                        ((tick.separator >> 20) & 15)
+                )
+
+            base += HccTable._size
+
+    def __str__(self):
+        table = ''
+        separator = ','
+        for row in self.rows:
+            table += '{:<19}'.format('{:%Y.%m.%d %H:%M:%S}'.format(row['timestamp']))
+            table += separator
+            table += '{:>9.5f}'.format(row['open'])
+            table += separator
+            table += '{:>9.5f}'.format(row['high'])
+            table += separator
+            table += '{:>9.5f}'.format(row['low'])
+            table += separator
+            table += '{:>9.5f}'.format(row['close'])
+            table += '\n'
+        return table[:-1]
+
+
+    def toCsv(self, fileName):
+        with open(fileName, 'w', newline='') as csvFile:
+            writer = csv.writer(csvFile, quoting = csv.QUOTE_NONE)
+            for row in self.rows:
+                writer.writerow(['{:%Y.%m.%d %H:%M:%S}'.format(row['timestamp']),
+                                 '{:.5f}'.format(row['open']),
+                                 '{:.5f}'.format(row['high']),
+                                 '{:.5f}'.format(row['low']),
+                                 '{:.5f}'.format(row['close']),
+                               ])
 
 class HST4_509(Input):
     version = 400
@@ -226,6 +308,9 @@ if __name__ == '__main__':
     elif args.inputFormat == 'fxt4':
         fxt4 = FXT4(args.inputFile)
         fxt4.toCsv(args.outputFile) if args.outputFile else print(fxt4)
+    elif args.inputFormat == 'hcc':
+        hcc = HCC(args.inputFile)
+        hcc.toCsv(args.outputFile) if args.outputFile else print(hcc)
     else:
         print('[ERROR] Unknown input file format \'%s\'!' % args.inputFormat)
         sys.exit(1)
