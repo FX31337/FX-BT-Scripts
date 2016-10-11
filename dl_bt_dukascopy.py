@@ -289,7 +289,7 @@ class Dukascopy:
                     print("Error: %s, reason: %s. Retrying (%i).." % (err.code, err.reason, i));
                     i += 1
                 except IOError as err:
-                    print("Error: %s, reason: %s. Retrying (%i).." % (err.code, err.reason, i));
+                    print("Error: %s, reason: %s. Retrying (%i).." % (err.errno, err.strerror, i));
                     i += 1
                 except socket.timeout as err:
                     print("Network error: %s. Retrying (%i).." % (err.strerror, i));
