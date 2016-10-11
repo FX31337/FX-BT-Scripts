@@ -47,7 +47,7 @@ def pretty_print_string(obj, x):
     return x.decode('utf-8').rstrip('\0')
 
 def pretty_print_wstring(obj, x):
-    return x.decode('utf-16')
+    return x.decode('utf-16').rstrip('\0')
 
 def pretty_print_ignore(obj, x):
     return '<...>'
