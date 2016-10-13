@@ -397,8 +397,7 @@ def _hstFilename(symbol, timeframe):
 def _fxtFilename(symbol, timeframe):
     return '%s%d_0.fxt' % (symbol, timeframe)
 
-if __name__ == '__main__':
-    # Parse the arguments
+def config_argparser():
     argumentParser = argparse.ArgumentParser(add_help=False)
     argumentParser.add_argument('-i', '--input-file',
         action='store',      dest='inputFile', help='input file', default=None, required=True)
@@ -418,7 +417,13 @@ if __name__ == '__main__':
         action='store_true', dest='verbose', help='increase output verbosity')
     argumentParser.add_argument('-h', '--help',
         action='help', help='Show this help message and exit')
-    args = argumentParser.parse_args()
+
+    return argumentParser
+
+if __name__ == '__main__':
+    # Parse the arguments
+    arg_parser = config_argparser()
+    args = arg_parser.parse_args()
 
     # Checking input file argument
     if args.verbose:
