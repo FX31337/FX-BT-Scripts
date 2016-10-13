@@ -391,18 +391,28 @@ class FXT(Output):
                 int(self._lastUniBar['barTimestamp']))                     # Tester end date - date of the last tick.
         self.path.write(fix)
 
+class HCC(Output):
+    def __init__(self, ticks, path, timeframe):
+        super().__init__(timeframe, path)
+
+    def pack_ticks(self, ticks):
+        print(ticks)
+
 def _hstFilename(symbol, timeframe):
     return '%s%d.hst' % (symbol, timeframe)
 
 def _fxtFilename(symbol, timeframe):
     return '%s%d_0.fxt' % (symbol, timeframe)
 
+def _hccFilename(symbol, timeframe):
+    return '%s%d.hcc' % (symbol, timeframe)
+
 def config_argparser():
     argumentParser = argparse.ArgumentParser(add_help=False)
     argumentParser.add_argument('-i', '--input-file',
         action='store',      dest='inputFile', help='input file', default=None, required=True)
     argumentParser.add_argument('-f', '--output-format',
-        action='store',      dest='outputFormat', help='format of output file (FXT/HST/Old HST), as: fxt4/hst4/hst4_509', default='fxt4')
+        action='store',      dest='outputFormat', help='format of output file (FXT/HST/Old HST/HCC), as: fxt4/hst4/hst4_509/hcc', default='fxt4')
     argumentParser.add_argument('-s', '--symbol',
         action='store',      dest='symbol', help='symbol code (maximum 12 characters)', default='EURUSD')
     argumentParser.add_argument('-t', '--timeframe',
@@ -495,6 +505,9 @@ if __name__ == '__main__':
         elif outputFormat == 'fxt4':
             outputPath = os.path.join(args.outputDir, _fxtFilename(symbol, timeframe))
             o = FXT(None, outputPath, timeframe, server, symbol, spread)
+        elif outputFormat == 'hcc':
+            outputPath = os.path.join(args.outputDir, _hccFilename(symbol, timeframe))
+            o = HCC(None, outputPath, timeframe)
         else:
             print('[ERROR] Unknown output file format!')
             sys.exit(1)
