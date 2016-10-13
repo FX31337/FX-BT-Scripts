@@ -57,6 +57,13 @@ class Input:
         }]
 
 def string_to_timestamp(s):
+    try_microseconds = s[20:]
+
+    if try_microseconds == '':
+        microseconds = int(s[20:])
+    else:
+        microseconds = 0
+
     return datetime.datetime(
             int(s[0:4]),   # Year
             int(s[5:7]),   # Month
@@ -64,7 +71,7 @@ def string_to_timestamp(s):
             int(s[11:13]), # Hour
             int(s[14:16]), # Minute
             int(s[17:19]), # Second
-            int(s[20:]),   # Microseconds
+            microseconds,  # Microseconds
             datetime.timezone.utc)
 
 class CSV(Input):
