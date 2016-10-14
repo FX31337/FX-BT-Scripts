@@ -360,7 +360,7 @@ class FXT(Output):
     def pack_ticks(self, ticks):
         # Transform universal bar list to binary bar data (56 Bytes per bar)
         for tick in ticks:
-            # We're getting an array  
+            # We're getting an array
             uniBar = {
                 'barTimestamp': tick['barTimestamp'],
                'tickTimestamp': tick['timestamp'],
@@ -402,8 +402,23 @@ class HCC(Output):
     def __init__(self, ticks, path, timeframe):
         super().__init__(timeframe, path)
 
+        # Build header (228 Bytes in total)
+        header = bytearray()
+        header += pack('<I', 501)                                                        # Magic
+        header += bytearray(u'Copyright 2001-2016, MetaQuotes Software Corp.'.ljust(64, # Copyright
+                            '\x00'),'utf-16', 'ignore')
+        header += bytearray('History'.ljust(16, '\x00'), 'utf-16', 'ignore')             # Name
+        header += bytearray('EURUSD'.ljust(32, '\x00'), 'utf-16', 'ignore')              # Title
+
+        print(bytearray(u'Copyright 2001-2016, MetaQuotes Software Corp.'.ljust(128,     # Copyright
+                            '\x00'),'utf-16', 'ignore'))
+        print(bytearray(u'History'.ljust(32, '\x00'), 'utf-16', 'ignore'))
+        print(bytearray(u'EURUSD'.ljust(64, '\x00'), 'utf-16', 'ignore'))
+
+        self.path.write(header)
+
     def pack_ticks(self, ticks):
-        print(ticks)
+        pass
 
 def _hstFilename(symbol, timeframe):
     return '%s%d.hst' % (symbol, timeframe)
