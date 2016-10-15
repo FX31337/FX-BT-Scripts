@@ -108,15 +108,15 @@ class Output:
         self.endTimestamp = None
         self.barCount = 0
 
-        filename = '%s%d%s' % (symbol, timeframe, path_suffix)
-        path = os.path.join(output_dir, filename)
+        self.filename = '%s%d%s' % (symbol, timeframe, path_suffix)
+        self.fullname = os.path.join(output_dir, self.filename)
 
         try:
-            os.remove(path)  # Remove existing output file before creating an appended new one
+            os.remove(self.fullname)  # Remove existing output file before creating an appended new one
         except (OSError, IOError) as e:
             pass
         try:
-            self.path = open(path, 'wb')
+            self.path = open(self.fullname, 'wb')
         except OSError as e:
             print("[ERROR] '%s' raised when tried to open for appending the file '%s'" % (e.strerror, e.filename))
             sys.exit(1)
@@ -403,7 +403,7 @@ class FXT(Output):
         self.path.write(fix)
 
 class HCC(Output):
-    def __init__(self, path, path_suffix, output_dir, timeframe, symbol):
+    def __init__(self, path_suffix, output_dir, timeframe, symbol):
         # Initialize variables in parent constructor
         super().__init__(timeframe, path_suffix, symbol, output_dir)
 
@@ -414,11 +414,6 @@ class HCC(Output):
                             '\x00'),'utf-16', 'ignore')
         header += bytearray('History'.ljust(16, '\x00'), 'utf-16', 'ignore')             # Name
         header += bytearray('EURUSD'.ljust(32, '\x00'), 'utf-16', 'ignore')              # Title
-
-        print(bytearray(u'Copyright 2001-2016, MetaQuotes Software Corp.'.ljust(128,     # Copyright
-                            '\x00'),'utf-16', 'ignore'))
-        print(bytearray(u'History'.ljust(32, '\x00'), 'utf-16', 'ignore'))
-        print(bytearray(u'EURUSD'.ljust(64, '\x00'), 'utf-16', 'ignore'))
 
         self.path.write(header)
 
