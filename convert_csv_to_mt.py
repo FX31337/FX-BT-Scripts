@@ -103,10 +103,13 @@ class CSV(Input):
         }
 
 class Output:
-    def __init__(self, timeframe, path):
+    def __init__(self, timeframe, path_suffix, symbol, output_dir):
         self.deltaTimestamp = timeframe * 60
         self.endTimestamp = None
         self.barCount = 0
+
+        filename = '%s%d%s' % (symbol, timeframe, path_suffix)
+        path = os.path.join(output_dir, filename)
 
         try:
             os.remove(path)  # Remove existing output file before creating an appended new one
@@ -186,9 +189,9 @@ class Output:
 
 
 class HST509(Output):
-    def __init__(self, ticks, path, timeframe, symbol):
+    def __init__(self, path, path_suffix, output_dir, timeframe, symbol):
         # Initialize variables in parent constructor
-        super().__init__(timeframe, path)
+        super().__init__(timeframe, path_suffix, symbol, output_dir)
 
         # Build header (148 Bytes in total)
         header = bytearray()
@@ -223,9 +226,9 @@ class HST509(Output):
 
 
 class HST574(Output):
-    def __init__(self, ticks, path, timeframe, symbol):
+    def __init__(self, path, path_suffix, output_dir, timeframe, symbol):
         # Initialize variables in parent constructor
-        super().__init__(timeframe, path)
+        super().__init__(timeframe, path_suffix, symbol, output_dir)
 
         # Build header (148 Bytes in total)
         header = bytearray()
@@ -280,9 +283,10 @@ class HST574(Output):
         return bar
 
 class FXT(Output):
-    def __init__(self, ticks, path, timeframe, server, symbol, spread):
-        # Initialize variables in parent constructor.
-        super().__init__(timeframe, path)
+    def __init__(self, path, path_suffix, output_dir, timeframe, symbol, server, spread):
+        # Initialize variables in parent constructor
+        super().__init__(timeframe, path_suffix, symbol, output_dir)
+
         self._priv = (timeframe, server, symbol, spread)
         self._firstUniBar = self._lastUniBar = None
 
@@ -399,8 +403,9 @@ class FXT(Output):
         self.path.write(fix)
 
 class HCC(Output):
-    def __init__(self, ticks, path, timeframe):
-        super().__init__(timeframe, path)
+    def __init__(self, path, path_suffix, output_dir, timeframe, symbol):
+        # Initialize variables in parent constructor
+        super().__init__(timeframe, path_suffix, symbol, output_dir)
 
         # Build header (228 Bytes in total)
         header = bytearray()
@@ -420,14 +425,6 @@ class HCC(Output):
     def pack_ticks(self, ticks):
         pass
 
-def _hstFilename(symbol, timeframe):
-    return '%s%d.hst' % (symbol, timeframe)
-
-def _fxtFilename(symbol, timeframe):
-    return '%s%d_0.fxt' % (symbol, timeframe)
-
-def _hccFilename(symbol, timeframe):
-    return '%s%d.hcc' % (symbol, timeframe)
 
 def config_argparser():
     argumentParser = argparse.ArgumentParser(add_help=False)
@@ -451,6 +448,31 @@ def config_argparser():
         action='help', help='Show this help message and exit')
 
     return argumentParser
+
+
+def construct_queue(timeframe_list):
+    queue = []
+
+    for timeframe in timeframe_list:
+        if multiple_timeframes:
+            print('[INFO] Queueing the {}m timeframe for conversion'.format(timeframe))
+        # Checking output file format argument and doing conversion
+        if outputFormat == 'hst4_509':
+            o = HST509(None, '.hst', args.outputDir, timeframe, symbol)
+        elif outputFormat == 'hst4':
+            o = HST574(None, '.hst', args.outputDir, timeframe, symbol)
+        elif outputFormat == 'fxt4':
+            o = FXT(None, '_0.fxt', args.outputDir, timeframe, symbol, server, spread)
+        elif outputFormat == 'hcc':
+            o = HCC(None, '.hcc', args.outputDir, timeframe, symbol)
+        else:
+            print('[ERROR] Unknown output file format!')
+            sys.exit(1)
+
+        queue.append(o)
+
+    return queue
+
 
 def process_queue(queue):
     # Process the queue, process all the timeframes at the same time to
@@ -582,28 +604,5 @@ if __name__ == '__main__':
 
     multiple_timeframes = len(timeframe_list) > 1
 
-    queue = []
-
-    for timeframe in timeframe_list:
-        if multiple_timeframes:
-            print('[INFO] Queueing the {}m timeframe for conversion'.format(timeframe))
-        # Checking output file format argument and doing conversion
-        if outputFormat == 'hst4_509':
-            outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
-            o = HST509(None, outputPath, timeframe, symbol)
-        elif outputFormat == 'hst4':
-            outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
-            o = HST574(None, outputPath, timeframe, symbol)
-        elif outputFormat == 'fxt4':
-            outputPath = os.path.join(args.outputDir, _fxtFilename(symbol, timeframe))
-            o = FXT(None, outputPath, timeframe, server, symbol, spread)
-        elif outputFormat == 'hcc':
-            outputPath = os.path.join(args.outputDir, _hccFilename(symbol, timeframe))
-            o = HCC(None, outputPath, timeframe)
-        else:
-            print('[ERROR] Unknown output file format!')
-            sys.exit(1)
-
-        queue.append(o)
-
+    queue = construct_queue(timeframe_list)
     process_queue(queue)
