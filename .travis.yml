@@ -30,6 +30,7 @@ before_script:
 # All commands must exit with code 0 on success. Anything else is considered failure.
 script:
   - set -e # This makes build to fail on first error.
+  - python3 -m unittest -v
   - make test
 
 # After Success
