@@ -141,6 +141,7 @@ class Output:
                       'volume': self.volume
             }
 
+            print(tick)
             self.startTimestamp = (int(tick['timestamp']) // self.deltaTimestamp) * self.deltaTimestamp
             self.endTimestamp = self.startTimestamp + self.deltaTimestamp
             self.open = self.high = self.low = self.close = tick['bidPrice']
@@ -207,7 +208,7 @@ class HST509(Output):
 
         self.path.write(header)
 
-    def pack_tick(self, tick):
+    def pack_ticks(self, tick):
         # Transform universal bar list to binary bar data (44 Bytes per bar)
         (uniBar, newUniBar) = self._aggregate(tick)
         if newUniBar:
@@ -402,23 +403,85 @@ class FXT(Output):
                 int(self._lastUniBar['barTimestamp']))                     # Tester end date - date of the last tick.
         self.path.write(fix)
 
+
 class HCC(Output):
+    """Output ticks in HCC file format."""
+
     def __init__(self, path_suffix, output_dir, timeframe, symbol):
-        # Initialize variables in parent constructor
+        """Create file and write headers."""
+
         super().__init__(timeframe, path_suffix, symbol, output_dir)
 
         # Build header (228 Bytes in total)
         header = bytearray()
-        header += pack('<I', 501)                                                        # Magic
-        header += bytearray(u'Copyright 2001-2016, MetaQuotes Software Corp.'.ljust(64, # Copyright
-                            '\x00'),'utf-16', 'ignore')
-        header += bytearray('History'.ljust(16, '\x00'), 'utf-16', 'ignore')             # Name
-        header += bytearray('EURUSD'.ljust(32, '\x00'), 'utf-16', 'ignore')              # Title
+        header += pack('<I', 501)                                                      # Magic
+        header += bytearray('Copyright 2001-2016, MetaQuotes Software Corp.'.ljust(64, # Copyright
+                            '\x00'),'utf-16', 'ignore')[2:]
+        header += bytearray('History'.ljust(16, '\x00'), 'utf-16', 'ignore')[2:]       # Name
+        header += bytearray('EURUSD'.ljust(32, '\x00'), 'utf-16', 'ignore')[2:]        # Title
+        assert 228 == self.path.write(header)
 
-        self.path.write(header)
+        # Build EMPTY table (18 Bytes in total)
+        table = bytearray()
+        table += pack('<i', 0) # unknown_0
+        table += pack('<i', 0) # unknown_1
+        table += pack('<h', 0) # unknown_2
+        table += pack('<i', 0) # size
+        table += pack('<i', 0) # off
+
+        # write main table (18 Bytes in total)
+        assert 18 == self.path.write(table)
+        self.table_end = self.path.tell()
+        # write an empty table record to indicate that there are no more tables
+        assert 18 == self.path.write(table)
+
+        # Build record header (189 Bytes in total)
+        record_header = bytearray()
+        record_header += pack('<H',0x81)                                               # magic
+        record_header += bytearray('LABEL'.ljust(32, '\x00'), 'utf-16', 'ignore')[2:]  # label
+        record_header += bytearray('UN0'.ljust(9, '\x00'), 'utf-16', 'ignore')[2:]     # unknown_0
+        record_header += pack('<I', 0)                                                 # rows
+        record_header += bytearray('UN1'.ljust(50, '\x00'), 'utf-16', 'ignore')[2:]    # unknown_1
+        record_header += pack('<c', b'0')
+        self.record_header_begin = self.path.tell()
+        assert 189 == self.path.write(record_header)
+        self.record_header_end = self.path.tell()
 
     def pack_ticks(self, ticks):
-        pass
+        """Prepare and write ticks in file."""
+
+        self.count_ticks = len(ticks)
+
+        # Transform universal bar list to binary bar data (40 Bytes per bar)
+        for tick in ticks:
+            # We're getting an array
+            uniBar = {
+                'barTimestamp': tick['barTimestamp'],
+               'tickTimestamp': tick['timestamp'],
+                        'open': tick['bidPrice'],
+                        'high': tick['bidPrice'],
+                         'low': tick['bidPrice'],
+                       'close': tick['bidPrice'],
+                      'volume': tick['bidVolume']
+            }
+
+            self.path.write(pack('<iidddd',
+                    0x00088884,                                                   # Separator
+                    int(uniBar['barTimestamp']),                                  # Bar datetime.
+                    uniBar['open'],uniBar['high'],uniBar['low'],uniBar['close'])) # Values.
+
+    def finalize(self):
+        """Write data count in headers."""
+
+        # fixup the table
+        fix = pack('<i', self.record_header_begin)
+        self.path.seek(self.table_end-4)
+        self.path.write(fix)
+
+        # fixup the record header
+        fix = pack('<I', self.count_ticks)
+        self.path.seek(self.record_header_end-101-4)
+        self.path.write(fix)
 
 
 def config_argparser():
@@ -446,6 +509,8 @@ def config_argparser():
 
 
 def construct_queue(timeframe_list):
+    """Select the apropriate classes and begin the work."""
+
     queue = []
 
     for timeframe in timeframe_list:
@@ -459,7 +524,7 @@ def construct_queue(timeframe_list):
         elif outputFormat == 'fxt4':
             o = FXT(None, '_0.fxt', args.outputDir, timeframe, symbol, server, spread)
         elif outputFormat == 'hcc':
-            o = HCC(None, '.hcc', args.outputDir, timeframe, symbol)
+            o = HCC('.hcc', args.outputDir, timeframe, symbol)
         else:
             print('[ERROR] Unknown output file format!')
             sys.exit(1)
@@ -470,8 +535,8 @@ def construct_queue(timeframe_list):
 
 
 def process_queue(queue):
-    # Process the queue, process all the timeframes at the same time to
-    # amortize the cost of the parsing
+    """Process the queue, process all the timeframes at the same time to amortize the cost of the parsing."""
+
     try:
 
         for obj in queue:
