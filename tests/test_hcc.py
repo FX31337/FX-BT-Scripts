@@ -16,7 +16,7 @@ class TestHCCSetup(unittest.TestCase):
         self.hcc_file.path = open(self.hcc_file.fullname, 'rb')
 
     def TearDown(self):
-        self;hcc_file.path.close()
+        self.hcc_file.path.close()
         os.remove(full_name)
 
 
@@ -31,11 +31,16 @@ class TestHCCFileName(TestHCCSetup):
         self.assertEqual('EURUSD1.hcc', self.hcc_file.filename)
 
 
-class TestHCCFileHeader(TestHCCSetup):
+class TestHCCGenerateFile(TestHCCSetup):
     def setUp(self):
         super().setUp()
+
         self.hcc_file.path.seek(0)
+
         self.hcc_header = self.hcc_file.path.read(228)
+        self.hcc_main_table = self.hcc_file.path.read(18)
+        self.hcc_empty_table = self.hcc_file.path.read(18)
+        self.hcc_record_header = self.hcc_file.path.read(189)
 
     def test_file_header_magic_field(self):
         self.assertEqual((501,), unpack('<I', self.hcc_header[:4]))
@@ -46,11 +51,18 @@ class TestHCCFileHeader(TestHCCSetup):
 
     def test_file_header_name_field(self):
         self.assertEqual(u'History',
-            self.hcc_header[134:164].decode('utf-16').replace('\x00', ''))
+            self.hcc_header[132:164].decode('utf-16').replace('\x00', ''))
 
     def test_header_title_field(self):
         self.assertEqual(u'EURUSD',
-            self.hcc_header[168:228].decode('utf-16').replace('\x00', ''))
+            self.hcc_header[164:228].decode('utf-16').replace('\x00', ''))
+
+    def test_table(self):
+        self.assertEqual((0,), unpack('<i', self.hcc_main_table[:4]))       # unknow_0
+        self.assertEqual((0,), unpack('<i', self.hcc_main_table[4:8]))      # unknow_1
+        self.assertEqual((0,), unpack('<h', self.hcc_main_table[8:10]))     # unknow_2
+        self.assertEqual((0,), unpack('<i', self.hcc_main_table[10:14])) # size
+        self.assertEqual((0,), unpack('<i', self.hcc_main_table[14:18])) # offset
 
 
 if __name__ == '__main__':
