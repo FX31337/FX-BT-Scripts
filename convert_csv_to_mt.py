@@ -57,6 +57,13 @@ class Input:
         }]
 
 def string_to_timestamp(s):
+    try_microseconds = s[20:]
+
+    if try_microseconds == '':
+        microseconds = int(s[20:])
+    else:
+        microseconds = 0
+
     return datetime.datetime(
             int(s[0:4]),   # Year
             int(s[5:7]),   # Month
@@ -64,7 +71,7 @@ def string_to_timestamp(s):
             int(s[11:13]), # Hour
             int(s[14:16]), # Minute
             int(s[17:19]), # Second
-            int(s[20:]),   # Microseconds
+            microseconds,  # Microseconds
             datetime.timezone.utc)
 
 class CSV(Input):
@@ -96,17 +103,20 @@ class CSV(Input):
         }
 
 class Output:
-    def __init__(self, timeframe, path):
+    def __init__(self, timeframe, path_suffix, symbol, output_dir):
         self.deltaTimestamp = timeframe * 60
         self.endTimestamp = None
         self.barCount = 0
 
+        self.filename = '%s%d%s' % (symbol, timeframe, path_suffix)
+        self.fullname = os.path.join(output_dir, self.filename)
+
         try:
-            os.remove(path)  # Remove existing output file before creating an appended new one
+            os.remove(self.fullname)  # Remove existing output file before creating an appended new one
         except (OSError, IOError) as e:
             pass
         try:
-            self.path = open(path, 'wb')
+            self.path = open(self.fullname, 'wb')
         except OSError as e:
             print("[ERROR] '%s' raised when tried to open for appending the file '%s'" % (e.strerror, e.filename))
             sys.exit(1)
@@ -131,6 +141,7 @@ class Output:
                       'volume': self.volume
             }
 
+            print(tick)
             self.startTimestamp = (int(tick['timestamp']) // self.deltaTimestamp) * self.deltaTimestamp
             self.endTimestamp = self.startTimestamp + self.deltaTimestamp
             self.open = self.high = self.low = self.close = tick['bidPrice']
@@ -179,9 +190,9 @@ class Output:
 
 
 class HST509(Output):
-    def __init__(self, ticks, path, timeframe, symbol):
+    def __init__(self, path, path_suffix, output_dir, timeframe, symbol):
         # Initialize variables in parent constructor
-        super().__init__(timeframe, path)
+        super().__init__(timeframe, path_suffix, symbol, output_dir)
 
         # Build header (148 Bytes in total)
         header = bytearray()
@@ -197,7 +208,7 @@ class HST509(Output):
 
         self.path.write(header)
 
-    def pack_tick(self, tick):
+    def pack_ticks(self, tick):
         # Transform universal bar list to binary bar data (44 Bytes per bar)
         (uniBar, newUniBar) = self._aggregate(tick)
         if newUniBar:
@@ -216,9 +227,9 @@ class HST509(Output):
 
 
 class HST574(Output):
-    def __init__(self, ticks, path, timeframe, symbol):
+    def __init__(self, path, path_suffix, output_dir, timeframe, symbol):
         # Initialize variables in parent constructor
-        super().__init__(timeframe, path)
+        super().__init__(timeframe, path_suffix, symbol, output_dir)
 
         # Build header (148 Bytes in total)
         header = bytearray()
@@ -273,9 +284,10 @@ class HST574(Output):
         return bar
 
 class FXT(Output):
-    def __init__(self, ticks, path, timeframe, server, symbol, spread):
-        # Initialize variables in parent constructor.
-        super().__init__(timeframe, path)
+    def __init__(self, path, path_suffix, output_dir, timeframe, symbol, server, spread):
+        # Initialize variables in parent constructor
+        super().__init__(timeframe, path_suffix, symbol, output_dir)
+
         self._priv = (timeframe, server, symbol, spread)
         self._firstUniBar = self._lastUniBar = None
 
@@ -353,7 +365,7 @@ class FXT(Output):
     def pack_ticks(self, ticks):
         # Transform universal bar list to binary bar data (56 Bytes per bar)
         for tick in ticks:
-            # We're getting an array  
+            # We're getting an array
             uniBar = {
                 'barTimestamp': tick['barTimestamp'],
                'tickTimestamp': tick['timestamp'],
@@ -391,19 +403,93 @@ class FXT(Output):
                 int(self._lastUniBar['barTimestamp']))                     # Tester end date - date of the last tick.
         self.path.write(fix)
 
-def _hstFilename(symbol, timeframe):
-    return '%s%d.hst' % (symbol, timeframe)
 
-def _fxtFilename(symbol, timeframe):
-    return '%s%d_0.fxt' % (symbol, timeframe)
+class HCC(Output):
+    """Output ticks in HCC file format."""
 
-if __name__ == '__main__':
-    # Parse the arguments
+    def __init__(self, path_suffix, output_dir, timeframe, symbol):
+        """Create file and write headers."""
+
+        super().__init__(timeframe, path_suffix, symbol, output_dir)
+
+        # Build header (228 Bytes in total)
+        header = bytearray()
+        header += pack('<I', 501)                                                      # Magic
+        header += bytearray('Copyright 2001-2016, MetaQuotes Software Corp.'.ljust(64, # Copyright
+                            '\x00'),'utf-16', 'ignore')[2:]
+        header += bytearray('History'.ljust(16, '\x00'), 'utf-16', 'ignore')[2:]       # Name
+        header += bytearray('EURUSD'.ljust(32, '\x00'), 'utf-16', 'ignore')[2:]        # Title
+        assert 228 == self.path.write(header)
+
+        # Build EMPTY table (18 Bytes in total)
+        table = bytearray()
+        table += pack('<i', 0) # unknown_0
+        table += pack('<i', 0) # unknown_1
+        table += pack('<h', 0) # unknown_2
+        table += pack('<i', 0) # size
+        table += pack('<i', 0) # off
+
+        # write main table (18 Bytes in total)
+        assert 18 == self.path.write(table)
+        self.table_end = self.path.tell()
+        # write an empty table record to indicate that there are no more tables
+        assert 18 == self.path.write(table)
+
+        # Build record header (189 Bytes in total)
+        record_header = bytearray()
+        record_header += pack('<H',0x81)                                               # magic
+        record_header += bytearray('LABEL'.ljust(32, '\x00'), 'utf-16', 'ignore')[2:]  # label
+        record_header += bytearray('UN0'.ljust(9, '\x00'), 'utf-16', 'ignore')[2:]     # unknown_0
+        record_header += pack('<I', 0)                                                 # rows
+        record_header += bytearray('UN1'.ljust(50, '\x00'), 'utf-16', 'ignore')[2:]    # unknown_1
+        record_header += pack('<c', b'0')
+        self.record_header_begin = self.path.tell()
+        assert 189 == self.path.write(record_header)
+        self.record_header_end = self.path.tell()
+
+    def pack_ticks(self, ticks):
+        """Prepare and write ticks in file."""
+
+        self.count_ticks = len(ticks)
+
+        # Transform universal bar list to binary bar data (40 Bytes per bar)
+        for tick in ticks:
+            # We're getting an array
+            uniBar = {
+                'barTimestamp': tick['barTimestamp'],
+               'tickTimestamp': tick['timestamp'],
+                        'open': tick['bidPrice'],
+                        'high': tick['bidPrice'],
+                         'low': tick['bidPrice'],
+                       'close': tick['bidPrice'],
+                      'volume': tick['bidVolume']
+            }
+
+            self.path.write(pack('<iidddd',
+                    0x00088884,                                                   # Separator
+                    int(uniBar['barTimestamp']),                                  # Bar datetime.
+                    uniBar['open'],uniBar['high'],uniBar['low'],uniBar['close'])) # Values.
+
+    def finalize(self):
+        """Write data count in headers."""
+
+        # fixup the table
+        fix = pack('<i', self.record_header_begin)
+        self.path.seek(self.table_end-4)
+        self.path.write(fix)
+
+        # fixup the record header
+        fix = pack('<I', self.count_ticks)
+        self.path.seek(self.record_header_end-101-4)
+        self.path.write(fix)
+
+
+def config_argparser():
     argumentParser = argparse.ArgumentParser(add_help=False)
     argumentParser.add_argument('-i', '--input-file',
         action='store',      dest='inputFile', help='input file', default=None, required=True)
     argumentParser.add_argument('-f', '--output-format',
-        action='store',      dest='outputFormat', help='format of output file (FXT/HST/Old HST), as: fxt4/hst4/hst4_509', default='fxt4')
+        action='store',      dest='outputFormat', help='format of output file (FXT/HST/Old HST/HCC), as: fxt4/hst4/hst4_509/hcc', default='fxt4')
     argumentParser.add_argument('-s', '--symbol',
         action='store',      dest='symbol', help='symbol code (maximum 12 characters)', default='EURUSD')
     argumentParser.add_argument('-t', '--timeframe',
@@ -418,62 +504,12 @@ if __name__ == '__main__':
         action='store_true', dest='verbose', help='increase output verbosity')
     argumentParser.add_argument('-h', '--help',
         action='help', help='Show this help message and exit')
-    args = argumentParser.parse_args()
 
-    # Checking input file argument
-    if args.verbose:
-        print('[INFO] Input file: %s' % args.inputFile)
+    return argumentParser
 
-    # Checking symbol argument
-    if len(args.symbol) > 12:
-        print('[WARNING] Symbol is more than 12 characters, cutting its end off!')
-        symbol = args.symbol[0:12]
-    else:
-        symbol = args.symbol
-    if args.verbose:
-        print('[INFO] Symbol name: %s' % symbol)
 
-    # Converting timeframe argument to minutes
-    timeframe_list = []
-    timeframe_conv = {
-            'm1': 1, 'm5':  5, 'm15': 15, 'm30':  30,
-            'h1':60, 'h4':240, 'd1':1440, 'w1':10080, 'mn':43200
-    }
-
-    for arg in args.timeframe.lower().split(','):
-        if arg in timeframe_conv:
-            timeframe_list.append(timeframe_conv[arg])
-        else:
-            print('[ERROR] Bad timeframe setting \'{}\'!'.format(arg))
-            sys.exit(1)
-
-    if args.verbose:
-        print('[INFO] Timeframe: %s - %s minute(s)' % (args.timeframe.upper(), timeframe_list))
-
-    # Checking spread argument
-    spread = int(args.spread)
-    if args.verbose:
-        print('[INFO] Spread: %d' % spread)
-
-    # Create output directory
-    os.makedirs(args.outputDir, 0o755, True)
-    if args.verbose:
-        print('[INFO] Output directory: %s' % args.outputDir)
-
-    # Checking server argument
-    if len(args.server) > 128:
-        print('[WARNING] Server name is longer than 128 characters, cutting its end off!')
-        server = args.server[0:128]
-    else:
-        server = args.server
-    if args.verbose:
-        print('[INFO] Server name: %s' % server)
-
-    outputFormat = args.outputFormat.lower()
-    if args.verbose:
-        print('[INFO] Output format: %s' % outputFormat)
-
-    multiple_timeframes = len(timeframe_list) > 1
+def construct_queue(timeframe_list):
+    """Select the apropriate classes and begin the work."""
 
     queue = []
 
@@ -482,22 +518,25 @@ if __name__ == '__main__':
             print('[INFO] Queueing the {}m timeframe for conversion'.format(timeframe))
         # Checking output file format argument and doing conversion
         if outputFormat == 'hst4_509':
-            outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
-            o = HST509(None, outputPath, timeframe, symbol)
+            o = HST509(None, '.hst', args.outputDir, timeframe, symbol)
         elif outputFormat == 'hst4':
-            outputPath = os.path.join(args.outputDir, _hstFilename(symbol, timeframe))
-            o = HST574(None, outputPath, timeframe, symbol)
+            o = HST574(None, '.hst', args.outputDir, timeframe, symbol)
         elif outputFormat == 'fxt4':
-            outputPath = os.path.join(args.outputDir, _fxtFilename(symbol, timeframe))
-            o = FXT(None, outputPath, timeframe, server, symbol, spread)
+            o = FXT(None, '_0.fxt', args.outputDir, timeframe, symbol, server, spread)
+        elif outputFormat == 'hcc':
+            o = HCC('.hcc', args.outputDir, timeframe, symbol)
         else:
             print('[ERROR] Unknown output file format!')
             sys.exit(1)
 
         queue.append(o)
 
-    # Process the queue, process all the timeframes at the same time to
-    # amortize the cost of the parsing
+    return queue
+
+
+def process_queue(queue):
+    """Process the queue, process all the timeframes at the same time to amortize the cost of the parsing."""
+
     try:
 
         for obj in queue:
@@ -563,3 +602,67 @@ if __name__ == '__main__':
     except KeyboardInterrupt as e:
         print('\n[INFO] Exiting by user request...')
         sys.exit()
+
+
+if __name__ == '__main__':
+    # Parse the arguments
+    arg_parser = config_argparser()
+    args = arg_parser.parse_args()
+
+    # Checking input file argument
+    if args.verbose:
+        print('[INFO] Input file: %s' % args.inputFile)
+
+    # Checking symbol argument
+    if len(args.symbol) > 12:
+        print('[WARNING] Symbol is more than 12 characters, cutting its end off!')
+        symbol = args.symbol[0:12]
+    else:
+        symbol = args.symbol
+    if args.verbose:
+        print('[INFO] Symbol name: %s' % symbol)
+
+    # Converting timeframe argument to minutes
+    timeframe_list = []
+    timeframe_conv = {
+            'm1': 1, 'm5':  5, 'm15': 15, 'm30':  30,
+            'h1':60, 'h4':240, 'd1':1440, 'w1':10080, 'mn':43200
+    }
+
+    for arg in args.timeframe.lower().split(','):
+        if arg in timeframe_conv:
+            timeframe_list.append(timeframe_conv[arg])
+        else:
+            print('[ERROR] Bad timeframe setting \'{}\'!'.format(arg))
+            sys.exit(1)
+
+    if args.verbose:
+        print('[INFO] Timeframe: %s - %s minute(s)' % (args.timeframe.upper(), timeframe_list))
+
+    # Checking spread argument
+    spread = int(args.spread)
+    if args.verbose:
+        print('[INFO] Spread: %d' % spread)
+
+    # Create output directory
+    os.makedirs(args.outputDir, 0o755, True)
+    if args.verbose:
+        print('[INFO] Output directory: %s' % args.outputDir)
+
+    # Checking server argument
+    if len(args.server) > 128:
+        print('[WARNING] Server name is longer than 128 characters, cutting its end off!')
+        server = args.server[0:128]
+    else:
+        server = args.server
+    if args.verbose:
+        print('[INFO] Server name: %s' % server)
+
+    outputFormat = args.outputFormat.lower()
+    if args.verbose:
+        print('[INFO] Output format: %s' % outputFormat)
+
+    multiple_timeframes = len(timeframe_list) > 1
+
+    queue = construct_queue(timeframe_list)
+    process_queue(queue)
