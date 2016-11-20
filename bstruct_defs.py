@@ -57,40 +57,48 @@ class Symgroups(BStruct):
 class SymbolsRaw(BStruct):
     _endianness = '<'
     _fields = [
-            ('name', '12s', pretty_print_string),
-            ('description', '64s', pretty_print_string),
-            ('altName', '12s', pretty_print_string),
-            ('baseCurrency', '12s', pretty_print_string),
-            ('group', 'I'),
-            ('digits', 'I'),
-            ('tradeMode', 'I'),
-            ('backgroundColor', 'I', pretty_print_hex),
-            ('id', 'I'),
-            ('unknown_1', '1508c', pretty_print_ignore),
-            ('unknown_2', 'I'),
-            ('unknown_3', '8c'),
-            ('unknown_4', 'd'),
-            ('unknown_5', '12s', pretty_print_compact),
-            ('spread', 'I'),
-            ('unknown_6', '16s', pretty_print_compact),
-            ('swapLong', 'd'),
-            ('swapShort', 'd'),
-            ('unknown_7', 'I'),
-            ('unknown_8', 'I'),
-            ('contractSize', 'd'),
-            ('unknown_9', '16s', pretty_print_compact),
-            ('stopDistance', 'I'),
-            ('unknown_10', '12s', pretty_print_compact),
-            ('marginInit', 'd'),
-            ('marginMaintenance', 'd'),
-            ('marginHedged', 'd'),
-            ('marginDivider', 'd'),
-            ('pointSize', 'd'),
-            ('pointsPerUnit', 'd'),
-            ('unknown_11', '24s', pretty_print_compact),
-            ('marginCurrency', '12s', pretty_print_string),
-            ('unknown_12', '104s', pretty_print_ignore),
-            ('unknown_13', 'I'),
+            ('name', '12s', pretty_print_string),           # Symbol name.
+            ('description', '65s', pretty_print_string),    # Symbol description.
+            ('altName', '11s', pretty_print_string),        # Alternative name, e.g. "AUDCAD" (if not equal 'name')
+            ('baseCurrency', '12s', pretty_print_string),   # Base currency.
+            ('group', 'I'),                                 # Index of group in "symgroups.raw".
+            ('digits', 'I'),                                # Number of digits after decimal point for the current symbol prices.
+            ('tradeMode', 'I'),                             # Trade mode: 0 = No, 1 = CloseOnly, 2 = Full.
+            ('backgroundColor', 'I', pretty_print_hex),     # Color in "Market Watch" window.
+            ('id', 'I'),                                    # Unique symbol id.
+            ('unknown_1', '1508c', pretty_print_ignore),    # ???: Some colors (use pretty_print_compact instead to print).
+            ('unknown_2', 'I'),                             # ???: E.g. 8, 10, 12, 14, 20, 24, 25, 30, 40, 50, 60, 100, 10000.
+            ('unknown_3', 'I'),                             # ???: 1 - Gold, _NQ100, 2 - Currencies, 3 - #IBM, #HPQ, etc.
+            ('padding_1', '4s', pretty_print_compact),      # Padding space - add 4 bytes to align to the next double.
+            ('unknown_4', 'd'),                             # ???: E.g. 0.0, 0.1, 0.01, 0.005.
+            ('unknown_5', '12s', pretty_print_compact),     # ???: Empty.
+            ('spread', 'I'),                                # Spread in points, 0 for current online spread (variable).
+            ('unknown_6', 'I'),                             # ???: Always 0.
+            ('unknown_7', 'I'),                             # ???: Always 1.
+            ('unknown_8', 'I'),                             # ???: Always 1.
+            ('profitCalcMode', 'I'),                        # ???: Profit calculation mode. 0 - Forex; 1 - CFD; 2 - Futures.
+            ('swapLong', 'd'),                              # Swap of the buy order.
+            ('swapShort', 'd'),                             # Swap of the sell order.
+            ('3daysSwap', 'I'),                             # Day of week to charge 3 days swap rollover.
+            ('padding_2', '4s', pretty_print_compact),      # Padding space - add 4 bytes to align to the next double.
+            ('contractSize', 'd'),                          # Trade contract size (lot size in units).
+            ('unknown_9', '16s', pretty_print_compact),     # ???: Empty.
+            ('stopsLevel', 'I'),                            # Minimal indention in points from the current close price to place Stop orders.
+            ('unknown_10', 'I'),                            # ???: Disabled for #HPQ, #IBM, etc.
+            ('unknown_11', 'I'),                            # ???: 0 - Currencies, 1 - Futures.
+            ('padding_3', '4s', pretty_print_compact),      # Padding space - add 4 bytes to align to the next double.
+            ('marginInit', 'd'),                            # Margin init (0 = contractSize).
+            ('marginMaintenance', 'd'),                     # Margin maintenance
+            ('marginHedged', 'd'),                          # Margin hedged
+            ('marginDivider', 'd'),                         # leverage calculation: 0...5 - relative to account leverage, > 10  - absolute custom leverage.
+            ('pointSize', 'd'),                             # Point size in the quote currency.
+            ('pointsPerUnit', 'd'),                         # Points per unit.
+            ('unknown_12', '24s', pretty_print_compact),    # ???: Reserved.
+            ('marginCurrency', '12s', pretty_print_string), # Margin currency.
+            ('unknown_13', 'I'),                            # ???: Always 0.
+            ('unknown_14', 'I'),                            # ???: Always 1 for currencies.
+            ('unknown_15', '96s', pretty_print_compact),    # ???: Reserved.
+            ('unknown_16', 'I'),                            # ???: E.g. 0, 3, 4, 6, 7, 8, 9, 10, 12, 200.
             ]
     _size = get_fields_size(_fields)
     assert(_size == 1936)
