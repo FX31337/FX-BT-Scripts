@@ -34,6 +34,26 @@ class BStruct():
 
         return ret
 
+    def repack(self):
+        blob_size = get_fields_size(self._fields)
+
+        if blob_size == 0:
+            return b''
+
+        offset = 0
+        blob = bytearray(b'\x00' * blob_size)
+        for (name, fmt, *_) in self._fields:
+            field_size = struct.calcsize(fmt)
+            v = getattr(self, name)
+
+            if fmt[-1] == 's' or len(fmt) == 1:
+                v = [v]
+
+            struct.pack_into(self._endianness + fmt, blob, offset, *v)
+            offset += field_size
+
+        return blob
+
 #
 # Pretty printers
 #
