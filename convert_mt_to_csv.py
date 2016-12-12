@@ -28,8 +28,7 @@ class Input:
 
     def _checkFormat(self):
         if (len(self.content) - self.headerLength)%self.rowLength != 0:
-            print('[ERROR] File length isn\'t suitable for this kind of format!')
-            sys.exit(1)
+            print('[ERROR] File length isn\'t valid for this kind of format!')
 
         if self.version != unpack('<i', self.content[0:4])[0]:
             print('[ERROR] Unsupported format version!')
