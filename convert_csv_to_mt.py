@@ -258,13 +258,11 @@ class HST574(Output):
         }
 
         for tick in ticks:
-            if tick['merge']:
-                ticksAggregated['low']     = min(ticksAggregated['low'],  tick['bidPrice'])
-                ticksAggregated['high']    = max(ticksAggregated['high'], tick['bidPrice'])
-                ticksAggregated['volume'] += tick['bidVolume'] + tick['askVolume']
+            ticksAggregated['low']     = min(ticksAggregated['low'],  tick['bidPrice'])
+            ticksAggregated['high']    = max(ticksAggregated['high'], tick['bidPrice'])
+            ticksAggregated['volume'] += tick['bidVolume'] + tick['askVolume']
 
-
-            #   high = max(tickToAggregate.high)
+        ticksAggregated['close'] = tick['bidPrice']
 
         self.path.write(self._packUniBar(ticksAggregated))
 
@@ -564,10 +562,6 @@ def process_queue(queue):
 
                 # Determines the end of the current bar.
                 endTimestampTimeline  = startTimestamp + obj.deltaTimestamp
-
-                # Indicates whether we use tick's LowBid/HighBid when aggregating.
-                # E.g., when aggregating M5 we use only the first 1 min of data.
-                tick['merge'] = tick['timestamp'] < endTimestampAggregate
 
                 if tick['timestamp'] >= endTimestampTimeline:
                 # Tick is beyond current bar's timeline, aggregating unaggregated
