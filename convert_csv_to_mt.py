@@ -618,14 +618,26 @@ if __name__ == '__main__':
 
     # Converting timeframe argument to minutes
     timeframe_list = []
+
+
+
     timeframe_conv = {
-            'm1': 1, 'm5':  5, 'm15': 15, 'm30':  30,
-            'h1':60, 'h4':240, 'd1':1440, 'w1':10080, 'mn':43200
+        'M': 1,
+        'H': 60,
+        'D': 24 * 60,
+        'W': 7 * 24 * 60,
+        'MN': 30 * 24 * 60
     }
 
     for arg in args.timeframe.lower().split(','):
-        if arg in timeframe_conv:
-            timeframe_list.append(timeframe_conv[arg])
+        match_obj = re.match(r'(M|H|D|W|MN)(\d+)', arg, re.I)
+        if match_obj:
+            model = match_obj.group(1).upper()
+            value = int(match_obj.group(2))
+
+            timeframe_list.append(
+                timeframe_conv[model] * value
+            )
         else:
             print('[ERROR] Bad timeframe setting \'{}\'!'.format(arg))
             sys.exit(1)
