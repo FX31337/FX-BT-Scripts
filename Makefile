@@ -66,7 +66,7 @@ $(m1_hst): $(csvfile) convert_csv_to_mt.py
 
 # Generate FXT files.
 $(m1_fxt): $(csvfile) convert_csv_to_mt.py
-	convert_csv_to_mt.py -v -i $(csvfile) -s $(pair) -p $(spread) -S default -t M1,M5,M15,M30,H1,H4,D1,W1,MN1 -f fxt4
+	convert_csv_to_mt.py -v -i $(csvfile) -s $(pair) -p $(spread) -S default -t M1,M5,M15,M30,H1,H4,D1,W1,MN1 -f fxt4 -m 0,1,2
 
 $(csvfile): $(dl_dir)/$(pair)/$(year)/01
 	find . -name '*.csv' -print0 | sort -z | $(xargs) -r0 cat | tee $(csvfile) > /dev/null
