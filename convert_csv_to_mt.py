@@ -282,7 +282,7 @@ class HST574(Output):
         return bar
 
 class FXT(Output):
-    def __init__(self, path, path_suffix, output_dir, timeframe, symbol, server, spread):
+    def __init__(self, path, path_suffix, output_dir, timeframe, symbol, server, spread, model):
         # Initialize variables in parent constructor
         super().__init__(timeframe, path_suffix, symbol, output_dir)
 
@@ -297,7 +297,7 @@ class FXT(Output):
         header += bytearray(server.ljust(128, '\x00'), 'latin1', 'ignore')              # Account server name.
         header += bytearray(symbol.ljust(12, '\x00'), 'latin1', 'ignore')               # Symbol pair.
         header += pack('<I', timeframe)                                                 # Period of data aggregation in minutes (timeframe).
-        header += pack('<I', 0)                                                         # Model type: 0 - every tick, 1 - control points, 2 - bar open.
+        header += pack('<I', model)                                                     # Model type: 0 - every tick, 1 - control points, 2 - bar open.
         header += pack('<I', 0)                                                         # Bars - amount of bars in history.
         header += pack('<I', 0)                                                         # Modelling start date - date of the first tick.
         header += pack('<I', 0)                                                         # Modelling end date - date of the last tick.
@@ -500,6 +500,8 @@ def config_argparser():
         action='store',      dest='server', help='name of FX server', default='default')
     argumentParser.add_argument('-v', '--verbose',
         action='store_true', dest='verbose', help='increase output verbosity')
+    argumentParser.add_argument('-m', '--model',
+        action='store',      dest='model', help='one of the model values: 0, 1, 2', default='0')
     argumentParser.add_argument('-h', '--help',
         action='help', help='Show this help message and exit')
 
@@ -509,34 +511,30 @@ def config_argparser():
 def construct_queue(timeframe_list):
     """Select the apropriate classes and begin the work."""
 
-    queue = []
-
     for timeframe in timeframe_list:
         if multiple_timeframes:
             print('[INFO] Queueing the {}m timeframe for conversion'.format(timeframe))
         # Checking output file format argument and doing conversion
         if outputFormat == 'hst4_509':
-            o = HST509(None, '.hst', args.outputDir, timeframe, symbol)
+            yield HST509(None, '.hst', args.outputDir, timeframe, symbol)
         elif outputFormat == 'hst4':
-            o = HST574(None, '.hst', args.outputDir, timeframe, symbol)
+            yield HST574(None, '.hst', args.outputDir, timeframe, symbol)
         elif outputFormat == 'fxt4':
-            o = FXT(None, '_0.fxt', args.outputDir, timeframe, symbol, server, spread)
+            for m in args.model.split(','):
+                yield FXT(None, '_{0}.fxt'.format(m), args.outputDir, timeframe, symbol, server, spread, int(m))
         elif outputFormat == 'hcc':
-            o = HCC('.hcc', args.outputDir, timeframe, symbol)
+            yield HCC('.hcc', args.outputDir, timeframe, symbol)
         else:
             print('[ERROR] Unknown output file format!')
             sys.exit(1)
-
-        queue.append(o)
-
-    return queue
 
 
 def process_queue(queue):
     """Process the queue, process all the timeframes at the same time to amortize the cost of the parsing."""
 
-    try:
+    queue = list(queue)
 
+    try:
         for obj in queue:
 
             ticks = CSV(args.inputFile);
