@@ -1,5 +1,6 @@
 import struct
 import datetime
+import binascii
 
 def get_fields_size(spec):
     # Prepend an endianness mark to prevent calcsize to insert padding bytes
@@ -65,6 +66,9 @@ def pretty_print_string(obj, x):
 
 def pretty_print_wstring(obj, x):
     return x.decode('utf-16').rstrip('\0')
+
+def pretty_print_bstring(obj, x):
+    return binascii.hexlify(x)
 
 def pretty_print_ignore(obj, x):
     return '<...>'
