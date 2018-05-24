@@ -67,6 +67,15 @@ def dump_srv_content(filename):
 
     print(obj)
 
+    while True:
+        buf = fp.read(SrvRecord._size)
+
+        if len(buf) != SrvRecord._size:
+            break
+
+        obj = SrvRecord(buf)
+        print(obj)
+
 def dump_content(filename, offset, strucc):
     """
     Dump the content of the file "filename" starting from offset and using the

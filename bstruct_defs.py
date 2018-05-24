@@ -233,9 +233,20 @@ class SrvHeader(BStruct):
     _fields = [
             ('serverName', '64s', pretty_print_string),
             ('companyName', '128s', pretty_print_string),
-            ('unknown_0', '24s', pretty_print_ignore),
+            ('unknown_0', '24s'),
             ('serverAddress', '64s', pretty_print_string),
+            ('unknown_1', '72s'),
             ]
     _size = get_fields_size(_fields)
-    assert(_size == 280)
+    assert(_size == 352)
 
+class SrvRecord(BStruct):
+    _endianness = '<'
+    _fields = [
+            ('unknown_0', '40s'),
+            ('unknown_1', '40s'),
+            ('unknown_2', '40s'),
+            ('unknown_3', '40s'),
+            ]
+    _size = get_fields_size(_fields)
+    assert(_size == 160)
