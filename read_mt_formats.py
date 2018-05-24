@@ -55,6 +55,18 @@ def dump_hcc_content(filename):
 
         fp.seek(was)
 
+def dump_srv_content(filename):
+    try:
+        fp = open(filename, 'rb')
+    except OSError as e:
+            print("[ERROR] '%s' raised when tried to read the file '%s'" % (e.strerror, filename))
+            sys.exit(1)
+
+    buf = fp.read(SrvHeader._size)
+    obj = SrvHeader(buf)
+
+    print(obj)
+
 def dump_content(filename, offset, strucc):
     """
     Dump the content of the file "filename" starting from offset and using the
@@ -96,6 +108,8 @@ if __name__ == '__main__':
         dump_content(args.inputFile, 0, Symgroups)
     elif args.inputType == 'fxt-header':
         dump_content(args.inputFile, 0, FxtHeader)
+    elif args.inputType == 'srv':
+        dump_srv_content(args.inputFile)
     elif args.inputType == 'hcc-header':
         dump_hcc_content(args.inputFile)
     else:

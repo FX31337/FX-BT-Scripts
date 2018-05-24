@@ -228,4 +228,12 @@ class HccRecord(BStruct):
     _size = get_fields_size(_fields)
     assert(_size == 40)
 
+class SrvHeader(BStruct):
+    _endianness = '<'
+    _fields = [
+            ('serverName', '64s'),
+            ('companyName', '128s'),
+            ]
+    _size = get_fields_size(_fields)
+    assert(_size == 192)
 
