@@ -286,7 +286,7 @@ class FXT(Output):
         # Initialize variables in parent constructor
         super().__init__(timeframe, path_suffix, symbol, output_dir)
 
-        self._priv = (timeframe, server, symbol, spread)
+        self._priv = (timeframe, server, symbol, spread, model)
         self._firstUniBar = self._lastUniBar = None
 
         # Build header (728 Bytes in total).
@@ -360,29 +360,49 @@ class FXT(Output):
 
         self.path.write(header)
 
+    def write_unibar(self, tick):
+        # We're getting an array
+        uniBar = {
+            'barTimestamp': tick['barTimestamp'],
+           'tickTimestamp': tick['timestamp'],
+                    'open': tick['bidPrice'],
+                    'high': tick['bidPrice'],
+                     'low': tick['bidPrice'],
+                   'close': tick['bidPrice'],
+                  'volume': tick['bidVolume']
+        }
+        if not self._firstUniBar: self._firstUniBar = uniBar             # Store first and ...
+        self._lastUniBar = uniBar                                        # ... last bar data for header.
+        self.path.write(pack('<iiddddQii',
+                int(uniBar['barTimestamp']),                                 # Bar datetime.
+                0,                                                           # Add 4 bytes of padding.
+                uniBar['open'],uniBar['high'],uniBar['low'],uniBar['close'], # OHLCV values.
+                max(int(uniBar['volume']), 1),                               # Volume (documentation says it's a double, though it's stored as a long int).
+                int(uniBar['tickTimestamp']),                                # The current time within a bar.
+                4))                                                          # Flag to launch an expert (0 - bar will be modified, but the expert will not be launched).
+
     def pack_ticks(self, ticks):
         # Transform universal bar list to binary bar data (56 Bytes per bar)
-        for tick in ticks:
-            # We're getting an array
-            uniBar = {
-                'barTimestamp': tick['barTimestamp'],
-               'tickTimestamp': tick['timestamp'],
-                        'open': tick['bidPrice'],
-                        'high': tick['bidPrice'],
-                         'low': tick['bidPrice'],
-                       'close': tick['bidPrice'],
-                      'volume': tick['bidVolume']
-            }
+        model = self._priv[4]
 
-            if not self._firstUniBar: self._firstUniBar = uniBar             # Store first and ...
-            self._lastUniBar = uniBar                                        # ... last bar data for header.
-            self.path.write(pack('<iiddddQii',
-                    int(uniBar['barTimestamp']),                                 # Bar datetime.
-                    0,                                                           # Add 4 bytes of padding.
-                    uniBar['open'],uniBar['high'],uniBar['low'],uniBar['close'], # OHLCV values.
-                    max(int(uniBar['volume']), 1),                               # Volume (documentation says it's a double, though it's stored as a long int).
-                    int(uniBar['tickTimestamp']),                                # The current time within a bar.
-                    4))                                                          # Flag to launch an expert (0 - bar will be modified, but the expert will not be launched).
+        # Every tick model
+        if model == 0:
+            for tick in ticks:
+                self.write_unibar(tick)
+        # Control points model
+        elif model == 1:
+            self.write_unibar(ticks[0])
+            lowPrice = highPrice = ticks[0]['bidPrice']
+            for tick in ticks[1:]:
+                if tick['bidPrice'] < lowPrice:
+                    lowPrice = tick['bidPrice']
+                    self.write_unibar(tick)
+                if tick['bidPrice'] > highPrice:
+                    highPrice = tick['bidPrice']
+                    self.write_unibar(tick)
+        # Open price model
+        elif model == 2:
+            self.write_unibar(ticks[0])
 
     def finalize(self):
         # Fixup the header.
