@@ -141,7 +141,6 @@ class Output:
                       'volume': self.volume
             }
 
-            print(tick)
             self.startTimestamp = (int(tick['timestamp']) // self.deltaTimestamp) * self.deltaTimestamp
             self.endTimestamp = self.startTimestamp + self.deltaTimestamp
             self.open = self.high = self.low = self.close = tick['bidPrice']
@@ -391,14 +390,27 @@ class FXT(Output):
                 self.write_unibar(tick)
         # Control points model
         elif model == 1:
+            startTimestamp = None
             self.write_unibar(ticks[0])
             lowPrice = highPrice = ticks[0]['bidPrice']
             for tick in ticks[1:]:
+                # Beginning of the M1 bar's timeline.
+                tick['barTimestamp'] = int(tick['timestamp']) - int(tick['timestamp']) % 60
+
+                if not startTimestamp:
+                    startTimestamp = tick['barTimestamp']
+
+                # Determines the end of the M1 bar.
+                endTimestampTimeline  = startTimestamp + 60
+
                 if tick['bidPrice'] < lowPrice:
                     lowPrice = tick['bidPrice']
                     self.write_unibar(tick)
-                if tick['bidPrice'] > highPrice:
+                elif tick['bidPrice'] > highPrice:
                     highPrice = tick['bidPrice']
+                    self.write_unibar(tick)
+                elif tick['timestamp'] >= endTimestampTimeline:
+                    startTimestamp   = tick['barTimestamp']
                     self.write_unibar(tick)
         # Open price model
         elif model == 2:
@@ -570,7 +582,7 @@ def process_queue(queue):
                 tick['barTimestamp'] = int(tick['timestamp']) - int(tick['timestamp']) % obj.deltaTimestamp
 
                 # Tick's timestamp will be rounded to 1 for M1 and 60 for other.
-                tick['timestamp'] = int(tick['timestamp']) - int(tick['timestamp']) % (1 if obj.deltaTimestamp == 60 else 60)
+                tick['timestamp'] = int(tick['timestamp']) #- int(tick['timestamp']) % (1 if obj.deltaTimestamp == 60 else 60)
 
                 if not startTimestamp:
                     startTimestamp = tick['barTimestamp']
@@ -581,9 +593,13 @@ def process_queue(queue):
                 # Determines the end of the current bar.
                 endTimestampTimeline  = startTimestamp + obj.deltaTimestamp
 
-                if tick['timestamp'] >= endTimestampTimeline:
-                # Tick is beyond current bar's timeline, aggregating unaggregated
-                # ticks:
+                if tick['timestamp'] < endTimestampTimeline:
+                    # Tick is within the current bar's timeline, queuing for
+                    # aggregation.
+                    ticksToAggregate.append(tick)
+                else:
+                    # Tick is beyond current bar's timeline, aggregating unaggregated
+                    # ticks:
                     if len(ticksToAggregate) > 0:
                         obj.pack_ticks(ticksToAggregate)
 
@@ -594,10 +610,6 @@ def process_queue(queue):
                     # Tick beyond delta timeframe will be aggregated in the next
                     # timeframe
                     ticksToAggregate = [tick]
-                else:
-                # Tick is within the current bar's timeline, queuing for
-                # aggregation.
-                    ticksToAggregate.append(tick)
 
                 spinner.spin()
 

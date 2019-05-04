@@ -1,4 +1,4 @@
-PATH  := "$(PATH):$(PWD)"
+PATH  := $(PATH):$(PWD)
 SHELL := env PATH=$(PATH) /bin/bash -xe
 xargs := $(shell which gxargs xargs | head -n1)
 pair    = EURUSD
@@ -55,7 +55,7 @@ $(dl_dir)/$(pair)/$(year)/01: dl_bt_dukascopy.py
 	convert_mt_to_csv.py -f fxt4 -i $< -o $@
 
 test-syntax: convert_csv_to_mt.py dl_bt_dukascopy.py convert_mt_to_csv.py
-	find . -name "*.py" -execdir python -m py_compile {} ';'
+	find -name "*.py" -execdir python -m py_compile {} ';'
 	find . -name "*.php" -execdir php -l {} ';'
 	find . -name "*.rb" -execdir ruby -c {} ';'
 	@touch test-syntax
