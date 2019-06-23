@@ -4,17 +4,26 @@
 
 #### About
 
-- `dl_bt_dukascopy.py`, `dl_bt_dukascopy.php`
+### `dl_bt_dukascopy.py`/`dl_bt_dukascopy.php`
 
-  Scripts to download Historical Data Feed from Dukascopy Bank SA.
+Scripts to download Historical Data Feed from Dukascopy Bank SA.
 
-- `convert_csv_to_mt.py`, `convert_bi5_to_csv.php`
+### `convert_csv_to_mt.py`
 
-  Scripts to convert financial historical data to various formats such as:
+Scripts to convert financial historical data from CSV to HST or FXT formats.
 
-  - CSV into FXT, FXT
-  - BI5 into CSV
+### `convert_bi5_to_csv.php`
 
-- `convert_mt_to_csv.py`
+PHP script to convert BI5 files into CSV.
 
-  Script for converting FXT/HST format into CSV.
+### `convert_mt_to_csv.py`
+
+Script for converting FXT/HST format into CSV.
+
+### `mt_read.py`
+
+Script to read MT formats such as FXT, HCC headers, symgroups, ticks and symbols raw formats.
+
+### `mt_modify.py`
+
+Script to modify MT formats such as symbols raw format.
