@@ -377,7 +377,7 @@ if __name__ == '__main__':
 
     curr_year = datetime.date.today().year
     pairs =  list(all_currencies.keys()) if args.pairs  == "all" else args.pairs.split(',')
-    hours  = range(1, 23+1)              if args.hours  == "all" else intlist(args.hours.split(','))
+    hours  = range(0, 23+1)              if args.hours  == "all" else intlist(args.hours.split(','))
     days   = range(1, 31+1)              if args.days   == "all" else intlist(args.days.split(','))
     months = range(1, 12+1)              if args.months == "all" else intlist(args.months.split(','))
     years  = range(1997, curr_year+1)    if args.years  == "all" else intlist(args.years.split(','))
