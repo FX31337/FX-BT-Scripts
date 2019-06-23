@@ -4,3 +4,5 @@ build.properties
 # Ignore Finder metadata files on Mac
 .DS_Store
 
+# Ignore Python cache folder.
+__pycache__
