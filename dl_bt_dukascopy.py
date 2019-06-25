@@ -338,22 +338,31 @@ class Dukascopy:
 
         # Opening output CSV file for write
         f = open(new_path, 'w', newline='')
-        w = csv.writer(f, quoting = csv.QUOTE_NONE)
+        w = csv.writer(f, quoting=csv.QUOTE_NONE)
 
-        for i in range(0, len(data)//20):
+        normSymbols = ["USDRUB", "XAGUSD", "XAUUSD"]
+        point = 10000
+
+        for sym in normSymbols:
+            if pair == sym:
+                point = 1000
+                break
+
+        TICK_BYTES = 20
+        for i in range(0, len(data)//TICK_BYTES):
             row = bytearray()
-            for j in range(0, 20):
-                row.append(data[i*20 + j])
+            for j in range(0, TICK_BYTES):
+                row.append(data[i*TICK_BYTES + j])
 
             # Big-endian to Little-endian conversion
             row = unpack('>iiiff', row)
-
+            
             # Calculating & formatting column values
             minute = row[0]/1000//60
             second = row[0]/1000 - minute*60
             timestamp = "%d.%02d.%02d %02d:%02d:%06.3f" % (self.year, self.month, self.day, self.hour, minute, second)
-            bidPrice = row[2]/1e5
-            askPrice = row[1]/1e5
+            askPrice = row[1]/point
+            bidPrice = row[2]/point
             bidVolume = round(row[3] * 1000000)
             askVolume = round(row[4] * 1000000)
 
