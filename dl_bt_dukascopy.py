@@ -356,7 +356,7 @@ class Dukascopy:
 
             # Big-endian to Little-endian conversion
             row = unpack('>iiiff', row)
-            
+
             # Calculating & formatting column values
             minute = row[0]/1000//60
             second = row[0]/1000 - minute*60
