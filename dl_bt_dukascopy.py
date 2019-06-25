@@ -341,7 +341,7 @@ class Dukascopy:
         w = csv.writer(f, quoting=csv.QUOTE_NONE)
 
         normSymbols = ["USDRUB", "XAGUSD", "XAUUSD"]
-        point = 10000
+        point = 100000
 
         for sym in normSymbols:
             if pair == sym:
