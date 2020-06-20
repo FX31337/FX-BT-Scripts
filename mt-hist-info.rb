@@ -14,7 +14,7 @@ Example:
 
 $ ./mt-hist-info.rb M1_EURUSD.hst --check
 Version: 400
-Copyright: Copyright Š 2005, Alpari Ltd.
+Copyright: Copyright 2005, Alpari Ltd.
 Symbol: EURUSD
 Period: 1
 Digits: 4

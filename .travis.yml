@@ -1,3 +1,5 @@
+# yamllint disable rule:line-length
+---
 # Travis CI build configuration config file.
 # Used environment variables (see: http://docs.travis-ci.com/user/ci-environment/):
 #   TRAVIS_BUILD_DIR - The absolute path to the directory where the repository being built has been copied on the worker. (e.g. "/home/travis/build/mycognitive/ads")
@@ -6,7 +8,7 @@
 addons:
   apt:
     packages:
-    - realpath
+      - realpath
 
 # Before Install
 # Use this to prepare the system to install prerequisites or dependencies.
@@ -29,7 +31,7 @@ before_script:
 # Main build command to run.
 # All commands must exit with code 0 on success. Anything else is considered failure.
 script:
-  - set -e # This makes build to fail on first error.
+  - set -e  # This makes build to fail on first error.
   - python3 -m unittest -v
   - make test
 
@@ -39,8 +41,8 @@ after_success:
 
 # After Failure
 after_failure:
- - sudo apt-get -qy install tree && - tree -d -L 6 # Print directory structure in the form of a tree.
- - env
+  - sudo apt-get -qy install tree && - tree -d -L 6  # Print directory structure in the form of a tree.
+  - env
 
 # After Script
 # Test result is exported to TRAVIS_TEST_RESULT.

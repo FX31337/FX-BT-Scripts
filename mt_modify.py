@@ -43,7 +43,7 @@ def modify_field(ss, field_name, value):
     if fmts is None:
         raise NoSuchField()
 
-    # Try to perform the correct cast to turn the 
+    # Try to perform the correct cast.
     if fmts[-1] == 'c':
         raise InvalidArgument('c fields aren\'t supported yet')
     elif fmts[-1] == 's':

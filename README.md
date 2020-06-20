@@ -1,8 +1,8 @@
-### Forex Backtest Scripts
+# Forex Backtest Scripts
 
 [![Build Status](https://api.travis-ci.org/FX31337/FX-BT-Scripts.svg?branch=master)](https://travis-ci.org/FX31337/FX-BT-Scripts)
 
-#### About
+## About
 
 ### `dl_bt_dukascopy.py`/`dl_bt_dukascopy.php`
 
