@@ -5,11 +5,6 @@
 #   TRAVIS_BUILD_DIR - The absolute path to the directory where the repository being built has been copied on the worker. (e.g. "/home/travis/build/mycognitive/ads")
 #   TRAVIS_REPO_SLUG - The slug (in form: owner_name/repo_name) of the repository currently being built. (e.g. "mycognitive/ads")
 
-addons:
-  apt:
-    packages:
-      - realpath
-
 # Before Install
 # Use this to prepare the system to install prerequisites or dependencies.
 # Commonly used to update git repository submodules and do similar tasks that need to be performed before dependencies are installed.
@@ -43,14 +38,6 @@ after_success:
 after_failure:
   - sudo apt-get -qy install tree && - tree -d -L 6  # Print directory structure in the form of a tree.
   - env
-
-# After Script
-# Test result is exported to TRAVIS_TEST_RESULT.
-after_script:
-  - pwd
-
-notifications:
-  email: false
 
 language: python
 python:
