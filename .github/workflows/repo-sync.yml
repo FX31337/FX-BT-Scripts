@@ -1,0 +1,23 @@
+---
+name: Repo Sync
+
+on:
+  schedule:
+    - cron: "1 1 */2 * *"
+
+jobs:
+  repo-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - run: echo ${{ github.repository }}
+        if: github.repository == 'FX31337/FX-BT-Scripts'
+      - run: echo ${{ github.repository }}
+        if: github.repository != 'FX31337/FX-BT-Scripts'
+      - name: repo-sync
+        uses: repo-sync/github-sync@v2
+        with:
+          source_repo: https://github.com/FX31337/FX-BT-Scripts.git
+          source_branch: master
+          destination_branch: master
+          github_token: ${{ secrets.GITHUB_TOKEN }}
