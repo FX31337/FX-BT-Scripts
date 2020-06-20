@@ -7,13 +7,10 @@ on:
 
 jobs:
   repo-sync:
+    if: github.repository != 'FX31337/FX-BT-Scripts'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
-      - run: echo ${{ github.repository }}
-        if: github.repository == 'FX31337/FX-BT-Scripts'
-      - run: echo ${{ github.repository }}
-        if: github.repository != 'FX31337/FX-BT-Scripts'
       - name: repo-sync
         uses: repo-sync/github-sync@v2
         with:
