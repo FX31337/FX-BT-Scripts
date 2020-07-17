@@ -1,0 +1,3 @@
+[submodule "wiki"]
+	path = docs
+	url = https://github.com/FX31337/FX-BT-Scripts.wiki.git
