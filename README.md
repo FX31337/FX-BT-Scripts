@@ -1,6 +1,6 @@
 # Forex Backtest Scripts
 
-[![Build Status](https://api.travis-ci.org/FX31337/FX-BT-Scripts.svg?branch=master)](https://travis-ci.org/FX31337/FX-BT-Scripts)
+[![Build Status][build-status-img]][build-status-link]
 
 ## About
 
@@ -29,4 +29,11 @@ Script to read MT formats such as FXT, HCC headers, symgroups, ticks and symbols
 Script to modify MT formats such as symbols raw format.
 
 ## Usage Syntax
-[How to Use Wiki Page](https://github.com/FX31337/FX-BT-Scripts/wiki/How-to-Use%3F)
+
+For usage, please read: [How to Use][wiki-usage].
+
+<!-- Named links -->
+
+[wiki-usage]: https://github.com/FX31337/FX-BT-Scripts/wiki/How-to-Use
+[build-status-link]: https://travis-ci.org/FX31337/FX-BT-Scripts
+[build-status-img]: https://api.travis-ci.org/FX31337/FX-BT-Scripts.svg?branch=master
