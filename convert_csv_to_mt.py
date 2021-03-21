@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+'''Converts MT files to CSV files'''
+
 import argparse
 import sys
 import os
@@ -11,6 +13,7 @@ import datetime
 import mmap
 
 class Spinner:
+    '''Displays an ASCII spinner'''
     def __init__(self, step):
         self._n = self._x = 0
         self._chars = '\\|/-'
@@ -91,8 +94,7 @@ class CSV(Input):
         if line:
             isLastRow = self._map_obj.tell () == self._map_obj.size ()
             return (self._parseLine(line), isLastRow)
-        else:
-            raise StopIteration
+        raise StopIteration
 
     def _parseLine(self, line):
         tick = line.split(b',')
