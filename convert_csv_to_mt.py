@@ -81,10 +81,7 @@ def string_to_timestamp(s):
 class CSV(Input):
     def __init__(self, path):
         super().__init__(path)
-        if os.name == "nt":
-            self._map_obj = mmap.mmap(self.path.fileno(), 0, access=mmap.ACCESS_READ)
-        else:
-            self._map_obj = mmap.mmap(self.path.fileno(), 0, access=mmap.ACCESS_READ)
+        self._map_obj = mmap.mmap(self.path.fileno(), 0, access=mmap.ACCESS_READ) 
 
     def __iter__(self):
         return self
