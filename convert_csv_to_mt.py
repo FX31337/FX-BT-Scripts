@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-'''Converts MT files to CSV files'''
+'''Script for converting FXT/HST format into CSV.'''
 
 import argparse
 import sys
