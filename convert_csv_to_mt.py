@@ -41,15 +41,16 @@ class Input:
         except OSError as e:
             print("[ERROR] '%s' raised when tried to read the file '%s'" % (e.strerror, e.filename))
             sys.exit(1)
+        self.uniBars = []
 
     def __del__(self):
         self.path.close()
 
-    def _addBar(self, barTimestamp, tickTimestamp, open, high, low, close, volume):
+    def _addBar(self, barTimestamp, tickTimestamp, uniBar_open, high, low, close, volume):
         self.uniBars += [{
             'barTimestamp': barTimestamp,
            'tickTimestamp': tickTimestamp,
-                    'open': open,
+                    'open': uniBar_open,
                     'high': high,
                      'low': low,
                    'close': close,
@@ -80,7 +81,7 @@ class CSV(Input):
         if os.name == "nt":
             self._map_obj = mmap.mmap(self.path.fileno(), 0, access=mmap.ACCESS_READ)
         else:
-            self._map_obj = mmap.mmap(self.path.fileno(), 0, prot=mmap.PROT_READ)
+            self._map_obj = mmap.mmap(self.path.fileno(), 0, access=mmap.ACCESS_READ)
 
     def __iter__(self):
         return self
@@ -572,13 +573,13 @@ def process_queue(queue):
     try:
         for obj in queue:
 
-            ticks = CSV(args.inputFile);
+            ticks = CSV(args.inputFile)
 
             startTimestamp = None
 
             # We will retrieve all ticks in the timeframe into following array and update their LowBid/HighBid
-            ticksToJoin      = [];
-            ticksToAggregate = [];
+            ticksToJoin      = []
+            ticksToAggregate = []
 
             for (tick, isLastRow) in ticks:
                 # Beginning of the bar's timeline.
