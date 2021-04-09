@@ -3,7 +3,7 @@
 
 import argparse
 import urllib.request
-from urllib.error import  URLError
+from urllib.error import URLError
 import re
 from datetime import date
 import os
@@ -16,29 +16,31 @@ import binascii
 import datetime
 import csv
 
-userAgent = 'Mozilla/5.0 (X11; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0)'
+userAgent = "Mozilla/5.0 (X11; Linux x86_64; rv:42.0) Gecko/20100101 Firefox/42.0)"
 
 
 def error(message, exit=True):
-    print('[ERROR] ', message)
-    if exit: sys.exit(1)
+    print("[ERROR] ", message)
+    if exit:
+        sys.exit(1)
 
 
 def fetchHistoryList(pair):
-    listUrlTemplate = 'http://history.metaquotes.net/symbols/%s/list.txt'
+    listUrlTemplate = "http://history.metaquotes.net/symbols/%s/list.txt"
     listUrl = listUrlTemplate % pair
-    if args.verbose: print('Downloading %s list file from %s ...' % (pair, listUrl))
+    if args.verbose:
+        print("Downloading %s list file from %s ..." % (pair, listUrl))
 
     history = []
     try:
-        request = urllib.request.Request(listUrl, None, {'User-Agent': userAgent})
+        request = urllib.request.Request(listUrl, None, {"User-Agent": userAgent})
         with urllib.request.urlopen(request) as response:
             for line in response:
-                history += [line.decode('utf-8').rstrip('\n')]
+                history += [line.decode("utf-8").rstrip("\n")]
     except URLError as e:
-        if hasattr(e, 'reason'):
+        if hasattr(e, "reason"):
             error(e.reason)
-        elif hasattr(e, 'code'):
+        elif hasattr(e, "code"):
             error(e.code)
 
     return history
@@ -46,60 +48,96 @@ def fetchHistoryList(pair):
 
 def findHistoryFile(history, pair, year, month):
     for datFile in history:
-        if re.match('%s_%s_%02d' % (pair, year, int(month)), datFile): return datFile
+        if re.match("%s_%s_%02d" % (pair, year, int(month)), datFile):
+            return datFile
 
     return False
 
 
 def downloadHistoryFile(pair, year, month, historyFile, destination):
-    historyPath = os.path.join(destination, pair, str(year), '%02d' % int(month), historyFile)
+    historyPath = os.path.join(
+        destination, pair, str(year), "%02d" % int(month), historyFile
+    )
     if os.path.isfile(historyPath):
-        if args.verbose: print('Skipping, file already exists.')
+        if args.verbose:
+            print("Skipping, file already exists.")
         return
 
-    historyUrlTemplate = 'http://history.metaquotes.net/symbols/%s/%s'
+    historyUrlTemplate = "http://history.metaquotes.net/symbols/%s/%s"
     historyUrl = historyUrlTemplate % (pair, historyFile)
-    if args.verbose: print('Downloading history file from %s to %s ...' % (historyUrl, destination))
+    if args.verbose:
+        print("Downloading history file from %s to %s ..." % (historyUrl, destination))
     try:
-        request = urllib.request.Request(historyUrl, None, {'User-Agent': userAgent})
+        request = urllib.request.Request(historyUrl, None, {"User-Agent": userAgent})
         os.makedirs(os.path.dirname(historyPath), mode=0o755, exist_ok=True)
-        with urllib.request.urlopen(request) as response, open(historyPath, 'wb') as h:
+        with urllib.request.urlopen(request) as response, open(historyPath, "wb") as h:
             h.write(response.read())
     except URLError as e:
-        if hasattr(e, 'reason'):
+        if hasattr(e, "reason"):
             error(e.reason)
-        elif hasattr(e, 'code'):
+        elif hasattr(e, "code"):
             error(e.code)
     except OSError as e:
         error(e.strerror)
 
 
-ENDIAN = 'little'
-TAIL = b'\x11\x00\x00'  # For checking: Packed buffer is alway contains the 3 last bytes = {0x11, 0, 0}
+ENDIAN = "little"
+TAIL = b"\x11\x00\x00"  # For checking: Packed buffer is alway contains the 3 last bytes = {0x11, 0, 0}
 PRECISION = 140
+
 
 def big_int(arr):
     """make an array of ints (4 bytes) into one big int
     arr[0] holds the LSB in its MSB position
     ie. the layout of bytes in memory is reversed from what it represents"""
     # concatenate the bytes of the ints
-    bs = b''.join(i.to_bytes(4, ENDIAN) for i in arr)
+    bs = b"".join(i.to_bytes(4, ENDIAN) for i in arr)
     return int.from_bytes(bs, ENDIAN)
 
 
 # could replace with this a single number or some other encoding
 #               |LSB
-MOD = big_int([0x2300905D, 0x1B6C06DF, 0xE4D0D140, 0xED8B47C4,
-               0x93970C42, 0x920C45E6, 0x22C90AFB, 0x37B67A10,
-               0x0F67F0F6, 0x4237AB4F, 0x9FA30B14, 0x916B3CA6,
-               0xD48FA715, 0x689FCCA6, 0xD3DBE628, 0x5200D9B3,
-               0x732F7BBC, 0xDC592279, 0x39861B5F, 0x0A007CBA,
-               0xBF311219, 0xD3461CB2, 0x519A4042, 0xDE59FBB0,
-               0xDD6662ED, 0xE9D7BAFC, 0x878F5459, 0x63294CBF,
-               0x103206C9, 0xD2FA9C90, 0x49832FEF, 0xADEAAD39,
-               0x00000000, 0x00000000])
+MOD = big_int(
+    [
+        0x2300905D,
+        0x1B6C06DF,
+        0xE4D0D140,
+        0xED8B47C4,
+        0x93970C42,
+        0x920C45E6,
+        0x22C90AFB,
+        0x37B67A10,
+        0x0F67F0F6,
+        0x4237AB4F,
+        0x9FA30B14,
+        0x916B3CA6,
+        0xD48FA715,
+        0x689FCCA6,
+        0xD3DBE628,
+        0x5200D9B3,
+        0x732F7BBC,
+        0xDC592279,
+        0x39861B5F,
+        0x0A007CBA,
+        0xBF311219,
+        0xD3461CB2,
+        0x519A4042,
+        0xDE59FBB0,
+        0xDD6662ED,
+        0xE9D7BAFC,
+        0x878F5459,
+        0x63294CBF,
+        0x103206C9,
+        0xD2FA9C90,
+        0x49832FEF,
+        0xADEAAD39,
+        0x00000000,
+        0x00000000,
+    ]
+)
 #                                 MSB|
 EXP = 17
+
 
 def decode_key(key, e=EXP, m=MOD):
     """compute key ^ e % m and return the least significant 128 bytes"""
@@ -119,22 +157,22 @@ def xor_data(key, data):
 def decode_body(buf, decompress=True):
     """given the bytes from a .dat file, decode it"""
     head = buf[:0x88]
-    key = decode_key(buf[0x88:0x88 + 0x80])
+    key = decode_key(buf[0x88 : 0x88 + 0x80])
     body = xor_data(key, buf[0x108:])
     expected_pack_size = len(buf) - 0x110
-    packed_size, unpacked_size = unpack_from('<L I', body)
+    packed_size, unpacked_size = unpack_from("<L I", body)
     if expected_pack_size != packed_size:
-        raise Exception('Wrong packed size')
+        raise Exception("Wrong packed size")
     if body[-3:] != TAIL:
-        raise Exception('Trailing 3 bytes not correct')
+        raise Exception("Trailing 3 bytes not correct")
         pass
     # this is needed to play nice with the lzo api
     if decompress:
-      magic = b'\xf0' + unpacked_size.to_bytes(4, 'big')
-      data = lzo.decompress(magic + body[8:])
-      return head, data
+        magic = b"\xf0" + unpacked_size.to_bytes(4, "big")
+        data = lzo.decompress(magic + body[8:])
+        return head, data
     else:
-      return head, body
+        return head, body
 
 
 # MetaQuotes Format Decompressor
@@ -161,28 +199,30 @@ def decompress(data, year, month):
         #   Field_3     : 1 byte, low price incremental stored as an unsigned char and subtracted from open price
         #   Field_4     : 1 byte, close price incremental stored as a signed char and added to open price
         #   Field_5     : 1 byte, volume incremental TODO
-        if data[i] > 0xbf:
-            streak = data[i] - 0xbf  # Get the number of streaks hiding inside this block
-            i += 1                   # Move index to first data byte of current streak
+        if data[i] > 0xBF:
+            streak = (
+                data[i] - 0xBF
+            )  # Get the number of streaks hiding inside this block
+            i += 1  # Move index to first data byte of current streak
 
             # Transform streak bytes into usable data and collect them in 'bars' list
             for s in range(0, streak):
-                timestamp = lastBar['timestamp'] + datetime.timedelta(minutes=1)
-                open      = lastBar['close'] + unpack('b', bytes([data[i    ]]))[0]
-                high      =            open  + unpack('B', bytes([data[i + 1]]))[0]
-                low       =            open  - unpack('B', bytes([data[i + 2]]))[0]
-                close     =            open  + unpack('b', bytes([data[i + 3]]))[0]
-                volume    =                    unpack('B', bytes([data[i + 4]]))[0]
+                timestamp = lastBar["timestamp"] + datetime.timedelta(minutes=1)
+                open = lastBar["close"] + unpack("b", bytes([data[i]]))[0]
+                high = open + unpack("B", bytes([data[i + 1]]))[0]
+                low = open - unpack("B", bytes([data[i + 2]]))[0]
+                close = open + unpack("b", bytes([data[i + 3]]))[0]
+                volume = unpack("B", bytes([data[i + 4]]))[0]
 
                 lastBar = {
-                    'timestamp': timestamp,
-                         'open': open,
-                         'high': high,
-                          'low': low,
-                        'close': close,
-                       'volume': volume,
-                         'type': 3,
-                      'address': i
+                    "timestamp": timestamp,
+                    "open": open,
+                    "high": high,
+                    "low": low,
+                    "close": close,
+                    "volume": volume,
+                    "type": 3,
+                    "address": i,
                 }
                 bars += [lastBar]
 
@@ -199,26 +239,30 @@ def decompress(data, year, month):
         #   Field_4     : TODO
         #   Field_5     : TODO
         #   Field_6     : TODO
-        elif data[i] > 0x7f:
-            streak = data[i] - 0x7f  # Get the number of streaks hiding inside this block
-            i += 1                   # Move index to first data byte of current streak
+        elif data[i] > 0x7F:
+            streak = (
+                data[i] - 0x7F
+            )  # Get the number of streaks hiding inside this block
+            i += 1  # Move index to first data byte of current streak
 
             # TODO Reveal repeater mechanism, until that indicate missing bars with
             #      EPOCH timestamp and unit open/high/low/close/volume values
             lastBar = {
-                'timestamp': datetime.datetime.fromtimestamp(0),
-                     'open': 1e5,
-                     'high': 1e5,
-                      'low': 1e5,
-                    'close': 1e5,
-                   'volume': 1,
-                     'type': 2,
-                  'address': i
+                "timestamp": datetime.datetime.fromtimestamp(0),
+                "open": 1e5,
+                "high": 1e5,
+                "low": 1e5,
+                "close": 1e5,
+                "volume": 1,
+                "type": 2,
+                "address": i,
             }
-            bars += [lastBar]  # *WARNING* It adds just one bar for now but the block can contain much more bars!
+            bars += [
+                lastBar
+            ]  # *WARNING* It adds just one bar for now but the block can contain much more bars!
 
             # Move index to first byte of next block or type
-            i += streak*6
+            i += streak * 6
 
         # Type-1 Block
         #   Description : kind of synchronization type, stores exact values
@@ -231,29 +275,32 @@ def decompress(data, year, month):
         #   Field_4     : 4 bytes, low price stored as a unsigned short added to open price
         #   Field_5     : 4 bytes, close price stored as a signed short added to open price
         #   Field_6     : 4 bytes, volume TODO *PROBABLY* stored as an unsigned integer
-        elif data[i] > 0x3f:
-            streak = data[i] - 0x3f  # Get the number of streaks hiding inside this block
-            i += 1                   # Move index to first data byte of current streak
+        elif data[i] > 0x3F:
+            streak = (
+                data[i] - 0x3F
+            )  # Get the number of streaks hiding inside this block
+            i += 1  # Move index to first data byte of current streak
 
             # Transform streak bytes into usable data and collect them in 'bars' list
             for s in range(0, streak):
                 timestamp = datetime.datetime.fromtimestamp(
-                                   unpack('<I', data[i     :i +  4])[0], datetime.timezone.utc)
-                open      =        unpack('<I', data[i +  4:i +  8])[0]
-                high      = open + unpack('<H', data[i +  8:i + 10])[0]
-                low       = open - unpack('<H', data[i + 10:i + 12])[0]
-                close     = open + unpack('<h', data[i + 12:i + 14])[0]
-                volume    =        unpack('<H', data[i + 14:i + 16])[0]
+                    unpack("<I", data[i : i + 4])[0], datetime.timezone.utc
+                )
+                open = unpack("<I", data[i + 4 : i + 8])[0]
+                high = open + unpack("<H", data[i + 8 : i + 10])[0]
+                low = open - unpack("<H", data[i + 10 : i + 12])[0]
+                close = open + unpack("<h", data[i + 12 : i + 14])[0]
+                volume = unpack("<H", data[i + 14 : i + 16])[0]
 
                 lastBar = {
-                    'timestamp': timestamp,
-                         'open': open,
-                         'high': high,
-                          'low': low,
-                        'close': close,
-                       'volume': volume,
-                         'type': 1,
-                      'address': i
+                    "timestamp": timestamp,
+                    "open": open,
+                    "high": high,
+                    "low": low,
+                    "close": close,
+                    "volume": volume,
+                    "type": 1,
+                    "address": i,
                 }
                 bars += [lastBar]
 
@@ -267,81 +314,199 @@ def decompress(data, year, month):
 def anomalyTest(bars):
     for bar in bars:
         anomalies = []
-        if bar['open'] > bar['high'] or bar['open'] < bar['low']: anomalies += ['open']
-        if max([bar['open'], bar['high'], bar['low'], bar['close']]) != bar['high']: anomalies += ['high']
-        if min([bar['open'], bar['high'], bar['low'], bar['close']]) != bar['low']: anomalies += ['low']
-        if bar['close'] > bar['high'] or bar['close'] < bar['low']: anomalies += ['close']
+        if bar["open"] > bar["high"] or bar["open"] < bar["low"]:
+            anomalies += ["open"]
+        if max([bar["open"], bar["high"], bar["low"], bar["close"]]) != bar["high"]:
+            anomalies += ["high"]
+        if min([bar["open"], bar["high"], bar["low"], bar["close"]]) != bar["low"]:
+            anomalies += ["low"]
+        if bar["close"] > bar["high"] or bar["close"] < bar["low"]:
+            anomalies += ["close"]
 
         if len(anomalies):
-            print('[ANOMALY] %s  Type-%d  %s' % (bar['timestamp'].strftime('%Y-%m-%d %H:%M:%S'), bar['type'], hex(bar['address'])), end='   ')
+            print(
+                "[ANOMALY] %s  Type-%d  %s"
+                % (
+                    bar["timestamp"].strftime("%Y-%m-%d %H:%M:%S"),
+                    bar["type"],
+                    hex(bar["address"]),
+                ),
+                end="   ",
+            )
             for anomaly in anomalies:
-                print('%s' % anomaly, end=' ')
+                print("%s" % anomaly, end=" ")
             print()
 
 
 def convertToCsv(pair, year, month, historyFile, destination):
     # return a string of the md5 checksum for the bytes `b`
-    digest = lambda b: binascii.hexlify(hashlib.md5 (b).digest()).decode()
+    digest = lambda b: binascii.hexlify(hashlib.md5(b).digest()).decode()
 
-    if args.verbose: print('Converting to CSV ...')
-    historyPath = os.path.join(destination, pair, str(year), '%02d' % int(month), historyFile)
-    csvPath = os.path.join(destination, pair, str(year), '%02d' % int(month), '%s-%02d.csv' % (str(year), int(month)))
-    with open(historyPath, 'rb') as datInput, open(csvPath, 'wt') as csvOutput:
+    if args.verbose:
+        print("Converting to CSV ...")
+    historyPath = os.path.join(
+        destination, pair, str(year), "%02d" % int(month), historyFile
+    )
+    csvPath = os.path.join(
+        destination,
+        pair,
+        str(year),
+        "%02d" % int(month),
+        "%s-%02d.csv" % (str(year), int(month)),
+    )
+    with open(historyPath, "rb") as datInput, open(csvPath, "wt") as csvOutput:
         buf = datInput.read()
-        matches = re.search(r'([a-z0-9]+)\.dat', historyFile).groups()
+        matches = re.search(r"([a-z0-9]+)\.dat", historyFile).groups()
         if len(matches) != 1 or len(matches[0]) != 32:
-            raise Exception('Error with MD5 from filename')
+            raise Exception("Error with MD5 from filename")
         md5 = matches[0]
         if digest(buf) != md5:
-            raise Exception('Checksum does not match')
+            raise Exception("Checksum does not match")
         head, data = decode_body(buf)
         bars = decompress(data, year, month)
         if args.anomaly:
             anomalyTest(bars)
-        csvWriter = csv.writer(csvOutput, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+        csvWriter = csv.writer(
+            csvOutput, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
+        )
 
         # Build timedelta object from time offset
-        timeOffsetMatch = re.match(r'(?P<sign>[+-]?)(?P<hours>\d{2})(?P<minutes>\d{2})', args.timeOffset)
+        timeOffsetMatch = re.match(
+            r"(?P<sign>[+-]?)(?P<hours>\d{2})(?P<minutes>\d{2})", args.timeOffset
+        )
         if timeOffsetMatch:
             timeOffsetGroup = timeOffsetMatch.groupdict()
-            timeOffset = datetime.timedelta(  hours=int(timeOffsetGroup['sign'] + timeOffsetGroup['hours'  ]),
-                                            minutes=int(timeOffsetGroup['sign'] + timeOffsetGroup['minutes']))
+            timeOffset = datetime.timedelta(
+                hours=int(timeOffsetGroup["sign"] + timeOffsetGroup["hours"]),
+                minutes=int(timeOffsetGroup["sign"] + timeOffsetGroup["minutes"]),
+            )
         else:
             timeOffset = datetime.timedelta(0)
 
         for bar in bars:
-            csvWriter.writerow([
-                (bar['timestamp'] + timeOffset).strftime('%Y-%m-%d %H:%M:%S'),
-                bar['open']/1e5,
-                bar['high']/1e5,
-                bar['low']/1e5,
-                bar['close']/1e5,
-                bar['volume']
-            ])
+            csvWriter.writerow(
+                [
+                    (bar["timestamp"] + timeOffset).strftime("%Y-%m-%d %H:%M:%S"),
+                    bar["open"] / 1e5,
+                    bar["high"] / 1e5,
+                    bar["low"] / 1e5,
+                    bar["close"] / 1e5,
+                    bar["volume"],
+                ]
+            )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Parse arguments
     argumentParser = argparse.ArgumentParser()
-    argumentParser.add_argument('-p', '--pairs',        action='store',      dest='pairs',       help='Pair(s) to download (separated by comma).', default='all')
-    argumentParser.add_argument('-y', '--years',        action='store',      dest='years',       help='Year(s) to download (separated by comma).', default='all')
-    argumentParser.add_argument('-m', '--months',       action='store',      dest='months',      help='Month(s) to download (separated by comma).', default='all')
-    argumentParser.add_argument('-d', '--destination',  action='store',      dest='destination', help='Directory to download files.', default='download/metaquotes')
-    argumentParser.add_argument('-c', '--csv-convert',  action='store_true', dest='convert',     help='Perform CSV conversion.')
-    argumentParser.add_argument('-t', '--time-offset',  action='store',      dest='timeOffset',  help='Time offset for timestamps in +/-HHMM format.', default='')
-    argumentParser.add_argument('-a', '--anomaly-test', action='store_true', dest='anomaly',     help='Run anomaly tests during conversion.')
-    argumentParser.add_argument('-v', '--verbose',      action='store_true', dest='verbose',     help='Increase output verbosity.')
+    argumentParser.add_argument(
+        "-p",
+        "--pairs",
+        action="store",
+        dest="pairs",
+        help="Pair(s) to download (separated by comma).",
+        default="all",
+    )
+    argumentParser.add_argument(
+        "-y",
+        "--years",
+        action="store",
+        dest="years",
+        help="Year(s) to download (separated by comma).",
+        default="all",
+    )
+    argumentParser.add_argument(
+        "-m",
+        "--months",
+        action="store",
+        dest="months",
+        help="Month(s) to download (separated by comma).",
+        default="all",
+    )
+    argumentParser.add_argument(
+        "-d",
+        "--destination",
+        action="store",
+        dest="destination",
+        help="Directory to download files.",
+        default="download/metaquotes",
+    )
+    argumentParser.add_argument(
+        "-c",
+        "--csv-convert",
+        action="store_true",
+        dest="convert",
+        help="Perform CSV conversion.",
+    )
+    argumentParser.add_argument(
+        "-t",
+        "--time-offset",
+        action="store",
+        dest="timeOffset",
+        help="Time offset for timestamps in +/-HHMM format.",
+        default="",
+    )
+    argumentParser.add_argument(
+        "-a",
+        "--anomaly-test",
+        action="store_true",
+        dest="anomaly",
+        help="Run anomaly tests during conversion.",
+    )
+    argumentParser.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        dest="verbose",
+        help="Increase output verbosity.",
+    )
     args = argumentParser.parse_args()
 
-    allPairs = ['AUDJPY', 'AUDNZD', 'AUDUSD', 'CADJPY', 'CHFJPY', 'EURAUD', 'EURCAD',
-                'EURCHF', 'EURGBP', 'EURJPY', 'EURNOK', 'EURSEK', 'EURUSD', 'GBPCHF',
-                'GBPJPY', 'GBPUSD', 'NZDUSD', 'USDCAD', 'USDCHF', 'USDJPY', 'USDNOK',
-                'USDSEK', 'USDSGD', 'AUDCAD', 'AUDCHF', 'CADCHF', 'EURNZD', 'GBPAUD',
-                'GBPCAD', 'GBPNZD', 'NZDCAD', 'NZDCHF', 'NZDJPY', 'XAGUSD', 'XAUUSD' ]
+    allPairs = [
+        "AUDJPY",
+        "AUDNZD",
+        "AUDUSD",
+        "CADJPY",
+        "CHFJPY",
+        "EURAUD",
+        "EURCAD",
+        "EURCHF",
+        "EURGBP",
+        "EURJPY",
+        "EURNOK",
+        "EURSEK",
+        "EURUSD",
+        "GBPCHF",
+        "GBPJPY",
+        "GBPUSD",
+        "NZDUSD",
+        "USDCAD",
+        "USDCHF",
+        "USDJPY",
+        "USDNOK",
+        "USDSEK",
+        "USDSGD",
+        "AUDCAD",
+        "AUDCHF",
+        "CADCHF",
+        "EURNZD",
+        "GBPAUD",
+        "GBPCAD",
+        "GBPNZD",
+        "NZDCAD",
+        "NZDCHF",
+        "NZDJPY",
+        "XAGUSD",
+        "XAUUSD",
+    ]
 
-    pairs  = allPairs if args.pairs  == 'all' else args.pairs.split(',')
-    years  = range(1970, date.today().year + 1) if args.years  == 'all' else args.years.split(',')
-    months = range(1, 12 + 1) if args.months == 'all' else args.months.split(',')
+    pairs = allPairs if args.pairs == "all" else args.pairs.split(",")
+    years = (
+        range(1970, date.today().year + 1)
+        if args.years == "all"
+        else args.years.split(",")
+    )
+    months = range(1, 12 + 1) if args.months == "all" else args.months.split(",")
 
     # Build destination directory structure
     for pair in pairs:
@@ -350,6 +515,8 @@ if __name__ == '__main__':
             for month in months:
                 historyFile = findHistoryFile(history, pair, year, month)
                 if historyFile:
-                    downloadHistoryFile(pair, year, month, historyFile, args.destination)
+                    downloadHistoryFile(
+                        pair, year, month, historyFile, args.destination
+                    )
                     if args.convert:
                         convertToCsv(pair, year, month, historyFile, args.destination)
