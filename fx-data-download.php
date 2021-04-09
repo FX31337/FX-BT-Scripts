@@ -34,7 +34,7 @@
 
     3. Finally run like this:
 
-      php dl_bt_dukascopy.php
+      php fx-data-download.php
 
 */
 
