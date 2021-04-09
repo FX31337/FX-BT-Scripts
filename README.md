@@ -8,7 +8,7 @@
 
 Scripts to download Historical Data Feed from Dukascopy Bank SA.
 
-### `convert_csv_to_mt.py`
+### `fx-data-convert-from-csv.py`
 
 Scripts to convert financial historical data from CSV to HST or FXT formats.
 
@@ -16,7 +16,7 @@ Scripts to convert financial historical data from CSV to HST or FXT formats.
 
 PHP script to convert BI5 files into CSV.
 
-### `convert_mt_to_csv.py`
+### `fx-data-convert-to-csv.py`
 
 Script for converting FXT/HST format into CSV.
 
