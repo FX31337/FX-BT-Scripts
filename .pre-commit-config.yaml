@@ -1,6 +1,46 @@
 ---
 repos:
 
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.26.1
+    hooks:
+      - id: yamllint
+        args: ["-c", ".yamllint", "-s"]
+
+  - repo: https://github.com/psf/black
+    rev: 20.8b1
+    hooks:
+      - id: black
+        args: [--line-length=88]
+        files: '(\.py)$'
+        language_version: python3
+
+  #  - repo: https://github.com/PyCQA/flake8
+  #    rev: 3.9.0
+  #    hooks:
+  #      - id: flake8
+  #        # Harmonizing flake8 and black
+  #        args: [--max-line-length=88]
+  #        files: '(\.py)$'
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli.git
+    rev: v0.27.1
+    hooks:
+      - id: markdownlint
+
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 2.1.5
+    hooks:
+      - id: forbid-binary
+        exclude: ^(lib|conf/servers)/.*$
+      - id: git-check     # Configure in .gitattributes
+      - id: markdownlint  # Configure in .mdlrc
+      - id: require-ascii
+        exclude: ^(README.md)$
+      - id: script-must-have-extension
+      - id: shellcheck
+      - id: shfmt
+
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v3.4.0
     hooks:
@@ -16,32 +56,8 @@ repos:
       - id: check-merge-conflict
       - id: check-yaml
       - id: debug-statements
-      - id: double-quote-string-fixer
       - id: end-of-file-fixer
       - id: fix-encoding-pragma
       - id: mixed-line-ending
       - id: sort-simple-yaml
       - id: trailing-whitespace
-
-  - repo: https://github.com/igorshubovych/markdownlint-cli.git
-    rev: v0.27.1
-    hooks:
-      - id: markdownlint
-
-  - repo: https://github.com/jumanjihouse/pre-commit-hooks
-    rev: 2.1.5
-    hooks:
-      - id: forbid-binary
-        exclude: ^(lib|conf/servers)/.*$
-      - id: git-check     # Configure in .gitattributes
-      - id: markdownlint  # Configure in .mdlrc
-      - id: require-ascii
-      - id: script-must-have-extension
-      - id: shellcheck
-      - id: shfmt
-
-  - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.26.1
-    hooks:
-      - id: yamllint
-        args: ["-c", ".yamllint", "-s"]
