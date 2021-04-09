@@ -20,6 +20,10 @@ PHP script to convert BI5 files into CSV.
 
 Script for converting FXT/HST format into CSV.
 
+### `fx-data-generate.py`
+
+Script to generate artificial prices based on the different patterns.
+
 ### `mt_read.py`
 
 Script to read MT formats such as FXT, HCC headers, symgroups, ticks and symbols raw formats.
