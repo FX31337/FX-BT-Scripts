@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Sample usage:
-#   ./dl_bt_dukascopy.py -p EURUSD -y 2013,2014
+#   ./fx-data-download.py -p EURUSD -y 2013,2014
 
 import sys
 import os
@@ -237,7 +237,7 @@ all_currencies = {
     #"E_EBAY": 1326988800, # Ebay starting from 2012.01.19 16:00
     #"E_GE": 1324375200, # General Electric starting from 2011.12.20 10:00
     #"E_GM": 1324375200, # General Motors starting from 2011.12.20 10:00
-    #"E_GOOGL": 1324375200, # Google starting from 2011.12.20 10:00
+    "GOOGUSUSD": 1324375200, # Google starting from 2011.12.20 10:00
     #"E_HD": 1326988800, # Home Depot starting from 2012.01.19 16:00
     #"E_HPQ": 1324375200, # Hewlett Packard starting from 2011.12.20 10:00
     #"E_IBM": 1324375200, # IBM starting from 2011.12.20 10:00

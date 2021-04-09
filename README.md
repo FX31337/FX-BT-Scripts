@@ -4,7 +4,7 @@
 
 ## About
 
-### `dl_bt_dukascopy.py`/`dl_bt_dukascopy.php`
+### `fx-data-download.py`/`fx-data-download.php`
 
 Scripts to download Historical Data Feed from Dukascopy Bank SA.
 

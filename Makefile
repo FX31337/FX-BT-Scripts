@@ -45,8 +45,8 @@ check: $(csvfile) $(pair)1_0.fxt.dump
 	@test "$(shell wc -l $(csvfile) | grep -o "^\S\+")" = "$(shell wc -l $(pair)1_0.fxt.dump | grep -o "^\S\+")" \
 		|| { echo ERROR: Number of ticks do not match; exit 2; } \
 
-$(dl_dir)/$(pair)/$(year)/01: dl_bt_dukascopy.py
-	dl_bt_dukascopy.py -v -p ${pair} -y ${year} -m 2,4 -d 2,4 -h 2,4,6,8 -c -D $(dl_dir)
+$(dl_dir)/$(pair)/$(year)/01: fx-data-download.py
+	fx-data-download.py -v -p ${pair} -y ${year} -m 2,4 -d 2,4 -h 2,4,6,8 -c -D $(dl_dir)
 
 %.hst.dump: %.hst
 	convert_mt_to_csv.py -f hst4 -i $< -o $@
@@ -54,7 +54,7 @@ $(dl_dir)/$(pair)/$(year)/01: dl_bt_dukascopy.py
 %.fxt.dump: %.fxt
 	convert_mt_to_csv.py -f fxt4 -i $< -o $@
 
-test-syntax: convert_csv_to_mt.py dl_bt_dukascopy.py convert_mt_to_csv.py
+test-syntax: convert_csv_to_mt.py fx-data-download.py convert_mt_to_csv.py
 	find -name "*.py" -execdir python -m py_compile {} ';'
 	find . -name "*.php" -execdir php -l {} ';'
 	find . -name "*.rb" -execdir ruby -c {} ';'
