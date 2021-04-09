@@ -8,12 +8,14 @@ sys.path.append("..")
 import os
 from struct import unpack
 
-import convert_csv_to_mt
+import importlib
+
+conv_from_csv = importlib.import_module("fx-data-convert-from-csv")
 
 
 class TestHCCSetup(unittest.TestCase):
     def setUp(self):
-        self.hcc_file = convert_csv_to_mt.HCC(".hcc", "/tmp", 1, "EURUSD")
+        self.hcc_file = conv_from_csv.HCC(".hcc", "/tmp", 1, "EURUSD")
         self.hcc_file.path.close()
         self.hcc_file.path = open(self.hcc_file.fullname, "rb")
 
@@ -24,9 +26,7 @@ class TestHCCSetup(unittest.TestCase):
 
 class TestHCCParameter(TestHCCSetup):
     def test_arg_option(self):
-        args = convert_csv_to_mt.config_argparser().parse_args(
-            ["-f", "hcc", "-i", "foo"]
-        )
+        args = conv_from_csv.config_argparser().parse_args(["-f", "hcc", "-i", "foo"])
         self.assertEqual("hcc", args.outputFormat.lower())
 
 
