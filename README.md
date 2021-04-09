@@ -12,7 +12,7 @@ Scripts to download Historical Data Feed from Dukascopy Bank SA.
 
 Scripts to convert financial historical data from CSV to HST or FXT formats.
 
-### `convert_bi5_to_csv.php`
+### `fx-data-convert-bi5-to-csv.php`
 
 PHP script to convert BI5 files into CSV.
 
