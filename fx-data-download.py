@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# Script to download Forex historical data and convert into CSV format.
 # Example usage:
 #   ./fx-data-download.py -p EURUSD -y 2013,2014
 
