@@ -49,10 +49,10 @@ $(dl_dir)/$(pair)/$(year)/01: fx-data-download.py
 	fx-data-download.py -v -p ${pair} -y ${year} -m 2,4 -d 2,4 -h 2,4,6,8 -c -D $(dl_dir)
 
 %.hst.dump: %.hst
-	fx-data-convert-to-csv.py -f hst4 -i $< -o $@
+	fx-data-convert-to-csv.py -f hst -i $< -o $@
 
 %.fxt.dump: %.fxt
-	fx-data-convert-to-csv.py -f fxt4 -i $< -o $@
+	fx-data-convert-to-csv.py -f fxt -i $< -o $@
 
 test-syntax: fx-data-convert-from-csv.py fx-data-download.py fx-data-convert-to-csv.py
 	find -name "*.py" -execdir python -m py_compile {} ';'
@@ -62,11 +62,11 @@ test-syntax: fx-data-convert-from-csv.py fx-data-download.py fx-data-convert-to-
 
 # Generate HST files.
 $(m1_hst): $(csvfile) fx-data-convert-from-csv.py
-	fx-data-convert-from-csv.py -v -i $(csvfile) -s $(pair) -p $(spread) -S default -t M1,M5,M15,M30,H1,H4,D1,W1,MN1 -f hst4
+	fx-data-convert-from-csv.py -v -i $(csvfile) -p $(pair) -s $(spread) -S default -t M1,M5,M15,M30,H1,H4,D1,W1,MN1 -f hst
 
 # Generate FXT files.
 $(m1_fxt): $(csvfile) fx-data-convert-from-csv.py
-	fx-data-convert-from-csv.py -v -i $(csvfile) -s $(pair) -p $(spread) -S default -t M1,M5,M15,M30,H1,H4,D1,W1,MN1 -f fxt4 -m 0,1,2
+	fx-data-convert-from-csv.py -v -i $(csvfile) -p $(pair) -s $(spread) -S default -t M1,M5,M15,M30,H1,H4,D1,W1,MN1 -f fxt -m 0,1,2
 
 $(csvfile): $(dl_dir)/$(pair)/$(year)/01
 	find . -name '*.csv' -print0 | sort -z | $(xargs) -r0 cat | tee $(csvfile) > /dev/null
