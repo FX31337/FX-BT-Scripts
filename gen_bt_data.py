@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 # Script to generate backtest data in CSV format.
 # Example usage:
 #  ./gen_bt_data.py -s 10 -p random -v 100 2014.01.01 2014.01.30 2.0 4.0 | gnuplot -p -e "set datafile separator ','; plot '-' using 3 w l"

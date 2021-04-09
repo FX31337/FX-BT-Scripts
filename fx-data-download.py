@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 # Example usage:
 #   ./fx-data-download.py -p EURUSD -y 2013,2014
 
@@ -24,87 +25,87 @@ intlist = lambda l: list(map(int, l))
 all_currencies = {
 
     # Currency pairs.
-    "AUDJPY": 1175270400,  # Starting from 2007.03.30 16:00
-    "AUDNZD": 1229961600,  # Starting from 2008.12.22 16:00
-    "AUDUSD": 1175270400,  # Starting from 2007.03.30 16:00
-    "CADJPY": 1175270400,  # Starting from 2007.03.30 16:00
-    "CHFJPY": 1175270400,  # Starting from 2007.03.30 16:00
-    "EURAUD": 1175270400,  # Starting from 2007.03.30 16:00
-    "EURCAD": 1222167600,  # Starting from 2008.09.23 11:00
-    "EURCHF": 1175270400,  # Starting from 2007.03.30 16:00
-    "EURGBP": 1175270400,  # Starting from 2007.03.30 16:00
-    "EURJPY": 1175270400,  # Starting from 2007.03.30 16:00
-    "EURNOK": 1175270400,  # Starting from 2007.03.30 16:00
-    "EURSEK": 1175270400,  # Starting from 2007.03.30 16:00
-    "EURUSD": 1175270400,  # Starting from 2007.03.30 16:00
-    "GBPCHF": 1175270400,  # Starting from 2007.03.30 16:00
-    "GBPJPY": 1175270400,  # Starting from 2007.03.30 16:00
-    "GBPUSD": 1175270400,  # Starting from 2007.03.30 16:00
-    "NZDUSD": 1175270400,  # Starting from 2007.03.30 16:00
-    "USDCAD": 1175270400,  # Starting from 2007.03.30 16:00
-    "USDCHF": 1175270400,  # Starting from 2007.03.30 16:00
-    "USDJPY": 1175270400,  # Starting from 2007.03.30 16:00
-    "USDNOK": 1222639200,  # Starting from 2008.09.28 22:00
-    "USDSEK": 1222642800,  # Starting from 2008.09.28 23:00
-    "USDSGD": 1222642800,  # Starting from 2008.09.28 23:00
-    "AUDCAD": 1266318000,  # Starting from 2010.02.16 11:00
-    "AUDCHF": 1266318000,  # Starting from 2010.02.16 11:00
-    "CADCHF": 1266318000,  # Starting from 2010.02.16 11:00
-    "EURNZD": 1266318000,  # Starting from 2010.02.16 11:00
-    "GBPAUD": 1266318000,  # Starting from 2010.02.16 11:00
-    "GBPCAD": 1266318000,  # Starting from 2010.02.16 11:00
-    "GBPNZD": 1266318000,  # Starting from 2010.02.16 11:00
-    "NZDCAD": 1266318000,  # Starting from 2010.02.16 11:00
-    "NZDCHF": 1266318000,  # Starting from 2010.02.16 11:00
-    "NZDJPY": 1266318000,  # Starting from 2010.02.16 11:00
-    "XAGUSD": 1289491200,  # Starting from 2010.11.11 16:00
-    "XAUUSD": 1305010800,  # Starting from 2011.05.10 07:00
+    'AUDJPY': 1175270400,  # Starting from 2007.03.30 16:00
+    'AUDNZD': 1229961600,  # Starting from 2008.12.22 16:00
+    'AUDUSD': 1175270400,  # Starting from 2007.03.30 16:00
+    'CADJPY': 1175270400,  # Starting from 2007.03.30 16:00
+    'CHFJPY': 1175270400,  # Starting from 2007.03.30 16:00
+    'EURAUD': 1175270400,  # Starting from 2007.03.30 16:00
+    'EURCAD': 1222167600,  # Starting from 2008.09.23 11:00
+    'EURCHF': 1175270400,  # Starting from 2007.03.30 16:00
+    'EURGBP': 1175270400,  # Starting from 2007.03.30 16:00
+    'EURJPY': 1175270400,  # Starting from 2007.03.30 16:00
+    'EURNOK': 1175270400,  # Starting from 2007.03.30 16:00
+    'EURSEK': 1175270400,  # Starting from 2007.03.30 16:00
+    'EURUSD': 1175270400,  # Starting from 2007.03.30 16:00
+    'GBPCHF': 1175270400,  # Starting from 2007.03.30 16:00
+    'GBPJPY': 1175270400,  # Starting from 2007.03.30 16:00
+    'GBPUSD': 1175270400,  # Starting from 2007.03.30 16:00
+    'NZDUSD': 1175270400,  # Starting from 2007.03.30 16:00
+    'USDCAD': 1175270400,  # Starting from 2007.03.30 16:00
+    'USDCHF': 1175270400,  # Starting from 2007.03.30 16:00
+    'USDJPY': 1175270400,  # Starting from 2007.03.30 16:00
+    'USDNOK': 1222639200,  # Starting from 2008.09.28 22:00
+    'USDSEK': 1222642800,  # Starting from 2008.09.28 23:00
+    'USDSGD': 1222642800,  # Starting from 2008.09.28 23:00
+    'AUDCAD': 1266318000,  # Starting from 2010.02.16 11:00
+    'AUDCHF': 1266318000,  # Starting from 2010.02.16 11:00
+    'CADCHF': 1266318000,  # Starting from 2010.02.16 11:00
+    'EURNZD': 1266318000,  # Starting from 2010.02.16 11:00
+    'GBPAUD': 1266318000,  # Starting from 2010.02.16 11:00
+    'GBPCAD': 1266318000,  # Starting from 2010.02.16 11:00
+    'GBPNZD': 1266318000,  # Starting from 2010.02.16 11:00
+    'NZDCAD': 1266318000,  # Starting from 2010.02.16 11:00
+    'NZDCHF': 1266318000,  # Starting from 2010.02.16 11:00
+    'NZDJPY': 1266318000,  # Starting from 2010.02.16 11:00
+    'XAGUSD': 1289491200,  # Starting from 2010.11.11 16:00
+    'XAUUSD': 1305010800,  # Starting from 2011.05.10 07:00
 
-    "ADSDEEUR": 1426201200,  # Starting from 2015.03.13 00:00
-    "ALVDEEUR": 1429394400,  # Starting from 2015.04.19 00:00
-    "AUSIDXAUD": 1402524000,  # Starting from 2014.06.12 00:00
-    "BASDEEUR": 1429678800,  # Starting from 2015.04.22 07:00
-    "BAYNDEEUR": 1426806000,  # Starting from 2015.03.20 00:00
-    "BEIDEEUR": 1428444000,  # Starting from 2015.04.08 00:00
-    "BMWDEEUR": 1427151600,  # Starting from 2015.03.24 00:00
-    "BRENTCMDUSD": 1291244400,  # Starting from 2010.12.02 00:00
-    "CHEIDXCHF": 1356994800,  # Starting from 2013.01.01 00:00
-    "CONDEEUR": 1428444000,  # Starting from 2015.04.08 00:00
-    "DAIDEEUR": 1427410800,  # Starting from 2015.03.27 00:00
-    "DB1DEEUR": 1428962400,  # Starting from 2015.04.14 00:00
-    "DBKDEEUR": 1427238000,  # Starting from 2015.03.25 00:00
-    "DEUIDXEUR": 1356994800,  # Starting from 2013.01.01 00:00
-    "DTEDEEUR": 1427752800,  # Starting from 2015.03.31 00:00
-    "EOANDEEUR": 1429480800,  # Starting from 2015.04.20 00:00
-    "ESPIDXEUR": 1427238000,  # Starting from 2015.03.25 00:00
-    "EUSIDXEUR": 1433196000,  # Starting from 2015.06.02 00:00
-    "FMEDEEUR": 1427839200,  # Starting from 2015.04.01 00:00
-    "FRAIDXEUR": 1356994800,  # Starting from 2013.01.01 00:00
-    "FREDEEUR": 1428616800,  # Starting from 2015.04.10 00:00
-    "HEIDEEUR": 1427925600,  # Starting from 2015.04.02 00:00
-    "HEN3DEEUR": 1429567200,  # Starting from 2015.04.21 00:00
-    "HKGIDXHKD": 1370210400,  # Starting from 2013.06.03 00:00
-    "IFXDEEUR": 1428876000,  # Starting from 2015.04.13 00:00
-    "JPNIDXJPY": 1356994800,  # Starting from 2013.01.01 00:00
-    "LHADEEUR": 1429567200,  # Starting from 2015.04.21 00:00
-    "LIGHTCMDUSD": 1427839200,  # Starting from 2015.04.01 00:00
-    "LINDEEUR": 1429567200,  # Starting from 2015.04.21 00:00
-    "LXSDEEUR": 1429567200,  # Starting from 2015.04.21 00:00
-    "MRKDEEUR": 1427151600,  # Starting from 2015.03.24 00:00
-    "MUV2DEEUR": 1429567200,  # Starting from 2015.04.21 00:00
-    "PAH3DEEUR": 1429567200,  # Starting from 2015.04.21 00:00
-    "PSMDEEUR": 1429480800,  # Starting from 2015.04.20 00:00
-    "RWEDEEUR": 1429135200,  # Starting from 2015.04.16 00:00
-    "SAPDEEUR": 1429135200,  # Starting from 2015.04.16 00:00
-    "SDFDEEUR": 1429048800,  # Starting from 2015.04.15 00:00
-    "SIEDEEUR": 1429480800,  # Starting from 2015.04.20 00:00
-    "TKADEEUR": 1428962400,  # Starting from 2015.04.14 00:00
-    "TUI1DEEUR": 1429048800,  # Starting from 2015.04.15 00:00
-    "USA30IDXUSD": 1356994800,  # Starting from 2013.01.01 00:00
-    "USA500IDXUSD": 1356994800,  # Starting from 2013.01.01 00:00
-    "USATECHIDXUSD": 1356994800,  # Starting from 2013.01.01 00:00
-    "VNADEEUR": 1428962400,  # Starting from 2015.04.14 00:00
-    "VOW3DEEUR": 1428962400,  # Starting from 2015.04.14 00:00
+    'ADSDEEUR': 1426201200,  # Starting from 2015.03.13 00:00
+    'ALVDEEUR': 1429394400,  # Starting from 2015.04.19 00:00
+    'AUSIDXAUD': 1402524000,  # Starting from 2014.06.12 00:00
+    'BASDEEUR': 1429678800,  # Starting from 2015.04.22 07:00
+    'BAYNDEEUR': 1426806000,  # Starting from 2015.03.20 00:00
+    'BEIDEEUR': 1428444000,  # Starting from 2015.04.08 00:00
+    'BMWDEEUR': 1427151600,  # Starting from 2015.03.24 00:00
+    'BRENTCMDUSD': 1291244400,  # Starting from 2010.12.02 00:00
+    'CHEIDXCHF': 1356994800,  # Starting from 2013.01.01 00:00
+    'CONDEEUR': 1428444000,  # Starting from 2015.04.08 00:00
+    'DAIDEEUR': 1427410800,  # Starting from 2015.03.27 00:00
+    'DB1DEEUR': 1428962400,  # Starting from 2015.04.14 00:00
+    'DBKDEEUR': 1427238000,  # Starting from 2015.03.25 00:00
+    'DEUIDXEUR': 1356994800,  # Starting from 2013.01.01 00:00
+    'DTEDEEUR': 1427752800,  # Starting from 2015.03.31 00:00
+    'EOANDEEUR': 1429480800,  # Starting from 2015.04.20 00:00
+    'ESPIDXEUR': 1427238000,  # Starting from 2015.03.25 00:00
+    'EUSIDXEUR': 1433196000,  # Starting from 2015.06.02 00:00
+    'FMEDEEUR': 1427839200,  # Starting from 2015.04.01 00:00
+    'FRAIDXEUR': 1356994800,  # Starting from 2013.01.01 00:00
+    'FREDEEUR': 1428616800,  # Starting from 2015.04.10 00:00
+    'HEIDEEUR': 1427925600,  # Starting from 2015.04.02 00:00
+    'HEN3DEEUR': 1429567200,  # Starting from 2015.04.21 00:00
+    'HKGIDXHKD': 1370210400,  # Starting from 2013.06.03 00:00
+    'IFXDEEUR': 1428876000,  # Starting from 2015.04.13 00:00
+    'JPNIDXJPY': 1356994800,  # Starting from 2013.01.01 00:00
+    'LHADEEUR': 1429567200,  # Starting from 2015.04.21 00:00
+    'LIGHTCMDUSD': 1427839200,  # Starting from 2015.04.01 00:00
+    'LINDEEUR': 1429567200,  # Starting from 2015.04.21 00:00
+    'LXSDEEUR': 1429567200,  # Starting from 2015.04.21 00:00
+    'MRKDEEUR': 1427151600,  # Starting from 2015.03.24 00:00
+    'MUV2DEEUR': 1429567200,  # Starting from 2015.04.21 00:00
+    'PAH3DEEUR': 1429567200,  # Starting from 2015.04.21 00:00
+    'PSMDEEUR': 1429480800,  # Starting from 2015.04.20 00:00
+    'RWEDEEUR': 1429135200,  # Starting from 2015.04.16 00:00
+    'SAPDEEUR': 1429135200,  # Starting from 2015.04.16 00:00
+    'SDFDEEUR': 1429048800,  # Starting from 2015.04.15 00:00
+    'SIEDEEUR': 1429480800,  # Starting from 2015.04.20 00:00
+    'TKADEEUR': 1428962400,  # Starting from 2015.04.14 00:00
+    'TUI1DEEUR': 1429048800,  # Starting from 2015.04.15 00:00
+    'USA30IDXUSD': 1356994800,  # Starting from 2013.01.01 00:00
+    'USA500IDXUSD': 1356994800,  # Starting from 2013.01.01 00:00
+    'USATECHIDXUSD': 1356994800,  # Starting from 2013.01.01 00:00
+    'VNADEEUR': 1428962400,  # Starting from 2015.04.14 00:00
+    'VOW3DEEUR': 1428962400,  # Starting from 2015.04.14 00:00
 
     # Commodities - Energy.
     # "E_Light": 1324375200, # Light starting from 2011.12.20 10:00
@@ -124,7 +125,7 @@ all_currencies = {
     #  indices - Americas
     # "E_NQcomp": 1326988800, # US Tech Composite starting from 2012.01.19 16:00
 
-    "E_Nysseecomp": 1326988800,  # US Composite starting from 2012.01.19 16:00
+    'E_Nysseecomp': 1326988800,  # US Composite starting from 2012.01.19 16:00
 
     # "E_DJInd": 1326988800, # US 30 starting from 2012.01.19 16:00
     # "E_NQ100": 1326988800, # US 100 Tech starting from 2012.01.19 16:00
@@ -133,7 +134,7 @@ all_currencies = {
     #  indices - Asia / Pacific
     # "E_HKong": 1328475600, # Hong Kong 40 starting from 2012.02.05 21:00
 
-    "E_SCKorea": 1326988800,  # Korea 200 starting from 2012.01.19 16:00
+    'E_SCKorea': 1326988800,  # Korea 200 starting from 2012.01.19 16:00
 
     # "E_N225Jap": 1328486400, # Japan 225 starting from 2012.02.06 00:00
 
@@ -278,7 +279,7 @@ all_currencies = {
     # "E_T": 1324378800, # AT&T starting from 2011.12.20 11:00
     # "E_UPS": 1333105200, # UPS starting from 2012.03.30 11:00
 
-    "E_VIXX": 1326988800,  # Cboe Volatility Index starting from 2012.01.19 16:00
+    'E_VIXX': 1326988800,  # Cboe Volatility Index starting from 2012.01.19 16:00
 
     # "E_WMT": 1326988800, # Wal-Mart Stores starting from 2012.01.19 16:00
     # "E_XOM": 1324375200, # Exxon Mobil starting from 2011.12.20 10:00
@@ -286,9 +287,9 @@ all_currencies = {
 }
 
 class Dukascopy:
-    url_tpl = "http://www.dukascopy.com/datafeed/%s/%04d/%02d/%02d/%02dh_ticks.bi5"
+    url_tpl = 'http://www.dukascopy.com/datafeed/%s/%04d/%02d/%02d/%02dh_ticks.bi5'
 
-    def __init__(self, pair, year, month, day, hour, dest = "download/dukascopy"):
+    def __init__(self, pair, year, month, day, hour, dest = 'download/dukascopy'):
         if not os.path.exists(dest):
             os.makedirs(dest)
         self.year = year
@@ -296,12 +297,12 @@ class Dukascopy:
         self.day = day
         self.hour = hour
         self.url = self.url_tpl % (pair, int(year), month - 1, day, hour)
-        self.path = "%s/%04d/%02d/%04d-%02d-%02d--%02dh_ticks.bi5" % (dest, year, month, year, month, day, hour)
+        self.path = '%s/%04d/%02d/%04d-%02d-%02d--%02dh_ticks.bi5' % (dest, year, month, year, month, day, hour)
 
     def download(self):
-        print("Downloading %s into: %s..." % (self.url, self.path))
+        print('Downloading %s into: %s...' % (self.url, self.path))
         if os.path.isfile(self.path):
-            print("File (%s) exists, so skipping." % self.path)
+            print('File (%s) exists, so skipping.' % self.path)
             return True
         else:
             if not os.path.exists(os.path.dirname(self.path)):
@@ -312,19 +313,19 @@ class Dukascopy:
                     urllib.request.urlretrieve(self.url, filename=self.path)
                     break
                 except HTTPError as err:
-                    print("Error: %s, reason: %s. Retrying (%i).." % (err.code, err.reason, i))
+                    print('Error: %s, reason: %s. Retrying (%i)..' % (err.code, err.reason, i))
                     i += 1
                 except IOError as err:
-                    print("Error: %s, reason: %s. Retrying (%i).." % (err.errno, err.strerror, i))
+                    print('Error: %s, reason: %s. Retrying (%i)..' % (err.errno, err.strerror, i))
                     i += 1
                 except socket.timeout as err:
-                    print("Network error: %s. Retrying (%i).." % (err.strerror, i))
+                    print('Network error: %s. Retrying (%i)..' % (err.strerror, i))
                     i += 1
                 except socket.error as err:
-                    print("Network error: %s. Retrying (%i).." % (err.strerror, i))
+                    print('Network error: %s. Retrying (%i)..' % (err.strerror, i))
                     i += 1
                 except ContentTooShortError as err:
-                    print("Error: The downloaded data is less than the expected amount, so skipping.")
+                    print('Error: The downloaded data is less than the expected amount, so skipping.')
                     i += 1
 
             if i == 5:
@@ -336,16 +337,16 @@ class Dukascopy:
         try:
             fileSize = os.stat(self.path).st_size
             if fileSize == 0:
-                print("File (%s) is empty" % self.path)
+                print('File (%s) is empty' % self.path)
                 return
         except FileNotFoundError:
             return False
 
-        new_path = self.path.replace("bi5", "csv")
+        new_path = self.path.replace('bi5', 'csv')
         if os.path.isfile(new_path):
-            print("CSV file (%s) exists, so skipping." % new_path)
+            print('CSV file (%s) exists, so skipping.' % new_path)
 
-        print("Converting into CSV (%s)..." % new_path)
+        print('Converting into CSV (%s)...' % new_path)
 
         # Opening, uncompress & reading raw data
         try:
@@ -353,7 +354,7 @@ class Dukascopy:
                 data = f.read()
         # Workaround for liblzma bug (https://bugs.python.org/issue21872)
         except EOFError:
-            print("Info: Ran into liblzma decompressor bug, falling back to command line decompression...")
+            print('Info: Ran into liblzma decompressor bug, falling back to command line decompression...')
             try:
                 pipe = subprocess.Popen(['xz', '-dc', self.path], stdout=subprocess.PIPE)
             except FileNotFoundError:
@@ -365,7 +366,7 @@ class Dukascopy:
         f = open(new_path, 'w', newline='')
         w = csv.writer(f, quoting=csv.QUOTE_NONE)
 
-        normSymbols = ["USDRUB", "XAGUSD", "XAUUSD"]
+        normSymbols = ['USDRUB', 'XAGUSD', 'XAUUSD']
         point = 100000
 
         for sym in normSymbols:
@@ -385,11 +386,11 @@ class Dukascopy:
             # Calculating & formatting column values
             minute = row[0]/1000//60
             second = row[0]/1000 - minute*60
-            timestamp = "%d.%02d.%02d %02d:%02d:%06.3f" % (self.year, self.month, self.day, self.hour, minute, second)
+            timestamp = '%d.%02d.%02d %02d:%02d:%06.3f' % (self.year, self.month, self.day, self.hour, minute, second)
             askPrice = row[1]/point
             bidPrice = row[2]/point
-            bidVolume = "%.2f" % (row[4])
-            askVolume = "%.2f" % (row[3])
+            bidVolume = '%.2f' % (row[4])
+            askVolume = '%.2f' % (row[3])
 
             # Writing one row in CSV format
             w.writerow([timestamp, bidPrice, askPrice, bidVolume, askVolume])
@@ -399,23 +400,23 @@ class Dukascopy:
 if __name__ == '__main__':
     # Parse arguments.
     parser = argparse.ArgumentParser(add_help=False)
-    parser.add_argument("-?", "--help",         action="help",                          help="Show this help message and exit." )
-    parser.add_argument("-v", "--verbose",      action="store_true",  dest="verbose",   help="Increase output verbosity." )
-    parser.add_argument("-D", "--download-dir", action="store",       dest="dest",      help="Directory to download files.", default="download/dukascopy")
-    parser.add_argument("-c", "--csv-convert",  action="store_true",  dest="csv",       help="Perform CSV conversion.")
-    parser.add_argument("-p", "--pairs",        action="store",       dest="pairs",     help="Pair(s) to download (separated by comma).", default="EURUSD")
-    parser.add_argument("-h", "--hours",        action="store",       dest="hours",     help="Hour(s) to download (separated by comma).", default="all")
-    parser.add_argument("-d", "--days",         action="store",       dest="days",      help="Day(s) to download (separated by comma).", default="1")
-    parser.add_argument("-m", "--months",       action="store",       dest="months",    help="Month(s) to download (separated by comma).", default="1")
-    parser.add_argument("-y", "--years",        action="store",       dest="years",     help="Year(s) to download (separated by comma).", default="2020")
+    parser.add_argument('-?', '--help',         action='help',                          help='Show this help message and exit.' )
+    parser.add_argument('-v', '--verbose',      action='store_true',  dest='verbose',   help='Increase output verbosity.' )
+    parser.add_argument('-D', '--download-dir', action='store',       dest='dest',      help='Directory to download files.', default='download/dukascopy')
+    parser.add_argument('-c', '--csv-convert',  action='store_true',  dest='csv',       help='Perform CSV conversion.')
+    parser.add_argument('-p', '--pairs',        action='store',       dest='pairs',     help='Pair(s) to download (separated by comma).', default='EURUSD')
+    parser.add_argument('-h', '--hours',        action='store',       dest='hours',     help='Hour(s) to download (separated by comma).', default='all')
+    parser.add_argument('-d', '--days',         action='store',       dest='days',      help='Day(s) to download (separated by comma).', default='1')
+    parser.add_argument('-m', '--months',       action='store',       dest='months',    help='Month(s) to download (separated by comma).', default='1')
+    parser.add_argument('-y', '--years',        action='store',       dest='years',     help='Year(s) to download (separated by comma).', default='2020')
     args = parser.parse_args()
 
     curr_year = datetime.date.today().year
-    pairs =  list(all_currencies.keys()) if args.pairs  == "all" else args.pairs.split(',')
-    hours  = range(0, 23+1)              if args.hours  == "all" else intlist(args.hours.split(','))
-    days   = range(1, 31+1)              if args.days   == "all" else intlist(args.days.split(','))
-    months = range(1, 12+1)              if args.months == "all" else intlist(args.months.split(','))
-    years  = range(1997, curr_year+1)    if args.years  == "all" else intlist(args.years.split(','))
+    pairs =  list(all_currencies.keys()) if args.pairs  == 'all' else args.pairs.split(',')
+    hours  = range(0, 23+1)              if args.hours  == 'all' else intlist(args.hours.split(','))
+    days   = range(1, 31+1)              if args.days   == 'all' else intlist(args.days.split(','))
+    months = range(1, 12+1)              if args.months == 'all' else intlist(args.months.split(','))
+    years  = range(1997, curr_year+1)    if args.years  == 'all' else intlist(args.years.split(','))
 
     try:
         currencies = []
@@ -430,7 +431,7 @@ if __name__ == '__main__':
 
                                 # Validate dates
                                 if unix > all_currencies.get(pair) and unix < time.time():
-                                    ds = Dukascopy(pair, year, month, day, hour, dest=args.dest + "/" + pair)
+                                    ds = Dukascopy(pair, year, month, day, hour, dest=args.dest + '/' + pair)
                                     ds.download()
                                     if args.csv:
                                         ds.bt5_to_csv()

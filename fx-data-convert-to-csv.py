@@ -13,9 +13,9 @@ import sys
 class Input:
     def __init__(self, fileName):
         if args.verbose:
-            print("[INFO] Trying to read data from %s..." % fileName)
+            print('[INFO] Trying to read data from %s...' % fileName)
         try:
-            with open(fileName, "rb") as inputFile:
+            with open(fileName, 'rb') as inputFile:
                 self.content = inputFile.read()
         except OSError as e:
             print(
@@ -35,8 +35,8 @@ class Input:
         if (len(self.content) - self.headerLength) % self.rowLength != 0:
             print("[ERROR] File length isn't valid for this kind of format!")
 
-        if self.version != struct.unpack("<i", self.content[0:4])[0]:
-            print("[ERROR] Unsupported format version!")
+        if self.version != struct.unpack('<i', self.content[0:4])[0]:
+            print('[ERROR] Unsupported format version!')
             sys.exit(1)
 
     def _parse(self):
@@ -52,7 +52,7 @@ class HCC(Input):
         header = HccHeader(self.content)
 
         if header.magic != 501:
-            print("[ERROR] Unsupported format version!")
+            print('[ERROR] Unsupported format version!')
             sys.exit(1)
 
     def _parse(self):
@@ -82,11 +82,11 @@ class HCC(Input):
 
                 self.rows += [
                     {
-                        "timestamp": datetime.datetime.fromtimestamp(tick.time),
-                        "open": tick.open,
-                        "high": tick.high,
-                        "low": tick.low,
-                        "close": tick.close,
+                        'timestamp': datetime.datetime.fromtimestamp(tick.time),
+                        'open': tick.open,
+                        'high': tick.high,
+                        'low': tick.low,
+                        'close': tick.close,
                     }
                 ]
 
@@ -99,32 +99,32 @@ class HCC(Input):
             base += HccTable._size
 
     def __str__(self):
-        table = ""
-        separator = ","
+        table = ''
+        separator = ','
         for row in self.rows:
-            table += "{:<19}".format("{:%Y.%m.%d %H:%M:%S}".format(row["timestamp"]))
+            table += '{:<19}'.format('{:%Y.%m.%d %H:%M:%S}'.format(row['timestamp']))
             table += separator
-            table += "{:>9.5f}".format(row["open"])
+            table += '{:>9.5f}'.format(row['open'])
             table += separator
-            table += "{:>9.5f}".format(row["high"])
+            table += '{:>9.5f}'.format(row['high'])
             table += separator
-            table += "{:>9.5f}".format(row["low"])
+            table += '{:>9.5f}'.format(row['low'])
             table += separator
-            table += "{:>9.5f}".format(row["close"])
-            table += "\n"
+            table += '{:>9.5f}'.format(row['close'])
+            table += '\n'
         return table[:-1]
 
     def toCsv(self, fileName):
-        with open(fileName, "w", newline="") as csvFile:
+        with open(fileName, 'w', newline='') as csvFile:
             writer = csv.writer(csvFile, quoting=csv.QUOTE_NONE)
             for row in self.rows:
                 writer.writerow(
                     [
-                        "{:%Y.%m.%d %H:%M:%S}".format(row["timestamp"]),
-                        "{:.5f}".format(row["open"]),
-                        "{:.5f}".format(row["high"]),
-                        "{:.5f}".format(row["low"]),
-                        "{:.5f}".format(row["close"]),
+                        '{:%Y.%m.%d %H:%M:%S}'.format(row['timestamp']),
+                        '{:.5f}'.format(row['open']),
+                        '{:.5f}'.format(row['high']),
+                        '{:.5f}'.format(row['low']),
+                        '{:.5f}'.format(row['close']),
                     ]
                 )
 
@@ -140,58 +140,58 @@ class HST509(Input):
             base = self.headerLength + i * self.rowLength
             self.rows += [
                 {
-                    "timestamp": datetime.datetime.fromtimestamp(
-                        struct.unpack("<i", self.content[base : base + 4])[0],
+                    'timestamp': datetime.datetime.fromtimestamp(
+                        struct.unpack('<i', self.content[base : base + 4])[0],
                         datetime.timezone.utc,
                     ),
-                    "open": struct.unpack("<d", self.content[base + 4 : base + 4 + 8])[
+                    'open': struct.unpack('<d', self.content[base + 4 : base + 4 + 8])[
                         0
                     ],
-                    "low": struct.unpack(
-                        "<d", self.content[base + 4 + 8 : base + 4 + 2 * 8]
+                    'low': struct.unpack(
+                        '<d', self.content[base + 4 + 8 : base + 4 + 2 * 8]
                     )[0],
-                    "high": struct.unpack(
-                        "<d", self.content[base + 4 + 2 * 8 : base + 4 + 3 * 8]
+                    'high': struct.unpack(
+                        '<d', self.content[base + 4 + 2 * 8 : base + 4 + 3 * 8]
                     )[0],
-                    "close": struct.unpack(
-                        "<d", self.content[base + 4 + 3 * 8 : base + 4 + 4 * 8]
+                    'close': struct.unpack(
+                        '<d', self.content[base + 4 + 3 * 8 : base + 4 + 4 * 8]
                     )[0],
-                    "volume": struct.unpack(
-                        "<d", self.content[base + 4 + 4 * 8 : base + 4 + 5 * 8]
+                    'volume': struct.unpack(
+                        '<d', self.content[base + 4 + 4 * 8 : base + 4 + 5 * 8]
                     )[0],
                 }
             ]
 
     def __str__(self):
-        table = ""
-        separator = ","
+        table = ''
+        separator = ','
         for row in self.rows:
-            table += "{:<19}".format("{:%Y.%m.%d %H:%M:%S}".format(row["timestamp"]))
+            table += '{:<19}'.format('{:%Y.%m.%d %H:%M:%S}'.format(row['timestamp']))
             table += separator
-            table += "{:>9.5f}".format(row["open"])
+            table += '{:>9.5f}'.format(row['open'])
             table += separator
-            table += "{:>9.5f}".format(row["high"])
+            table += '{:>9.5f}'.format(row['high'])
             table += separator
-            table += "{:>9.5f}".format(row["low"])
+            table += '{:>9.5f}'.format(row['low'])
             table += separator
-            table += "{:>9.5f}".format(row["close"])
+            table += '{:>9.5f}'.format(row['close'])
             table += separator
-            table += "{:>12.2f}".format(row["volume"])
-            table += "\n"
+            table += '{:>12.2f}'.format(row['volume'])
+            table += '\n'
         return table[:-1]
 
     def toCsv(self, fileName):
-        with open(fileName, "w", newline="") as csvFile:
+        with open(fileName, 'w', newline='') as csvFile:
             writer = csv.writer(csvFile, quoting=csv.QUOTE_NONE)
             for row in self.rows:
                 writer.writerow(
                     [
-                        "{:%Y.%m.%d %H:%M:%S}".format(row["timestamp"]),
-                        "{:.5f}".format(row["open"]),
-                        "{:.5f}".format(row["high"]),
-                        "{:.5f}".format(row["low"]),
-                        "{:.5f}".format(row["close"]),
-                        "{:.2f}".format(row["volume"]),
+                        '{:%Y.%m.%d %H:%M:%S}'.format(row['timestamp']),
+                        '{:.5f}'.format(row['open']),
+                        '{:.5f}'.format(row['high']),
+                        '{:.5f}'.format(row['low']),
+                        '{:.5f}'.format(row['close']),
+                        '{:.2f}'.format(row['volume']),
                     ]
                 )
 
@@ -207,70 +207,70 @@ class HST(Input):
             base = self.headerLength + i * self.rowLength
             self.rows += [
                 {
-                    "timestamp": datetime.datetime.fromtimestamp(
-                        struct.unpack("<i", self.content[base : base + 4])[0],
+                    'timestamp': datetime.datetime.fromtimestamp(
+                        struct.unpack('<i', self.content[base : base + 4])[0],
                         datetime.timezone.utc,
                     ),
-                    "open": struct.unpack("<d", self.content[base + 8 : base + 2 * 8])[
+                    'open': struct.unpack('<d', self.content[base + 8 : base + 2 * 8])[
                         0
                     ],
-                    "high": struct.unpack(
-                        "<d", self.content[base + 2 * 8 : base + 3 * 8]
+                    'high': struct.unpack(
+                        '<d', self.content[base + 2 * 8 : base + 3 * 8]
                     )[0],
-                    "low": struct.unpack(
-                        "<d", self.content[base + 3 * 8 : base + 4 * 8]
+                    'low': struct.unpack(
+                        '<d', self.content[base + 3 * 8 : base + 4 * 8]
                     )[0],
-                    "close": struct.unpack(
-                        "<d", self.content[base + 4 * 8 : base + 5 * 8]
+                    'close': struct.unpack(
+                        '<d', self.content[base + 4 * 8 : base + 5 * 8]
                     )[0],
-                    "volume": struct.unpack(
-                        "<Q", self.content[base + 5 * 8 : base + 6 * 8]
+                    'volume': struct.unpack(
+                        '<Q', self.content[base + 5 * 8 : base + 6 * 8]
                     )[0],
-                    "spread": struct.unpack(
-                        "<i", self.content[base + 6 * 8 : base + 4 + 6 * 8]
+                    'spread': struct.unpack(
+                        '<i', self.content[base + 6 * 8 : base + 4 + 6 * 8]
                     )[0],
-                    "realVolume": struct.unpack(
-                        "<Q", self.content[base + 4 + 6 * 8 : base + 4 + 7 * 8]
+                    'realVolume': struct.unpack(
+                        '<Q', self.content[base + 4 + 6 * 8 : base + 4 + 7 * 8]
                     )[0],
                 }
             ]
 
     def __str__(self):
-        table = ""
-        separator = ","
+        table = ''
+        separator = ','
         for row in self.rows:
-            table += "{:<19}".format("{:%Y.%m.%d %H:%M:%S}".format(row["timestamp"]))
+            table += '{:<19}'.format('{:%Y.%m.%d %H:%M:%S}'.format(row['timestamp']))
             table += separator
-            table += "{:>.5f}".format(row["open"])
+            table += '{:>.5f}'.format(row['open'])
             table += separator
-            table += "{:>.5f}".format(row["high"])
+            table += '{:>.5f}'.format(row['high'])
             table += separator
-            table += "{:>.5f}".format(row["low"])
+            table += '{:>.5f}'.format(row['low'])
             table += separator
-            table += "{:>.5f}".format(row["close"])
+            table += '{:>.5f}'.format(row['close'])
             table += separator
-            table += "{:>d}".format(row["volume"])
+            table += '{:>d}'.format(row['volume'])
             table += separator
-            table += "{:>d}".format(row["spread"])
+            table += '{:>d}'.format(row['spread'])
             table += separator
-            table += "{:>d}".format(row["realVolume"])
-            table += "\n"
+            table += '{:>d}'.format(row['realVolume'])
+            table += '\n'
         return table[:-1]
 
     def toCsv(self, fileName):
-        with open(fileName, "w", newline="") as csvFile:
+        with open(fileName, 'w', newline='') as csvFile:
             writer = csv.writer(csvFile, quoting=csv.QUOTE_NONE)
             for row in self.rows:
                 writer.writerow(
                     [
-                        "{:%Y.%m.%d %H:%M:%S}".format(row["timestamp"]),
-                        "{:.5f}".format(row["open"]),
-                        "{:.5f}".format(row["high"]),
-                        "{:.5f}".format(row["low"]),
-                        "{:.5f}".format(row["close"]),
-                        "{:d}".format(row["volume"]),
-                        "{:d}".format(row["spread"]),
-                        "{:d}".format(row["realVolume"]),
+                        '{:%Y.%m.%d %H:%M:%S}'.format(row['timestamp']),
+                        '{:.5f}'.format(row['open']),
+                        '{:.5f}'.format(row['high']),
+                        '{:.5f}'.format(row['low']),
+                        '{:.5f}'.format(row['close']),
+                        '{:d}'.format(row['volume']),
+                        '{:d}'.format(row['spread']),
+                        '{:d}'.format(row['realVolume']),
                     ]
                 )
 
@@ -286,135 +286,135 @@ class FXT(Input):
             base = self.headerLength + i * self.rowLength
             self.rows += [
                 {
-                    "barTimestamp": datetime.datetime.fromtimestamp(
-                        struct.unpack("<i", self.content[base : base + 4])[0],
+                    'barTimestamp': datetime.datetime.fromtimestamp(
+                        struct.unpack('<i', self.content[base : base + 4])[0],
                         datetime.timezone.utc,
                     ),
-                    "open": struct.unpack("<d", self.content[base + 8 : base + 2 * 8])[
+                    'open': struct.unpack('<d', self.content[base + 8 : base + 2 * 8])[
                         0
                     ],
-                    "high": struct.unpack(
-                        "<d", self.content[base + 2 * 8 : base + 3 * 8]
+                    'high': struct.unpack(
+                        '<d', self.content[base + 2 * 8 : base + 3 * 8]
                     )[0],
-                    "low": struct.unpack(
-                        "<d", self.content[base + 3 * 8 : base + 4 * 8]
+                    'low': struct.unpack(
+                        '<d', self.content[base + 3 * 8 : base + 4 * 8]
                     )[0],
-                    "close": struct.unpack(
-                        "<d", self.content[base + 4 * 8 : base + 5 * 8]
+                    'close': struct.unpack(
+                        '<d', self.content[base + 4 * 8 : base + 5 * 8]
                     )[0],
-                    "volume": struct.unpack(
-                        "<Q", self.content[base + 5 * 8 : base + 6 * 8]
+                    'volume': struct.unpack(
+                        '<Q', self.content[base + 5 * 8 : base + 6 * 8]
                     )[0],
-                    "tickTimestamp": datetime.datetime.fromtimestamp(
+                    'tickTimestamp': datetime.datetime.fromtimestamp(
                         struct.unpack(
-                            "<i", self.content[base + 6 * 8 : base + 4 + 6 * 8]
+                            '<i', self.content[base + 6 * 8 : base + 4 + 6 * 8]
                         )[0],
                         datetime.timezone.utc,
                     ),
-                    "flag": struct.unpack(
-                        "<i", self.content[base + 4 + 6 * 8 : base + 7 * 8]
+                    'flag': struct.unpack(
+                        '<i', self.content[base + 4 + 6 * 8 : base + 7 * 8]
                     )[0],
                 }
             ]
 
     def __str__(self):
-        table = ""
-        separator = ","
+        table = ''
+        separator = ','
         for row in self.rows:
-            table += "{:<19}".format("{:%Y.%m.%d %H:%M:%S}".format(row["barTimestamp"]))
+            table += '{:<19}'.format('{:%Y.%m.%d %H:%M:%S}'.format(row['barTimestamp']))
             table += separator
-            table += "{:>.5f}".format(row["open"])
+            table += '{:>.5f}'.format(row['open'])
             table += separator
-            table += "{:>.5f}".format(row["high"])
+            table += '{:>.5f}'.format(row['high'])
             table += separator
-            table += "{:>.5f}".format(row["low"])
+            table += '{:>.5f}'.format(row['low'])
             table += separator
-            table += "{:>.5f}".format(row["close"])
+            table += '{:>.5f}'.format(row['close'])
             table += separator
-            table += "{:>d}".format(row["volume"])
+            table += '{:>d}'.format(row['volume'])
             table += separator
-            table += "{:<19}".format(
-                "{:%Y.%m.%d %H:%M:%S}".format(row["tickTimestamp"])
+            table += '{:<19}'.format(
+                '{:%Y.%m.%d %H:%M:%S}'.format(row['tickTimestamp'])
             )
             table += separator
-            table += "{:>d}".format(row["flag"])
-            table += "\n"
+            table += '{:>d}'.format(row['flag'])
+            table += '\n'
         return table[:-1]
 
     def toCsv(self, fileName):
-        with open(fileName, "w", newline="") as csvFile:
+        with open(fileName, 'w', newline='') as csvFile:
             writer = csv.writer(csvFile, quoting=csv.QUOTE_NONE)
             for row in self.rows:
                 writer.writerow(
                     [
-                        "{:%Y.%m.%d %H:%M:%S}".format(row["barTimestamp"]),
-                        "{:.5f}".format(row["open"]),
-                        "{:.5f}".format(row["high"]),
-                        "{:.5f}".format(row["low"]),
-                        "{:.5f}".format(row["close"]),
-                        "{:d}".format(row["volume"]),
-                        "{:%Y.%m.%d %H:%M:%S}".format(row["tickTimestamp"]),
-                        "{:d}".format(row["flag"]),
+                        '{:%Y.%m.%d %H:%M:%S}'.format(row['barTimestamp']),
+                        '{:.5f}'.format(row['open']),
+                        '{:.5f}'.format(row['high']),
+                        '{:.5f}'.format(row['low']),
+                        '{:.5f}'.format(row['close']),
+                        '{:d}'.format(row['volume']),
+                        '{:%Y.%m.%d %H:%M:%S}'.format(row['tickTimestamp']),
+                        '{:d}'.format(row['flag']),
                     ]
                 )
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     # Parse the arguments
     argumentParser = argparse.ArgumentParser(add_help=False)
     argumentParser.add_argument(
-        "-i",
-        "--input-file",
-        action="store",
-        dest="inputFile",
-        help="Input file",
+        '-i',
+        '--input-file',
+        action='store',
+        dest='inputFile',
+        help='Input file',
         required=True,
     )
     argumentParser.add_argument(
-        "-f",
-        "--input-format",
-        action="store",
-        dest="inputFormat",
-        help="MetaTrader format of input file (fxt/hcc/hst/hst509)",
+        '-f',
+        '--input-format',
+        action='store',
+        dest='inputFormat',
+        help='MetaTrader format of input file (fxt/hcc/hst/hst509)',
         required=True,
     )
     argumentParser.add_argument(
-        "-o",
-        "--output-file",
-        action="store",
-        dest="outputFile",
-        help="Output CSV file",
+        '-o',
+        '--output-file',
+        action='store',
+        dest='outputFile',
+        help='Output CSV file',
         default=None,
     )
     argumentParser.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        dest="verbose",
-        help="Enables verbose messages",
+        '-v',
+        '--verbose',
+        action='store_true',
+        dest='verbose',
+        help='Enables verbose messages',
     )
     argumentParser.add_argument(
-        "-D",
-        "--debug",
-        action="store_true",
-        dest="debug",
-        help="Enables debugging messages",
+        '-D',
+        '--debug',
+        action='store_true',
+        dest='debug',
+        help='Enables debugging messages',
     )
     argumentParser.add_argument(
-        "-h", "--help", action="help", help="Show this help message and exit"
+        '-h', '--help', action='help', help='Show this help message and exit'
     )
     args = argumentParser.parse_args()
 
-    if args.inputFormat == "hst509":
+    if args.inputFormat == 'hst509':
         hst509 = HST509(args.inputFile)
         hst509.toCsv(args.outputFile) if args.outputFile else print(hst509)
-    elif args.inputFormat == "hst":
+    elif args.inputFormat == 'hst':
         hst = HST(args.inputFile)
         hst.toCsv(args.outputFile) if args.outputFile else print(hst)
-    elif args.inputFormat == "fxt":
+    elif args.inputFormat == 'fxt':
         fxt = FXT(args.inputFile)
         fxt.toCsv(args.outputFile) if args.outputFile else print(fxt)
-    elif args.inputFormat == "hcc":
+    elif args.inputFormat == 'hcc':
         hcc = HCC(args.inputFile)
         hcc.toCsv(args.outputFile) if args.outputFile else print(hcc)
     else:
