@@ -15,8 +15,8 @@
 */
 
 // Usage:
-//   php convert_bi5_to_csv.php EURUSD start_date end_date foo.csv
-// E.g.: php convert_bi5_to_csv.php EURUSD 201001 201101 EURUSD_2010_01-2011_01.csv
+//   php fx-data-convert-bi5-to-csv.php EURUSD start_date end_date foo.csv
+// E.g.: php fx-data-convert-bi5-to-csv.php EURUSD 201001 201101 EURUSD_2010_01-2011_01.csv
 
 /* Notes:
 
