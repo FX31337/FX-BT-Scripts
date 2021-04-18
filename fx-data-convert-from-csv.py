@@ -868,7 +868,7 @@ if __name__ == "__main__":
         "MN": 30 * 24 * 60,
     }
 
-    for arg in args.timeframe.lower().split(","):
+    for arg in args.timeframe.strip().upper().split(","):
         match_obj = re.match(r"(M|H|D|W|MN)(\d+)", arg, re.I)
         if match_obj:
             model = match_obj.group(1).upper()
