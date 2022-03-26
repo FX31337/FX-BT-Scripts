@@ -287,6 +287,9 @@ class Dukascopy:
         if os.path.isfile(self.path):
             print("File (%s) exists, so skipping." % self.path)
             return True
+        elif os.path.isfile(self.path.replace("bi5", "csv")):
+            print("File (%s) exists, so skipping." % self.path.replace("bi5", "csv"))
+            return True
         else:
             if not os.path.exists(os.path.dirname(self.path)):
                 os.makedirs(os.path.dirname(self.path))
@@ -479,9 +482,9 @@ if __name__ == "__main__":
         list(all_currencies.keys()) if args.pairs == "all" else args.pairs.split(",")
     )
     hours = range(0, 23 + 1) if args.hours == "all" else intlist(args.hours.split(","))
-    days = range(1, 31 + 1) if args.days == "all" else intlist(args.days.split(","))
+    days = range(1, 31) if args.days == "all" else intlist(args.days.split(","))
     months = (
-        range(1, 12 + 1) if args.months == "all" else intlist(args.months.split(","))
+        range(0, 12 + 1) if args.months == "all" else intlist(args.months.split(","))
     )
     years = (
         range(1997, curr_year + 1)
