@@ -262,7 +262,7 @@ all_currencies = {
 
 
 class Dukascopy:
-    url_tpl = "http://www.dukascopy.com/datafeed/%s/%04d/%02d/%02d/%02dh_ticks.bi5"
+    url_tpl = "http://datafeed.dukascopy.com/datafeed/%s/%04d/%02d/%02d/%02dh_ticks.bi5"
 
     def __init__(self, pair, year, month, day, hour, dest="download/dukascopy"):
         if not os.path.exists(dest):

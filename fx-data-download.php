@@ -312,7 +312,7 @@ foreach($symbols as $pair => $firsttick) {
         $month = str_pad(gmstrftime('%m',$i) - 1, 2, '0', STR_PAD_LEFT); // format (month-1), such as the conversion of 00 January, February -> 01
         $day = gmstrftime('%d',$i);
         $hour = gmstrftime('%H',$i);
-        $url = "http://www.dukascopy.com/datafeed/$pair/$year/$month/$day/{$hour}h_ticks.bi5";
+        $url = "http://datafeed.dukascopy.com/datafeed/$pair/$year/$month/$day/{$hour}h_ticks.bi5";
 
     // When the file begins to download before the first one day to $ lasttim, $ lastday recorded.  Prompt action is actually downloaded to the day, no other practical effect.
     if ($day != $lastday)
