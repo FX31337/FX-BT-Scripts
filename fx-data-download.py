@@ -371,6 +371,9 @@ class Dukascopy:
                 point = 1000
                 break
 
+        if pair.endswith("JPY"):
+            point = 1000
+
         TICK_BYTES = 20
         for i in range(0, len(data) // TICK_BYTES):
             row = bytearray()
