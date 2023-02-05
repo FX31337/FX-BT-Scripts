@@ -198,7 +198,7 @@ def decompress(data, year, month):
         #   Field_2     : 1 byte, high price incremental stored as an unsigned char and added to open price
         #   Field_3     : 1 byte, low price incremental stored as an unsigned char and subtracted from open price
         #   Field_4     : 1 byte, close price incremental stored as a signed char and added to open price
-        #   Field_5     : 1 byte, volume incremental stored as a signed char
+        #   Field_5     : 1 byte, volume incremental stored as a unsigned char
 
         if data[i] > 0xBF: #191 as decimal
             streak = (
@@ -237,9 +237,9 @@ def decompress(data, year, month):
         #   Field_1     : timestamp incremental to previous timestamp
         #   Field_2     : 1 byte, open price incremental stored as a signed char and added to previous close price
         #   Field_3     : 1 byte, high price incremental stored as an unsigned char and added to open price
-        #   Field_4     : 4 bytes, low price incremental stored as an unsigned short subtracted from open price
-        #   Field_5     : 4 bytes, close price incremental stored as an unsigned short and added to open price
-        #   Field_6     : 1 byte, volume incremental stored as a signed char
+        #   Field_4     : 1 byte, low price incremental stored as an unsigned char and subtracted from open price
+        #   Field_5     : 1 byte, close price incremental stored as a signed char and added to open price
+        #   Field_6     : 1 byte, volume incremental stored as a unsigned char
         elif data[i] > 0x7F:
             streak = (
                 data[i] - 0x7F
@@ -247,22 +247,21 @@ def decompress(data, year, month):
             i += 1  # Move index to first data byte of current streak            
 
             timestamp = lastBar["timestamp"] + datetime.timedelta(minutes=1)
-
             open      = lastBar["close"] + unpack("b", bytes([data[i]]))[0]
             high      = open + unpack("B", bytes([data[i + 1]]))[0]
-            low       = open - unpack("<H", data[i + 8  : i + 10])[0]
-            close     = open + unpack("<H", data[i + 10  : i + 12])[0]
-            volume    = unpack("B", bytes([data[i + 9]]))[0]
+            low       = open - unpack("B", bytes([data[i + 2]]))[0]
+            close     = open + unpack("b", bytes([data[i + 3]]))[0]
+            volume    = unpack("B", bytes([data[i + 4]]))[0]
 
             lastBar = {
                 "timestamp": timestamp,
-                "open"     : open,
-                "high"     : high,
-                "low"      : low,
-                "close"    : close,
-                "volume"   : volume,
-                "type"     : 2,
-                "address"  : i,
+                "open": open,
+                "high": high,
+                "low": low,
+                "close": close,
+                "volume": volume,
+                "type": 2,
+                "address": i,
             }
 
             bars += [
@@ -271,6 +270,7 @@ def decompress(data, year, month):
 
             # Move index to first byte of next block or type
             i += streak * 6
+
 
         # Type-1 Block
         #   Description : kind of synchronization type, stores exact values
@@ -289,6 +289,7 @@ def decompress(data, year, month):
             )  # Get the number of streaks hiding inside this block
             i += 1  # Move index to first data byte of current streak
 
+            
             # Transform streak bytes into usable data and collect them in 'bars' list
             for s in range(0, streak):
                 timestamp = datetime.datetime.fromtimestamp(
@@ -311,7 +312,6 @@ def decompress(data, year, month):
                     "address": i,
                 }
                 bars += [lastBar]
-
                 # Move index to first byte of next block or type
                 i += 16
         else:
