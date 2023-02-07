@@ -198,8 +198,9 @@ def decompress(data, year, month):
         #   Field_2     : 1 byte, high price incremental stored as an unsigned char and added to open price
         #   Field_3     : 1 byte, low price incremental stored as an unsigned char and subtracted from open price
         #   Field_4     : 1 byte, close price incremental stored as a signed char and added to open price
-        #   Field_5     : 1 byte, volume incremental TODO
-        if data[i] > 0xBF:
+        #   Field_5     : 1 byte, volume incremental stored as a unsigned char
+
+        if data[i] > 0xBF: #191 as decimal
             streak = (
                 data[i] - 0xBF
             )  # Get the number of streaks hiding inside this block
@@ -208,11 +209,11 @@ def decompress(data, year, month):
             # Transform streak bytes into usable data and collect them in 'bars' list
             for s in range(0, streak):
                 timestamp = lastBar["timestamp"] + datetime.timedelta(minutes=1)
-                open = lastBar["close"] + unpack("b", bytes([data[i]]))[0]
-                high = open + unpack("B", bytes([data[i + 1]]))[0]
-                low = open - unpack("B", bytes([data[i + 2]]))[0]
-                close = open + unpack("b", bytes([data[i + 3]]))[0]
-                volume = unpack("B", bytes([data[i + 4]]))[0]
+                open      = lastBar["close"] + unpack("b", bytes([data[i]]))[0]
+                high      = open + unpack("B", bytes([data[i + 1]]))[0]
+                low       = open - unpack("B", bytes([data[i + 2]]))[0]
+                close     = open + unpack("b", bytes([data[i + 3]]))[0]
+                volume    = unpack("B", bytes([data[i + 4]]))[0]
 
                 lastBar = {
                     "timestamp": timestamp,
@@ -233,36 +234,43 @@ def decompress(data, year, month):
         #   Description : kind of repeater type for highly compressable one minute step data
         #   Block length: 1 byte flag + streak*6 bytes of data
         #   Flag codes  : 0x8a..0xbf stores the length of streak in this type of block
-        #   Field_1     : TODO
-        #   Field_2     : TODO
-        #   Field_3     : TODO
-        #   Field_4     : TODO
-        #   Field_5     : TODO
-        #   Field_6     : TODO
+        #   Field_1     : timestamp incremental to previous timestamp
+        #   Field_2     : 1 byte, open price incremental stored as a signed char and added to previous close price
+        #   Field_3     : 1 byte, high price incremental stored as an unsigned char and added to open price
+        #   Field_4     : 1 byte, low price incremental stored as an unsigned char and subtracted from open price
+        #   Field_5     : 1 byte, close price incremental stored as a signed char and added to open price
+        #   Field_6     : 1 byte, volume incremental stored as a unsigned char
         elif data[i] > 0x7F:
             streak = (
                 data[i] - 0x7F
             )  # Get the number of streaks hiding inside this block
-            i += 1  # Move index to first data byte of current streak
+            i += 1  # Move index to first data byte of current streak            
 
-            # TODO Reveal repeater mechanism, until that indicate missing bars with
-            #      EPOCH timestamp and unit open/high/low/close/volume values
+            timestamp = lastBar["timestamp"] + datetime.timedelta(minutes=1)
+            open      = lastBar["close"] + unpack("b", bytes([data[i]]))[0]
+            high      = open + unpack("B", bytes([data[i + 1]]))[0]
+            low       = open - unpack("B", bytes([data[i + 2]]))[0]
+            close     = open + unpack("b", bytes([data[i + 3]]))[0]
+            volume    = unpack("B", bytes([data[i + 4]]))[0]
+
             lastBar = {
-                "timestamp": datetime.datetime.fromtimestamp(0),
-                "open": 1e5,
-                "high": 1e5,
-                "low": 1e5,
-                "close": 1e5,
-                "volume": 1,
+                "timestamp": timestamp,
+                "open": open,
+                "high": high,
+                "low": low,
+                "close": close,
+                "volume": volume,
                 "type": 2,
                 "address": i,
             }
+
             bars += [
                 lastBar
             ]  # *WARNING* It adds just one bar for now but the block can contain much more bars!
 
             # Move index to first byte of next block or type
             i += streak * 6
+
 
         # Type-1 Block
         #   Description : kind of synchronization type, stores exact values
@@ -274,22 +282,23 @@ def decompress(data, year, month):
         #   Field_3     : 4 bytes, high price stored as a unsigned short added to open price
         #   Field_4     : 4 bytes, low price stored as a unsigned short added to open price
         #   Field_5     : 4 bytes, close price stored as a signed short added to open price
-        #   Field_6     : 4 bytes, volume TODO *PROBABLY* stored as an unsigned integer
+        #   Field_6     : 4 bytes, volume stored as a unsigned short
         elif data[i] > 0x3F:
             streak = (
                 data[i] - 0x3F
             )  # Get the number of streaks hiding inside this block
             i += 1  # Move index to first data byte of current streak
 
+            
             # Transform streak bytes into usable data and collect them in 'bars' list
             for s in range(0, streak):
                 timestamp = datetime.datetime.fromtimestamp(
                     unpack("<I", data[i : i + 4])[0], datetime.timezone.utc
                 )
-                open = unpack("<I", data[i + 4 : i + 8])[0]
-                high = open + unpack("<H", data[i + 8 : i + 10])[0]
-                low = open - unpack("<H", data[i + 10 : i + 12])[0]
-                close = open + unpack("<h", data[i + 12 : i + 14])[0]
+                open   = unpack("<I", data[i + 4 : i + 8])[0]
+                high   = open + unpack("<H", data[i + 8  : i + 10])[0]
+                low    = open - unpack("<H", data[i + 10 : i + 12])[0]
+                close  = open + unpack("<h", data[i + 12 : i + 14])[0]
                 volume = unpack("<H", data[i + 14 : i + 16])[0]
 
                 lastBar = {
@@ -303,7 +312,6 @@ def decompress(data, year, month):
                     "address": i,
                 }
                 bars += [lastBar]
-
                 # Move index to first byte of next block or type
                 i += 16
         else:
@@ -344,9 +352,15 @@ def convertToCsv(pair, year, month, historyFile, destination):
 
     if args.verbose:
         print("Converting to CSV ...")
+
     historyPath = os.path.join(
-        destination, pair, str(year), "%02d" % int(month), historyFile
+        destination, 
+        pair, 
+        str(year), 
+        "%02d" % int(month), 
+        historyFile
     )
+
     csvPath = os.path.join(
         destination,
         pair,
@@ -354,20 +368,30 @@ def convertToCsv(pair, year, month, historyFile, destination):
         "%02d" % int(month),
         "%s-%02d.csv" % (str(year), int(month)),
     )
+
     with open(historyPath, "rb") as datInput, open(csvPath, "wt") as csvOutput:
         buf = datInput.read()
         matches = re.search(r"([a-z0-9]+)\.dat", historyFile).groups()
+
         if len(matches) != 1 or len(matches[0]) != 32:
             raise Exception("Error with MD5 from filename")
+
         md5 = matches[0]
+
         if digest(buf) != md5:
             raise Exception("Checksum does not match")
+
         head, data = decode_body(buf)
         bars = decompress(data, year, month)
+
         if args.anomaly:
             anomalyTest(bars)
+
         csvWriter = csv.writer(
-            csvOutput, delimiter=",", quotechar='"', quoting=csv.QUOTE_MINIMAL
+            csvOutput, 
+            delimiter=",", 
+            quotechar='"', 
+            quoting=csv.QUOTE_MINIMAL
         )
 
         # Build timedelta object from time offset
@@ -376,6 +400,7 @@ def convertToCsv(pair, year, month, historyFile, destination):
         )
         if timeOffsetMatch:
             timeOffsetGroup = timeOffsetMatch.groupdict()
+
             timeOffset = datetime.timedelta(
                 hours=int(timeOffsetGroup["sign"] + timeOffsetGroup["hours"]),
                 minutes=int(timeOffsetGroup["sign"] + timeOffsetGroup["minutes"]),
@@ -520,3 +545,5 @@ if __name__ == "__main__":
                     )
                     if args.convert:
                         convertToCsv(pair, year, month, historyFile, args.destination)
+
+# python3 dl_bt_metaquotes.py -p XAUUSD -y 2022 -m 10,11 -c -t YYYY-MM-DD -a -v
